@@ -1,6 +1,6 @@
-﻿# Akka.Hosting
+# Akka.Hosting
 
-Update this readme file with your details.
+Prototype for https://www.notion.so/petabridge/Akka-NET-Microsoft-Extensions-Hosting-APIs-3e70b5b131a94e5796b4c993390462dd
 
 # The Build System
 
