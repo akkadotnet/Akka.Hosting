@@ -8,5 +8,8 @@
 	<ItemGroup>
 		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Akka.DependencyInjection" Version="1.4.33" />
+	</ItemGroup>
 
 </Project>
