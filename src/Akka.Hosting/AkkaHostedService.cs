@@ -27,7 +27,7 @@ internal sealed class AkkaHostedService : IHostedService
             _hostApplicationLifetime.StopApplication();
         }
 
-        // terminate the application if the ActorSystem is terminated first
+        // terminate the application if the Sys is terminated first
         // this can happen in instances such as Akka.Cluster membership changes
 #pragma warning disable CS4014
         TerminationHook();
@@ -36,7 +36,7 @@ internal sealed class AkkaHostedService : IHostedService
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        // run full CoordinatedShutdown on the ActorSystem
+        // run full CoordinatedShutdown on the Sys
         await CoordinatedShutdown.Get(_actorSystem).Run(CoordinatedShutdown.ClrExitReason.Instance).ConfigureAwait(false);
     }
 }

@@ -4,6 +4,13 @@ using Akka.Actor;
 
 namespace Akka.Hosting;
 
+
+/// <summary>
+/// Default <see cref="ActorRegistry{TKey}"/> implementation designed
+/// to work with <see cref="System.Enum"/> or constant <see cref="int"/>.
+/// </summary>
+public sealed class DefaultActorRegistry : ActorRegistry<int>{  }
+
 /// <summary>
 /// INTERNAL API
 /// </summary>
@@ -25,7 +32,7 @@ public class ActorRegistryExtension<TKey> : ExtensionIdProvider<ActorRegistry<TK
 ///
 /// If you are adding every single actor in your <see cref="ActorSystem"/> to the registry you are definitely using it wrong.
 /// </remarks>
-public sealed class ActorRegistry<TKey> : IExtension where TKey : struct
+public class ActorRegistry<TKey> : IExtension where TKey : struct
 {
     private readonly ConcurrentDictionary<TKey, IActorRef> _actorRegistrations = new ConcurrentDictionary<TKey, IActorRef>();
 
