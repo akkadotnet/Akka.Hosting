@@ -4,20 +4,21 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Akka.Hosting
 {
     public sealed class AkkaConfigurationBuilder
     {
-        private IServiceProvider _serviceProvider;
+        private IServiceCollection _serviceCollection;
         private readonly HashSet<Setup> _setups = new HashSet<Setup>();
         private ProviderSelection _selection = ProviderSelection.Local.Instance;
         private Config _configuration = Config.Empty;
         private Func<ActorSystem, Task> _actorStarter = system => Task.CompletedTask;
 
-        public AkkaConfigurationBuilder(IServiceProvider serviceProvider)
+        public AkkaConfigurationBuilder(IServiceCollection serviceCollection)
         {
-            _serviceProvider = serviceProvider;
+            _serviceCollection = serviceCollection;
         }
 
         public AkkaConfigurationBuilder AddSetup(Setup setup)
@@ -31,9 +32,12 @@ namespace Akka.Hosting
             _selection = provider;
             return this;
         }
+        
+        
     }
     
     public static class AkkaHostingExtensions
     {
+        public
     }
 }
