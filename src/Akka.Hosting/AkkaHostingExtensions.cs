@@ -51,9 +51,18 @@ namespace Akka.Hosting
         private readonly string _actorSystemName;
         private readonly IServiceCollection _serviceCollection;
         private readonly HashSet<Setup> _setups = new HashSet<Setup>();
-        private Option<ProviderSelection> _selection = Option<ProviderSelection>.None;
-        private Option<Config> _configuration = Option<Config>.None;
-        private ActorStarter _actorStarter = system => Task.CompletedTask;
+        
+        /// <summary>
+        /// The currently configured <see cref="ProviderSelection"/>.
+        /// </summary>
+        public Option<ProviderSelection> ActorRefProvider { get; }= Option<ProviderSelection>.None;
+        
+        /// <summary>
+        /// The current HOCON configuration.
+        /// </summary>
+        public  Option<Config> Configuration { get; } = Option<Config>.None;
+
+        private readonly HashSet<ActorStarter> _actorStarters = new HashSet<ActorStarter>();
         private bool _complete = false;
 
         public AkkaConfigurationBuilder(IServiceCollection serviceCollection, string actorSystemName)
@@ -70,10 +79,10 @@ namespace Akka.Hosting
             if (setup is BootstrapSetup bootstrapSetup)
             {
                 if (bootstrapSetup.Config.HasValue)
-                    _configuration = _configuration.HasValue
-                        ? _configuration.FlatSelect<Config>(c => bootstrapSetup.Config.Value.WithFallback(c))
+                    Configuration = Configuration.HasValue
+                        ? Configuration.FlatSelect<Config>(c => bootstrapSetup.Config.Value.WithFallback(c))
                         : bootstrapSetup.Config;
-                _selection = bootstrapSetup.ActorRefProvider;
+                ActorRefProvider = bootstrapSetup.ActorRefProvider;
                 return this;
             }
 
@@ -91,7 +100,7 @@ namespace Akka.Hosting
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
             if (_complete) return this;
-            _selection = provider;
+            ActorRefProvider = provider;
             return this;
         }
 
@@ -103,7 +112,7 @@ namespace Akka.Hosting
                 throw new ArgumentNullException(nameof(configurator));
             
             if (_complete) return this;
-            _configuration = configurator(_configuration.GetOrElse(Config.Empty), newHocon);
+            Configuration = configurator(Configuration.GetOrElse(Config.Empty), newHocon);
             return this;
         }
 
@@ -127,7 +136,7 @@ namespace Akka.Hosting
         public AkkaConfigurationBuilder StartActors(ActorStarter starter)
         {
             if (_complete) return this;
-            _actorStarter = starter;
+            _actorStarters.Add(starter);
             return this;
         }
 
@@ -153,10 +162,10 @@ namespace Akka.Hosting
              */
             var sp = _serviceCollection.BuildServiceProvider();
             var diSetup = DependencyResolverSetup.Create(sp);
-            var bootstrapSetup = BootstrapSetup.Create().WithConfig(_configuration.GetOrElse(Config.Empty));
-            if (_selection.HasValue) // only set the provider when explicitly required
+            var bootstrapSetup = BootstrapSetup.Create().WithConfig(Configuration.GetOrElse(Config.Empty));
+            if (ActorRefProvider.HasValue) // only set the provider when explicitly required
             {
-                bootstrapSetup = bootstrapSetup.WithActorRefProvider(_selection.Value);
+                bootstrapSetup = bootstrapSetup.WithActorRefProvider(ActorRefProvider.Value);
             }
 
             var actorSystemSetup = bootstrapSetup.And(diSetup);
@@ -177,7 +186,10 @@ namespace Akka.Hosting
             /*
              * Start Actors
              */
-            await _actorStarter(actorSystem).ConfigureAwait(false);
+            foreach (var starter in _actorStarters)
+            {
+                await starter(actorSystem).ConfigureAwait(false);
+            }
 
             return actorSystem;
         }
