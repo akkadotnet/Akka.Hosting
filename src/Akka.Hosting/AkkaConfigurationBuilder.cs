@@ -44,7 +44,7 @@ public enum HoconAddMode
 /// <summary>
 /// Delegate used to instantiate <see cref="IActorRef"/>s once the <see cref="ActorSystem"/> has booted.
 /// </summary>
-public delegate Task ActorStarter(ActorSystem system, DefaultActorRegistry registry);
+public delegate Task ActorStarter(ActorSystem system, ActorRegistry registry);
 
 public sealed class AkkaConfigurationBuilder
 {
@@ -78,7 +78,7 @@ public sealed class AkkaConfigurationBuilder
         _actorSystemName = actorSystemName;
     }
 
-    public AkkaConfigurationBuilder AddSetup(Setup setup)
+    internal AkkaConfigurationBuilder AddSetup(Setup setup)
     {
         if (_complete) return this;
 
@@ -103,7 +103,7 @@ public sealed class AkkaConfigurationBuilder
         return this;
     }
 
-    public AkkaConfigurationBuilder WithActorRefProvider(ProviderSelection provider)
+    internal AkkaConfigurationBuilder WithActorRefProvider(ProviderSelection provider)
     {
         if (provider == null)
             throw new ArgumentNullException(nameof(provider));
@@ -112,7 +112,7 @@ public sealed class AkkaConfigurationBuilder
         return this;
     }
 
-    public AkkaConfigurationBuilder AddHoconConfiguration(HoconConfigurator configurator, Config newHocon)
+    internal AkkaConfigurationBuilder AddHoconConfiguration(HoconConfigurator configurator, Config newHocon)
     {
         if (newHocon == null)
             throw new ArgumentNullException(nameof(newHocon));
@@ -124,7 +124,7 @@ public sealed class AkkaConfigurationBuilder
         return this;
     }
 
-    public AkkaConfigurationBuilder AddHoconConfiguration(Config newHocon,
+    internal AkkaConfigurationBuilder AddHoconConfiguration(Config newHocon,
         HoconAddMode addMode = HoconAddMode.Append)
     {
         switch (addMode)
@@ -140,9 +140,9 @@ public sealed class AkkaConfigurationBuilder
         }
     }
 
-    private static ActorStarter ToAsyncStarter(Action<ActorSystem, DefaultActorRegistry> nonAsyncStarter)
+    private static ActorStarter ToAsyncStarter(Action<ActorSystem, ActorRegistry> nonAsyncStarter)
     {
-        Task Starter(ActorSystem f, DefaultActorRegistry registry)
+        Task Starter(ActorSystem f, ActorRegistry registry)
         {
             nonAsyncStarter(f, registry);
             return Task.CompletedTask;
@@ -151,7 +151,7 @@ public sealed class AkkaConfigurationBuilder
         return Starter;
     }
 
-    public AkkaConfigurationBuilder StartActors(Action<ActorSystem, DefaultActorRegistry> starter)
+    public AkkaConfigurationBuilder StartActors(Action<ActorSystem, ActorRegistry> starter)
     {
         if (_complete) return this;
         _actorStarters.Add(ToAsyncStarter(starter));
@@ -202,7 +202,7 @@ public sealed class AkkaConfigurationBuilder
             // register as singleton - not interested in supporting multi-Sys use cases
             _serviceCollection.AddSingleton<ActorSystem>(sys);
 
-            DefaultActorRegistry actorRegistry = (DefaultActorRegistry)DefaultActorRegistry.For(sys);
+            var actorRegistry = ActorRegistry.For(sys);
             _serviceCollection.AddSingleton(actorRegistry);
         }
     }
@@ -224,7 +224,7 @@ public sealed class AkkaConfigurationBuilder
          * Start Actors
          */
         
-        var registry = (DefaultActorRegistry)DefaultActorRegistry.For(sys);
+        var registry = ActorRegistry.For(sys);
         
         foreach (var starter in _actorStarters)
         {
