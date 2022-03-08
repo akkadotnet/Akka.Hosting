@@ -7,10 +7,19 @@ using Akka.Hosting;
 
 namespace Akka.Cluster.Hosting;
 
+/// <summary>
+/// The set of options for enabling Akka.Cluster support.
+/// </summary>
 public sealed class ClusterOptions
 {
+    /// <summary>
+    /// The akka.cluster.roles values.
+    /// </summary>
     public string[] Roles { get; set; }
 
+    /// <summary>
+    /// If populated, the akka.cluster.seed-nodes that will be used.
+    /// </summary>
     public Address[] SeedNodes { get; set; }
 }
 
@@ -51,6 +60,12 @@ public static class AkkaClusterHostingExtensions
             .WithFallback(DistributedPubSub.DefaultConfig()).WithFallback(ClusterClientReceptionist.DefaultConfig()));
     }
 
+    /// <summary>
+    /// Adds Akka.Cluster support to the <see cref="ActorSystem"/>.
+    /// </summary>
+    /// <param name="builder">The builder instance being configured.</param>
+    /// <param name="options">Optional. Akka.Cluster configuration parameters.</param>
+    /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
     public static AkkaConfigurationBuilder WithClustering(this AkkaConfigurationBuilder builder,
         ClusterOptions? options = null)
     {
@@ -68,9 +83,68 @@ public static class AkkaClusterHostingExtensions
         return hoconBuilder.WithActorRefProvider(ProviderSelection.Cluster.Instance);
     }
 
-    public static AkkaConfigurationBuilder WithShardRegion(this AkkaConfigurationBuilder builder, string shardRegion,
+    /// <summary>
+    /// Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
+    /// and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
+    /// <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+    /// </summary>
+    /// <param name="builder">The builder instance being configured.</param>
+    /// <param name="typeName"></param>
+    /// <param name="entityFactory"></param>
+    /// <param name="extractor"></param>
+    /// <param name="settings"></param>
+    /// <param name="allocationStrategy"></param>
+    /// <param name="handOffStopMessage"></param>
+    /// <typeparam name="TKey"></typeparam>
+    /// <returns></returns>
+    public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder, string typeName,
+        Func<string, Props> entityFactory, IMessageExtractor extractor, ClusterShardingSettings settings,
+        IShardAllocationStrategy allocationStrategy,
+        object handOffStopMessage)
+    {
+        return builder.WithActors(async (system, registry) =>
+        {
+            var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityFactory, settings, extractor,
+                allocationStrategy, handOffStopMessage);
+            registry.TryRegister<TKey>(shardRegion);
+        });
+    }
+    
+    public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder, string typeName,
+        Func<string, Props> entityFactory, ExtractEntityId entityExtractor, ExtractShardId shardExtractor, ClusterShardingSettings settings,
+        IShardAllocationStrategy allocationStrategy,
+        object handOffStopMessage)
+    {
+        return builder.WithActors(async (system, registry) =>
+        {
+            var shardRegion = await ClusterSharding.Get(system)
+                .StartAsync(typeName, entityFactory, settings, entityExtractor, shardExtractor,
+                allocationStrategy, handOffStopMessage);
+            registry.TryRegister<TKey>(shardRegion);
+        });
+    }
+    
+    public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder, string typeName,
         Func<string, Props> entityFactory, IMessageExtractor extractor, ClusterShardingSettings settings)
     {
-        
+
+        return builder.WithActors(async (system, registry) =>
+        {
+            var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityFactory, 
+                settings, extractor);
+            registry.TryRegister<TKey>(shardRegion);
+        });
+    }
+    
+    public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder, string typeName,
+        Func<string, Props> entityFactory, ExtractEntityId entityExtractor, ExtractShardId shardExtractor, ClusterShardingSettings settings)
+    {
+
+        return builder.WithActors(async (system, registry) =>
+        {
+            var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityFactory, 
+                settings, entityExtractor, shardExtractor);
+            registry.TryRegister<TKey>(shardRegion);
+        });
     }
 }
