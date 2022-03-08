@@ -4,10 +4,15 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj" />
+      <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Akka.Remote" Version="$(AkkaVersion)" />
     </ItemGroup>
 
 </Project>

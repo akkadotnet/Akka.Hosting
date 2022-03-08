@@ -1,12 +1,18 @@
 using Akka.Hosting;
 using Akka.Actor;
 using Akka.Actor.Dsl;
+using Akka.Cluster.Hosting;
+using Akka.Remote.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 {
-    configurationBuilder.WithActors((system, registry) =>
+    configurationBuilder
+        .WithRemoting("localhost", 8110)
+        .WithClustering(new ClusterOptions(){ Roles = new[]{ "myRole" }, 
+            SeedNodes = new[]{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110")}})
+        .WithActors((system, registry) =>
     {
         var echo = system.ActorOf(act =>
         {
