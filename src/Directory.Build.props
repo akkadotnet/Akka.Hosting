@@ -1,7 +1,7 @@
 ﻿<Project>
   <PropertyGroup>
-    <Copyright>Copyright © 2020 Your Company</Copyright>
-    <Authors>Your Authors</Authors>
+    <Copyright>Petabridge</Copyright>
+    <Authors>Aaron Stannard</Authors>
     <VersionPrefix>0.3.0</VersionPrefix>
     <PackageReleaseNotes>• Fixed bugs</PackageReleaseNotes>
     <PackageIconUrl>
@@ -18,6 +18,8 @@
     <NBenchVersion>1.2.2</NBenchVersion>
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>17.1.0</TestSdkVersion>
+    <AkkaVersion>1.4.34</AkkaVersion>
+    <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
