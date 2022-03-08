@@ -25,6 +25,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Cluster.Hosting", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.SqlServer.Hosting", "src\Akka.Persistence.SqlServer.Hosting\Akka.Persistence.SqlServer.Hosting.csproj", "{3E1405FC-EED8-406E-BF39-D68730913492}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{EFA970FF-6BCC-4C38-84D8-324D40F2BF03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.SqlSharding", "src\Examples\Akka.Hosting.SqlSharding\Akka.Hosting.SqlSharding.csproj", "{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,11 +65,19 @@ Global
 		{3E1405FC-EED8-406E-BF39-D68730913492}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E1405FC-EED8-406E-BF39-D68730913492}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E1405FC-EED8-406E-BF39-D68730913492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
+		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 	EndGlobalSection
 EndGlobal
