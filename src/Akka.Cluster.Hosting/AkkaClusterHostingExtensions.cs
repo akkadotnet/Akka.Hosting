@@ -156,6 +156,34 @@ public static class AkkaClusterHostingExtensions
             registry.TryRegister<TKey>(shardRegion);
         });
     }
+
+    /// <summary>
+    /// Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
+    /// and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
+    /// <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+    /// </summary>
+    /// <param name="builder">The builder instance being configured.</param>
+    /// <param name="typeName">The name of the entity type</param>
+    /// <param name="entityPropsFactory">
+    /// Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>
+    /// </param>
+    /// <param name="messageExtractor">
+    /// Functions to extract the entity id, shard id, and the message to send to the entity from the incoming message.
+    /// </param>
+    /// <param name="role">The akka.cluster role to use to host this <see cref="ShardRegion"/>.</param>
+    /// <typeparam name="TKey">The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.</typeparam>
+    /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+    public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder, string typeName,
+        Func<string, Props> entityPropsFactory, IMessageExtractor messageExtractor, string role)
+    {
+
+        return builder.WithActors(async (system, registry) =>
+        {
+            var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory, 
+                ClusterShardingSettings.Create(system).WithRole(role), messageExtractor);
+            registry.TryRegister<TKey>(shardRegion);
+        });
+    }
     
     /// <summary>
     /// Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
