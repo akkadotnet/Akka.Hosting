@@ -10,12 +10,12 @@ using Directive = Akka.Streams.Supervision.Directive;
 
 namespace Akka.Hosting.SqlSharding;
 
-public sealed class Indexer : ReceiveActor
+public sealed class Indexer : ReceiveActor, IWithTimers
 {
     private readonly ILoggingAdapter _log = Context.GetLogger();
     private readonly IActorRef _userActionsShardRegion;
 
-    private HashSet<UserDescriptor> _users = new HashSet<UserDescriptor>();
+    private Dictionary<string, UserDescriptor> _users = new Dictionary<string, UserDescriptor>();
 
     public Indexer(IActorRef userActionsShardRegion)
     {
@@ -24,38 +24,34 @@ public sealed class Indexer : ReceiveActor
         Receive<UserDescriptor>(d =>
         {
             _log.Info("Found {0}", d);
-            _users.Add(d);
+            _users[d.UserId] = d;
         });
 
-        Receive<FetchUsers>(f => { Sender.Tell(_users.ToImmutableList()); });
+        Receive<FetchUsers>(f => { Sender.Tell(_users.Values.ToImmutableList()); });
 
         Receive<string>(s => { _log.Info("Recorded completion of the stream"); });
+
+        Receive<UserCreatedEvent>(e =>
+        {
+            _userActionsShardRegion.Ask<UserDescriptor>(new FetchUser(e.UserId), TimeSpan.FromSeconds(1)).PipeTo(Self);
+        });
     }
 
 
     protected override void PreStart()
     {
-        var readJournal = Context.System.ReadJournalFor<SqlReadJournal>(SqlReadJournal.Identifier);
-        readJournal.PersistenceIds()
-            .SelectAsync(10, async c =>
-            {
-                var attempts = 5;
-                while (attempts > 0)
-                    try
-                    {
-                        return await _userActionsShardRegion.Ask<UserDescriptor>(new FetchUser(c),
-                            TimeSpan.FromSeconds(5));
-                    }
-                    catch
-                    {
-                        if (attempts == 0)
-                            throw;
-                        attempts--;
-                    }
-
-                return UserDescriptor.Empty;
-            })
-            .WithAttributes(ActorAttributes.CreateSupervisionStrategy(e => Directive.Restart))
-            .RunWith(Sink.ActorRef<UserDescriptor>(Self, "complete"), Context.Materializer());
+        FetchIds();
     }
+
+    private void FetchIds()
+    {
+        var readJournal = Context.System.ReadJournalFor<SqlReadJournal>(SqlReadJournal.Identifier);
+        readJournal.AllEvents()
+            .Where(e => e.Event is UserCreatedEvent)
+            .Select(uc => (UserCreatedEvent)uc.Event)
+            .WithAttributes(ActorAttributes.CreateSupervisionStrategy(e => Directive.Restart))
+            .RunWith(Sink.ActorRef<UserCreatedEvent>(Self, "complete"), Context.Materializer());
+    }
+
+    public ITimerScheduler Timers { get; set; }
 }

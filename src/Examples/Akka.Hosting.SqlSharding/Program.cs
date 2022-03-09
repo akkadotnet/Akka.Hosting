@@ -36,7 +36,7 @@ var app = builder.Build();
 
 var system = app.Services.GetRequiredService<ActorSystem>();
 
-system.Scheduler.Advanced.ScheduleRepeatedly(TimeSpan.Zero, TimeSpan.FromSeconds(10), () =>
+system.Scheduler.Advanced.ScheduleRepeatedly(TimeSpan.Zero, TimeSpan.FromSeconds(1), () =>
 {
     var entityRegion = ActorRegistry.For(system).Get<UserActionsEntity>();
     var user = UserGenerator.CreateRandom();
@@ -50,7 +50,7 @@ app.MapGet("/", async (ActorRegistry registry) =>
         .ConfigureAwait(false);
 });
 
-app.MapGet("/{userId}", async (string userId, ActorRegistry registry) =>
+app.MapGet("/user/{userId}", async (string userId, ActorRegistry registry) =>
 {
     var index = registry.Get<UserActionsEntity>();
     return await index.Ask<UserDescriptor>(new FetchUser(userId), TimeSpan.FromSeconds(3))

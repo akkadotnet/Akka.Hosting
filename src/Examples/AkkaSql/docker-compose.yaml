@@ -2,9 +2,9 @@ version: '3'
 
 services:
   sqlserver:
-    image: sharding.sql
+    image: sharding2.sql
     build:
-      context: ./src/AkkaSql
+      context: .
     ports:
       - '1533:1433'
     environment:
