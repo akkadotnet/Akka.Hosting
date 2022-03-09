@@ -30,7 +30,8 @@ public class UserActionsEntity : ReceivePersistentActor
             {
                 _log.Info("Persisted {0}", evt);
                 CurrentState = evt.Descriptor;
-                Sender.Tell(new CommandResponse(ResponseKind.Success));
+                if(!Sender.IsNobody())
+                    Sender.Tell(new CommandResponse(ResponseKind.Success));
             });
         });
 

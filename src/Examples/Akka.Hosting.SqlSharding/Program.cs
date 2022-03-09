@@ -10,7 +10,6 @@ using Akka.Persistence.SqlServer.Hosting;
 using Akka.Remote.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
 
 builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 {
@@ -24,13 +23,24 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
         .WithSqlServerPersistence(builder.Configuration.GetConnectionString("sqlServerLocal"))
         .WithShardRegion<UserActionsEntity>("userActions", s => UserActionsEntity.Props(s),
             new UserMessageExtractor(),
-            ShardSettings.Default().WithRole("myRole").WithStateStoreMode(StateStoreMode.DData))
+            new ShardOptions(){ StateStoreMode = StateStoreMode.DData, Role = "myRole"})
         .WithActors((system, registry) =>
         {
             var userActionsShard = registry.Get<UserActionsEntity>();
             var indexer = system.ActorOf(Props.Create(() => new Indexer(userActionsShard)), "index");
             registry.TryRegister<Index>(indexer); // register for DI
         });
+});
+
+var app = builder.Build();
+
+var system = app.Services.GetRequiredService<ActorSystem>();
+
+system.Scheduler.Advanced.ScheduleRepeatedly(TimeSpan.Zero, TimeSpan.FromSeconds(10), () =>
+{
+    var entityRegion = ActorRegistry.For(system).Get<UserActionsEntity>();
+    var user = UserGenerator.CreateRandom();
+    entityRegion.Tell(new CreateUser(user));
 });
 
 app.MapGet("/", async (ActorRegistry registry) =>

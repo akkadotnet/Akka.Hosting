@@ -23,6 +23,15 @@ public sealed class ClusterOptions
     public Address[] SeedNodes { get; set; }
 }
 
+public sealed class ShardOptions
+{
+    public StateStoreMode StateStoreMode { get; set;} = StateStoreMode.DData;
+
+    public bool RememberEntities { get; set; } = false;
+    
+    public string Role { get; set; }
+}
+
 public static class AkkaClusterHostingExtensions
 {
     private static AkkaConfigurationBuilder BuildClusterRolesHocon(this AkkaConfigurationBuilder builder,
@@ -170,17 +179,20 @@ public static class AkkaClusterHostingExtensions
     /// <param name="messageExtractor">
     /// Functions to extract the entity id, shard id, and the message to send to the entity from the incoming message.
     /// </param>
-    /// <param name="role">The akka.cluster role to use to host this <see cref="ShardRegion"/>.</param>
+    /// <param name="shardOptions">The set of options for configuring <see cref="ClusterShardingSettings"/></param>
     /// <typeparam name="TKey">The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.</typeparam>
     /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
     public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder, string typeName,
-        Func<string, Props> entityPropsFactory, IMessageExtractor messageExtractor, string role)
+        Func<string, Props> entityPropsFactory, IMessageExtractor messageExtractor, ShardOptions shardOptions)
     {
 
         return builder.WithActors(async (system, registry) =>
         {
             var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory, 
-                ClusterShardingSettings.Create(system).WithRole(role), messageExtractor);
+                ClusterShardingSettings.Create(system)
+                    .WithRole(shardOptions.Role)
+                    .WithRememberEntities(shardOptions.RememberEntities)
+                    .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
             registry.TryRegister<TKey>(shardRegion);
         });
     }

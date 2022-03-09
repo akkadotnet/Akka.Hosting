@@ -7,6 +7,9 @@ public static class ShardSettings
 {
     public static ClusterShardingSettings Default()
     {
-        return ClusterShardingSettings.Create(ClusterSharding.DefaultConfig(), ClusterSingletonManager.DefaultConfig());
+        var shardingConfig = ClusterSharding.DefaultConfig();
+        var singletonConfig = shardingConfig.GetString("coordinator-singleton");
+        return ClusterShardingSettings.Create(shardingConfig.
+            GetConfig("akka.cluster.sharding"), shardingConfig.GetConfig(singletonConfig));
     }
 }

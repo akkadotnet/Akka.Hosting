@@ -38,6 +38,10 @@ public static class AkkaPersistenceSqlServerHostingExtensions
                     sql-server {{
                         class = ""Akka.Persistence.SqlServer.Journal.SqlServerJournal, Akka.Persistence.SqlServer""
                         connection-string = ""{connectionString}""
+                        table-name = EventJournal
+                        schema-name = dbo
+                        auto-initialize = on
+                        refresh-interval = 1s
                     }}
                 }}
             }}";
@@ -48,6 +52,9 @@ public static class AkkaPersistenceSqlServerHostingExtensions
                     plugin = ""akka.persistence.snapshot-store.sql-server""
                     sql-server {{
                         class = ""Akka.Persistence.SqlServer.Snapshot.SqlServerSnapshotStore, Akka.Persistence.SqlServer""
+			            schema-name = dbo
+			            table-name = SnapshotStore
+			            auto-initialize = on
                         connection-string = """ + connectionString + @"""
                     }}
                 }}
@@ -71,6 +78,6 @@ public static class AkkaPersistenceSqlServerHostingExtensions
                 throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
         }
 
-        return builder.AddHocon(finalConfig);
+        return builder.AddHocon(finalConfig.WithFallback(SqlServerPersistence.DefaultConfiguration()));
     }
 }
