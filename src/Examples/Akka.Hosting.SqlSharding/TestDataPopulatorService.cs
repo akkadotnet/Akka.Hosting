@@ -22,10 +22,13 @@ public sealed class TestDataPopulatorService : IHostedService
             entityRegion.Tell(new CreateUser(user));
         });
 
+        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _cancelable?.Cancel();
+
+        return Task.CompletedTask;
     }
 }
