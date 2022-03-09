@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  sqlserver:
+    image: sharding.sql
+    build:
+      context: ./src/AkkaSql
+    ports:
+      - '1533:1433'
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: l0lTh1sIsOpenSource
+      MSSQL_PID: Developer

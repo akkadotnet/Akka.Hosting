@@ -1,0 +1,2 @@
+CREATE DATABASE Akka;
+GO

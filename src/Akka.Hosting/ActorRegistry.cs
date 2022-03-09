@@ -19,7 +19,6 @@ public class ActorRegistryExtension : ExtensionIdProvider<ActorRegistry>
 /// <summary>
 /// Mutable, but thread-safe <see cref="ActorRegistry"/>.
 /// </summary>
-/// <typeparam name="TKey">A actor type. For best practices, use an <see cref="System.Enum"/> or any other easily type-checked actor.</typeparam>
 /// <remarks>
 /// Should only be used for top-level actors that need to be accessed from inside or outside the <see cref="ActorSystem"/>.
 ///
