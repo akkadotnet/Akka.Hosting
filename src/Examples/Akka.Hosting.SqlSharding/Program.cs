@@ -30,18 +30,10 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
             var indexer = system.ActorOf(Props.Create(() => new Indexer(userActionsShard)), "index");
             registry.TryRegister<Index>(indexer); // register for DI
         });
-});
+})
+    .AddHostedService<TestDataPopulatorService>();
 
 var app = builder.Build();
-
-var system = app.Services.GetRequiredService<ActorSystem>();
-
-system.Scheduler.Advanced.ScheduleRepeatedly(TimeSpan.Zero, TimeSpan.FromSeconds(1), () =>
-{
-    var entityRegion = ActorRegistry.For(system).Get<UserActionsEntity>();
-    var user = UserGenerator.CreateRandom();
-    entityRegion.Tell(new CreateUser(user));
-});
 
 app.MapGet("/", async (ActorRegistry registry) =>
 {
