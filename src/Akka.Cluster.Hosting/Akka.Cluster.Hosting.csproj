@@ -1,10 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+    
+  <PropertyGroup>
+    <TargetFramework>$(LibraryFramework)</TargetFramework>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Akka.Cluster and Akka.Cluster.Sharding Microsoft.Extensions.Hosting support.</Description>
+  </PropertyGroup>
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj" />

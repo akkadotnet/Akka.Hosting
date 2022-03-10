@@ -1,7 +1,7 @@
 ﻿<Project>
   <PropertyGroup>
-    <Copyright>Petabridge</Copyright>
-    <Authors>Aaron Stannard</Authors>
+   <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
+    <Authors>Akka.NET Team</Authors>
     <VersionPrefix>0.3.0</VersionPrefix>
     <PackageReleaseNotes>• Fixed bugs</PackageReleaseNotes>
     <PackageIconUrl>

@@ -1,4 +1,5 @@
-﻿using Akka.Configuration;
+﻿using System;
+using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Query.Sql;
 

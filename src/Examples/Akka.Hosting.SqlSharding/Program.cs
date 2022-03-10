@@ -5,6 +5,7 @@ using Akka.Cluster.Sharding;
 using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Hosting.SqlSharding;
+using Akka.Hosting.SqlSharding.Actors;
 using Akka.Hosting.SqlSharding.Messages;
 using Akka.Persistence.SqlServer.Hosting;
 using Akka.Remote.Hosting;

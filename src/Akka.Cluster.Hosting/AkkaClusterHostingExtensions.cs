@@ -1,4 +1,7 @@
-﻿using Akka.Actor;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Akka.Actor;
 using Akka.Cluster.Sharding;
 using Akka.Cluster.Tools.Client;
 using Akka.Cluster.Tools.PublishSubscribe;
@@ -53,7 +56,7 @@ public static class AkkaClusterHostingExtensions
     }
 
     private static AkkaConfigurationBuilder BuildClusterHocon(this AkkaConfigurationBuilder builder,
-        ClusterOptions? options)
+        ClusterOptions options)
     {
         if (options == null)
             return builder;
@@ -76,7 +79,7 @@ public static class AkkaClusterHostingExtensions
     /// <param name="options">Optional. Akka.Cluster configuration parameters.</param>
     /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
     public static AkkaConfigurationBuilder WithClustering(this AkkaConfigurationBuilder builder,
-        ClusterOptions? options = null)
+        ClusterOptions options = null)
     {
         var hoconBuilder = BuildClusterHocon(builder, options);
 

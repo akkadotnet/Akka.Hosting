@@ -8,9 +8,9 @@ using Akka.Streams;
 using Akka.Streams.Dsl;
 using Directive = Akka.Streams.Supervision.Directive;
 
-namespace Akka.Hosting.SqlSharding;
+namespace Akka.Hosting.SqlSharding.Actors;
 
-public sealed class Indexer : ReceiveActor, IWithTimers
+public sealed class Indexer : ReceiveActor
 {
     private readonly ILoggingAdapter _log = Context.GetLogger();
     private readonly IActorRef _userActionsShardRegion;
@@ -52,6 +52,4 @@ public sealed class Indexer : ReceiveActor, IWithTimers
             .WithAttributes(ActorAttributes.CreateSupervisionStrategy(e => Directive.Restart))
             .RunWith(Sink.ActorRef<UserCreatedEvent>(Self, "complete"), Context.Materializer());
     }
-
-    public ITimerScheduler Timers { get; set; }
 }
