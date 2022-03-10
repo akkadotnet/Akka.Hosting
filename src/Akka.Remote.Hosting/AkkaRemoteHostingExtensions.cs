@@ -6,7 +6,7 @@ namespace Akka.Remote.Hosting;
 
 public static class AkkaRemoteHostingExtensions
 {
-    private static AkkaConfigurationBuilder BuildRemoteHocon(this AkkaConfigurationBuilder builder, string hostname, int port, string? publicHostname = null, int? publicPort = null)
+    private static AkkaConfigurationBuilder BuildRemoteHocon(this AkkaConfigurationBuilder builder, string hostname, int port, string publicHostname = null, int? publicPort = null)
     {
         var config = $@"
             akka.remote.dot-netty.tcp.hostname = ""{hostname}""
@@ -28,7 +28,7 @@ public static class AkkaRemoteHostingExtensions
     /// <param name="publicHostname">Optional. If using hostname aliasing, this is the host we will advertise.</param>
     /// <param name="publicPort">Optional. If using port aliasing, this is the port we will advertise.</param>
     /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-    public static AkkaConfigurationBuilder WithRemoting(this AkkaConfigurationBuilder builder, string hostname, int port, string? publicHostname = null, int? publicPort = null)
+    public static AkkaConfigurationBuilder WithRemoting(this AkkaConfigurationBuilder builder, string hostname, int port, string publicHostname = null, int? publicPort = null)
     {
         var hoconBuilder = BuildRemoteHocon(builder, hostname, port);
         

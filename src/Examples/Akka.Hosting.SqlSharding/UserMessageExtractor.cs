@@ -20,6 +20,6 @@ public sealed class UserMessageExtractor : HashCodeMessageExtractor
             return userId.UserId;
         }
 
-        return null;
+        return null!;
     }
 }
