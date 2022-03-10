@@ -3,40 +3,44 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Microsoft.Extensions.Hosting;
 
-namespace Akka.Hosting;
-
-internal sealed class AkkaHostedService : IHostedService
+namespace Akka.Hosting
 {
-    private ActorSystem _actorSystem;
-    private readonly AkkaConfigurationBuilder _configurationBuilder;
-    private readonly IHostApplicationLifetime _hostApplicationLifetime;
-
-    public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, IHostApplicationLifetime hostApplicationLifetime)
+    /// <summary>
+    /// INTERNAL API
+    /// </summary>
+    internal sealed class AkkaHostedService : IHostedService
     {
-        _configurationBuilder = configurationBuilder;
-        _hostApplicationLifetime = hostApplicationLifetime;
-    }
+        private ActorSystem _actorSystem;
+        private readonly AkkaConfigurationBuilder _configurationBuilder;
+        private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        _actorSystem = await _configurationBuilder.StartAsync();
-
-        async Task TerminationHook()
+        public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, IHostApplicationLifetime hostApplicationLifetime)
         {
-            await _actorSystem.WhenTerminated.ConfigureAwait(false);
-            _hostApplicationLifetime.StopApplication();
+            _configurationBuilder = configurationBuilder;
+            _hostApplicationLifetime = hostApplicationLifetime;
         }
 
-        // terminate the application if the Sys is terminated first
-        // this can happen in instances such as Akka.Cluster membership changes
-#pragma warning disable CS4014
-        TerminationHook();
-#pragma warning restore CS4014
-    }
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            _actorSystem = await _configurationBuilder.StartAsync();
 
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        // run full CoordinatedShutdown on the Sys
-        await CoordinatedShutdown.Get(_actorSystem).Run(CoordinatedShutdown.ClrExitReason.Instance).ConfigureAwait(false);
+            async Task TerminationHook()
+            {
+                await _actorSystem.WhenTerminated.ConfigureAwait(false);
+                _hostApplicationLifetime.StopApplication();
+            }
+
+            // terminate the application if the Sys is terminated first
+            // this can happen in instances such as Akka.Cluster membership changes
+#pragma warning disable CS4014
+            TerminationHook();
+#pragma warning restore CS4014
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            // run full CoordinatedShutdown on the Sys
+            await CoordinatedShutdown.Get(_actorSystem).Run(CoordinatedShutdown.ClrExitReason.Instance).ConfigureAwait(false);
+        }
     }
 }
