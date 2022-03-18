@@ -18,7 +18,7 @@
     <NBenchVersion>1.2.2</NBenchVersion>
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>17.1.0</TestSdkVersion>
-    <AkkaVersion>1.4.34</AkkaVersion>
+    <AkkaVersion>1.4.35</AkkaVersion>
     <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
