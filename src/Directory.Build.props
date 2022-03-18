@@ -2,8 +2,8 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.3.0</VersionPrefix>
-    <PackageReleaseNotes>• Fixed bugs</PackageReleaseNotes>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <PackageReleaseNotes>• Initial release of Akka.Hosting%2C Akka.Remote.Hosting%2C Akka.Cluster.Hosting%2C and Akka.Persistence.SqlServer.Hosting</PackageReleaseNotes>
     <PackageIconUrl>
     </PackageIconUrl>
     <PackageProjectUrl>
