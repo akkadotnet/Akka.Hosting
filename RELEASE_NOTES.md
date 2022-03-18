@@ -1,2 +1,2 @@
-## [0.1.0] / 09 March 2022
-- Initial release of Akka.Hosting, Akka.Remote.Hosting, Akka.Cluster.Hosting, and Akka.Persistence.SqlServer.Hosting
+## [0.1.1] / 18 March 2022
+- Upgraded to [Akka.NET v1.4.35](https://github.com/akkadotnet/akka.net/releases/tag/1.4.35)
