@@ -23,6 +23,8 @@ using Nuke.Common.Tools.Docker;
 using static Nuke.Common.Tools.SignClient.SignClientTasks;
 using Nuke.Common.Tools.SignClient;
 using static Nuke.Common.Tools.Git.GitTasks;
+using Octokit;
+using Nuke.Common.Utilities;
 
 [CheckBuildProjectConfigurations]
 [ShutdownDotNetAfterServerBuild]
@@ -42,7 +44,9 @@ partial class Build : NukeBuild
     [GitRepository] readonly GitRepository GitRepository;
 
     [Parameter] string NugetPublishUrl = "https://api.nuget.org/v3/index.json";
-    [Parameter] [Secret] string NugetKey;
+
+    [Parameter][Secret] string GitHubToken;
+    [Parameter][Secret] string NugetKey;
 
     [Parameter] int Port = 8090;
 
@@ -57,8 +61,8 @@ partial class Build : NukeBuild
     [Parameter] string SigningDescription = "My REALLY COOL Library";
     [Parameter] string SigningUrl = "https://signing.is.cool/";
 
-    [Parameter] [Secret] string SignClientSecret;
-    [Parameter] [Secret] string SignClientUser;
+    [Parameter][Secret] string SignClientSecret;
+    [Parameter][Secret] string SignClientUser;
     // Directories
     AbsolutePath ToolsDir => RootDirectory / "tools";
     AbsolutePath Output => RootDirectory / "bin";
@@ -88,7 +92,7 @@ partial class Build : NukeBuild
     private string VersionFromReleaseNotes => ReleaseNotes.Version.IsPrerelease ? ReleaseNotes.Version.OriginalVersion : "";
     private string VersionSuffix => NugetPrerelease == "dev" ? PreReleaseVersionSuffix : NugetPrerelease == "" ? VersionFromReleaseNotes : NugetPrerelease;
     public string ReleaseVersion => ReleaseNotes.Version?.ToString() ?? throw new ArgumentException("Bad Changelog File. Define at least one version");
-
+    GitHubClient GitHubClient;
     Target Clean => _ => _
         .Description("Cleans all the output directories")
         .Before(Restore)
@@ -133,8 +137,6 @@ partial class Build : NukeBuild
                   .SetVersionPrefix(version)
                   .SetVersionSuffix(VersionSuffix)
                   .SetPackageReleaseNotes(releaseNotes)
-                  .SetDescription("YOUR_DESCRIPTION_HERE")
-                  .SetPackageProjectUrl("YOUR_PACKAGE_URL_HERE")
                   .SetOutputDirectory(OutputNuget));
           }
       });
@@ -144,35 +146,88 @@ partial class Build : NukeBuild
     .After(CreateNuget, SignClient)
     .OnlyWhenDynamic(() => !NugetPublishUrl.IsNullOrEmpty())
     .OnlyWhenDynamic(() => !NugetKey.IsNullOrEmpty())
+    .Triggers(GitHubRelease)
     .Executes(() =>
     {
         var packages = OutputNuget.GlobFiles("*.nupkg", "*.symbols.nupkg").NotNull();
         var shouldPublishSymbolsPackages = !string.IsNullOrWhiteSpace(SymbolsPublishUrl);
-        if (!string.IsNullOrWhiteSpace(NugetPublishUrl))
+        foreach (var package in packages)
         {
-            foreach (var package in packages)
+            if (shouldPublishSymbolsPackages)
             {
-                if (shouldPublishSymbolsPackages)
-                {
-                    DotNetNuGetPush(s => s
-                     .SetTimeout(TimeSpan.FromMinutes(10).Minutes)
-                     .SetTargetPath(package)
-                     .SetSource(NugetPublishUrl)
-                     .SetSymbolSource(SymbolsPublishUrl)
-                     .SetApiKey(NugetKey));
-                }
-                else
-                {
-                    DotNetNuGetPush(s => s
-                      .SetTimeout(TimeSpan.FromMinutes(10).Minutes)
-                      .SetTargetPath(package)
-                      .SetSource(NugetPublishUrl)
-                      .SetApiKey(NugetKey)
-                  );
-                }
+                DotNetNuGetPush(s => s
+                 .SetTimeout(TimeSpan.FromMinutes(10).Minutes)
+                 .SetTargetPath(package)
+                 .SetSource(NugetPublishUrl)
+                 .SetSymbolSource(SymbolsPublishUrl)
+                 .SetApiKey(NugetKey));
             }
+            else
+            {
+                DotNetNuGetPush(s => s
+                  .SetTimeout(TimeSpan.FromMinutes(10).Minutes)
+                  .SetTargetPath(package)
+                  .SetSource(NugetPublishUrl)
+                  .SetApiKey(NugetKey));
+            }
+
         }
     });
+    Target AuthenticatedGitHubClient => _ => _
+        .Unlisted()
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubToken))
+        .Executes(() =>
+        {
+            GitHubClient = new GitHubClient(new ProductHeaderValue("nuke-build"))
+            {
+                Credentials = new Credentials(GitHubToken, AuthenticationType.Bearer)
+            };
+        });
+    Target GitHubRelease => _ => _
+        .Unlisted()
+        .Description("Creates a GitHub release (or amends existing) and uploads the artifact")
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubToken))
+        .DependsOn(AuthenticatedGitHubClient)
+        .Executes(async () =>
+        {
+            var version = ReleaseNotes.Version.ToString();
+            var releaseNotes = GetNuGetReleaseNotes(ChangelogFile);
+            Release release;
+            var releaseName = $"{version}";
+            if (!VersionSuffix.IsNullOrWhiteSpace())
+                releaseName = $"{version}-{VersionSuffix}";
+            var identifier = GitRepository.Identifier.Split("/");
+            var (gitHubOwner, repoName) = (identifier[0], identifier[1]);
+            try
+            {
+                release = await GitHubClient.Repository.Release.Get(gitHubOwner, repoName, releaseName);
+            }
+            catch (NotFoundException)
+            {
+                var newRelease = new NewRelease(releaseName)
+                {
+                    Body = releaseNotes,
+                    Name = releaseName,
+                    Draft = false,
+                    Prerelease = GitRepository.IsOnReleaseBranch()
+                };
+                release = await GitHubClient.Repository.Release.Create(gitHubOwner, repoName, newRelease);
+            }
+
+            foreach (var existingAsset in release.Assets)
+            {
+                await GitHubClient.Repository.Release.DeleteAsset(gitHubOwner, repoName, existingAsset.Id);
+            }
+
+            Information($"GitHub Release {releaseName}");
+            var packages = OutputNuget.GlobFiles("*.nupkg", "*.symbols.nupkg").NotNull();
+            foreach (var artifact in packages)
+            {
+                var releaseAssetUpload = new ReleaseAssetUpload(artifact.Name, "application/zip", File.OpenRead(artifact), null);
+                var releaseAsset = await GitHubClient.Repository.Release.UploadAsset(release, releaseAssetUpload);
+                Information($"  {releaseAsset.BrowserDownloadUrl}");
+            }
+        });
     Target RunTests => _ => _
         .Description("Runs all the unit tests")
         .DependsOn(Compile)
@@ -306,23 +361,21 @@ partial class Build : NukeBuild
 
     Target Compile => _ => _
         .Description("Builds all the projects in the solution")
-        .DependsOn(Restore)
+        .DependsOn(AssemblyInfo, Restore)
         .Executes(() =>
         {
             var version = ReleaseNotes.Version.ToString();
             DotNetBuild(s => s
                 .SetProjectFile(Solution)
                 .SetConfiguration(Configuration)
-                .SetAssemblyVersion(version)
-                .SetFileVersion(version)
-                .SetVersion(version)
                 .EnableNoRestore());
         });
 
     Target BuildRelease => _ => _
-    .DependsOn(Clean, AssemblyInfo, Compile);
+    .DependsOn(Compile);
 
     Target AssemblyInfo => _ => _
+        .After(Restore)
         .Executes(() =>
         {
             XmlTasks.XmlPoke(SourceDirectory / "Directory.Build.props", "//Project/PropertyGroup/PackageReleaseNotes", GetNuGetReleaseNotes(ChangelogFile));
@@ -330,13 +383,6 @@ partial class Build : NukeBuild
 
         });
 
-    Target SetFilePermission => _ => _
-    .Description("User may experience PERMISSION issues - this target be used to fix that!")
-    .Executes(() =>
-    {
-        Git($"update-index --chmod=+x {RootDirectory}/build.cmd");
-        Git($"update-index --chmod=+x {RootDirectory}/build.sh");
-    });
     Target Install => _ => _
         .Description("Install `Nuke.GlobalTool` and SignClient")
         .Executes(() =>
