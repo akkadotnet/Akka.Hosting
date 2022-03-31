@@ -1,2 +1,2 @@
-## [0.1.1] / 18 March 2022
-- Upgraded to [Akka.NET v1.4.35](https://github.com/akkadotnet/akka.net/releases/tag/1.4.35)
+## [0.1.2] / 31 March 2022
+- Removed all `Cluster.Sharding` methods that rely on `ClusterShardingSettings`, since it's not practical to create those prior to starting the `ActorSystem`.
