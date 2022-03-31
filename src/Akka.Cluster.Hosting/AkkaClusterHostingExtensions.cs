@@ -107,85 +107,6 @@ namespace Akka.Cluster.Hosting
         /// <param name="entityPropsFactory">
         /// Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>
         /// </param>
-        /// <param name="settings">Configuration settings, see <see cref="ClusterShardingSettings"/></param>
-        /// <param name="messageExtractor">
-        /// Functions to extract the entity id, shard id, and the message to send to the entity from the incoming message.
-        /// </param>
-        /// <param name="allocationStrategy">Possibility to use a custom shard allocation and rebalancing logic</param>
-        /// <param name="handOffStopMessage">
-        /// The message that will be sent to entities when they are to be stopped for a rebalance or
-        /// graceful shutdown of a <see cref="Sharding.ShardRegion"/>, e.g. <see cref="PoisonPill"/>.
-        /// </param>
-        /// <typeparam name="TKey">The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.</typeparam>
-        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
-            string typeName,
-            Func<string, Props> entityPropsFactory, IMessageExtractor messageExtractor,
-            ClusterShardingSettings settings,
-            IShardAllocationStrategy allocationStrategy,
-            object handOffStopMessage)
-        {
-            return builder.WithActors(async (system, registry) =>
-            {
-                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory, settings,
-                    messageExtractor,
-                    allocationStrategy, handOffStopMessage);
-                registry.TryRegister<TKey>(shardRegion);
-            });
-        }
-
-        /// <summary>
-        /// Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
-        /// and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
-        /// <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
-        /// </summary>
-        /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="typeName">The name of the entity type</param>
-        /// <param name="entityPropsFactory">
-        /// Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>
-        /// </param>
-        /// <param name="settings">Configuration settings, see <see cref="ClusterShardingSettings"/></param>
-        /// <param name="extractEntityId">
-        /// Partial function to extract the entity id and the message to send to the entity from the incoming message,
-        /// if the partial function does not match the message will be `unhandled`,
-        /// i.e.posted as `Unhandled` messages on the event stream
-        /// </param>
-        /// <param name="extractShardId">
-        /// Function to determine the shard id for an incoming message, only messages that passed the `extractEntityId` will be used
-        /// </param>
-        /// <param name="allocationStrategy">Possibility to use a custom shard allocation and rebalancing logic</param>
-        /// <param name="handOffStopMessage">
-        /// The message that will be sent to entities when they are to be stopped for a rebalance or
-        /// graceful shutdown of a <see cref="Sharding.ShardRegion"/>, e.g. <see cref="PoisonPill"/>.
-        /// </param>
-        /// <typeparam name="TKey">The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.</typeparam>
-        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
-            string typeName,
-            Func<string, Props> entityPropsFactory, ExtractEntityId extractEntityId, ExtractShardId extractShardId,
-            ClusterShardingSettings settings,
-            IShardAllocationStrategy allocationStrategy,
-            object handOffStopMessage)
-        {
-            return builder.WithActors(async (system, registry) =>
-            {
-                var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, entityPropsFactory, settings, extractEntityId, extractShardId,
-                        allocationStrategy, handOffStopMessage);
-                registry.TryRegister<TKey>(shardRegion);
-            });
-        }
-
-        /// <summary>
-        /// Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
-        /// and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
-        /// <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
-        /// </summary>
-        /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="typeName">The name of the entity type</param>
-        /// <param name="entityPropsFactory">
-        /// Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>
-        /// </param>
         /// <param name="messageExtractor">
         /// Functions to extract the entity id, shard id, and the message to send to the entity from the incoming message.
         /// </param>
@@ -217,36 +138,6 @@ namespace Akka.Cluster.Hosting
         /// <param name="entityPropsFactory">
         /// Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>
         /// </param>
-        /// <param name="settings">Configuration settings, see <see cref="ClusterShardingSettings"/></param>
-        /// <param name="messageExtractor">
-        /// Functions to extract the entity id, shard id, and the message to send to the entity from the incoming message.
-        /// </param>
-        /// <typeparam name="TKey">The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.</typeparam>
-        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
-            string typeName,
-            Func<string, Props> entityPropsFactory, IMessageExtractor messageExtractor,
-            ClusterShardingSettings settings)
-        {
-            return builder.WithActors(async (system, registry) =>
-            {
-                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
-                    settings, messageExtractor);
-                registry.TryRegister<TKey>(shardRegion);
-            });
-        }
-
-        /// <summary>
-        /// Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
-        /// and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
-        /// <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
-        /// </summary>
-        /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="typeName">The name of the entity type</param>
-        /// <param name="entityPropsFactory">
-        /// Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>
-        /// </param>
-        /// <param name="settings">Configuration settings, see <see cref="ClusterShardingSettings"/></param>
         /// <param name="extractEntityId">
         /// Partial function to extract the entity id and the message to send to the entity from the incoming message,
         /// if the partial function does not match the message will be `unhandled`,
@@ -255,17 +146,21 @@ namespace Akka.Cluster.Hosting
         /// <param name="extractShardId">
         /// Function to determine the shard id for an incoming message, only messages that passed the `extractEntityId` will be used
         /// </param>
+        /// <param name="shardOptions">The set of options for configuring <see cref="ClusterShardingSettings"/></param>
         /// <typeparam name="TKey">The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.</typeparam>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
             string typeName,
             Func<string, Props> entityPropsFactory, ExtractEntityId extractEntityId, ExtractShardId extractShardId,
-            ClusterShardingSettings settings)
+            ShardOptions shardOptions)
         {
             return builder.WithActors(async (system, registry) =>
             {
                 var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
-                    settings, extractEntityId, extractShardId);
+                    ClusterShardingSettings.Create(system)
+                        .WithRole(shardOptions.Role)
+                        .WithRememberEntities(shardOptions.RememberEntities)
+                        .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
                 registry.TryRegister<TKey>(shardRegion);
             });
         }
