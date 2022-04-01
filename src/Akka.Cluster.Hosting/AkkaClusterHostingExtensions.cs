@@ -217,5 +217,32 @@ namespace Akka.Cluster.Hosting
                 registry.TryRegister<TKey>(shardRegionProxy);
             });
         }
+
+        /// <summary>
+        /// Starts <see cref="DistributedPubSub"/> on this node immediately upon <see cref="ActorSystem"/> startup.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="role">Specifies which role <see cref="DistributedPubSub"/> will broadcast gossip to. If this value
+        /// is left blank then ALL roles will be targeted.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <remarks>
+        /// Stores the mediator <see cref="IActorRef"/> in the registry using the <see cref="DistributedPubSub"/> key.
+        /// </remarks>
+        public static AkkaConfigurationBuilder WithDistributedPubSub(this AkkaConfigurationBuilder builder,
+            string role)
+        {
+            var middle = builder.AddHocon(DistributedPubSub.DefaultConfig());
+            if (!string.IsNullOrEmpty(role)) // add role config
+            {
+                middle = middle.AddHocon($"akka.cluster.pub-sub = \"{role}\"");
+            }
+                
+            return middle.WithActors((system, registry) =>
+            {
+                // force the initialization
+                var mediator = DistributedPubSub.Get(system).Mediator;
+                registry.TryRegister<DistributedPubSub>(mediator);
+            });
+        }
     }
 }
