@@ -2,9 +2,8 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.1.3</VersionPrefix>
-    <PackageReleaseNotes>• Added ShardRegionProxy support to Akka.Cluster.Hosting
-• Added DistributedPubSub support to Akka.Cluster.Hosting</PackageReleaseNotes>
+    <VersionPrefix>0.1.4</VersionPrefix>
+    <PackageReleaseNotes>• Added WithCustomSerializer  method to make it easy to add additional Serializer instances to an ActorSystem</PackageReleaseNotes>
     <PackageIconUrl>
     </PackageIconUrl>
     <PackageProjectUrl>
