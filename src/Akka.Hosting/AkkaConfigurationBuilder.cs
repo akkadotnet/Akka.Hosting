@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
+using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,10 +49,31 @@ namespace Akka.Hosting
     /// </summary>
     public delegate Task ActorStarter(ActorSystem system, ActorRegistry registry);
 
+    /// <summary>
+    /// Used to help populate a <see cref="SerializationSetup"/> upon starting the <see cref="ActorSystem"/>,
+    /// if any are added to the builder;
+    /// </summary>
+    internal sealed class SerializerRegistration
+    {
+        public SerializerRegistration(string id, ImmutableHashSet<Type> typeBindings, Func<ExtendedActorSystem, Serializer> serializerFactory)
+        {
+            Id = id;
+            TypeBindings = typeBindings;
+            SerializerFactory = serializerFactory;
+        }
+
+        public string Id { get; }
+        
+        public Func<ExtendedActorSystem, Serializer> SerializerFactory { get; }
+        
+        public ImmutableHashSet<Type> TypeBindings { get; }
+    }
+
     public sealed class AkkaConfigurationBuilder
     {
         private readonly string _actorSystemName;
         private readonly IServiceCollection _serviceCollection;
+        private readonly HashSet<SerializerRegistration> _serializers = new HashSet<SerializerRegistration>();
         private readonly HashSet<Setup> _setups = new HashSet<Setup>();
 
         /// <summary>
@@ -165,6 +189,15 @@ namespace Akka.Hosting
             return this;
         }
 
+        public AkkaConfigurationBuilder WithCustomSerializer(
+            string serializerIdentifier, IEnumerable<Type> boundTypes, Func<ExtendedActorSystem, Serializer> serializerFactory)
+        {
+            var serializerRegistration = new SerializerRegistration(serializerIdentifier,
+                boundTypes.ToImmutableHashSet(), serializerFactory);
+            _serializers.Add(serializerRegistration);
+            return this;
+        }
+
         internal void Build()
         {
             if (!_complete)
@@ -190,6 +223,17 @@ namespace Akka.Hosting
                 foreach (var setup in _setups)
                 {
                     actorSystemSetup = actorSystemSetup.And(setup);
+                }
+                
+                /* check to see if we have any custom serializers that need to be registered */
+                if (_serializers.Count > 0)
+                {
+                    var serializationSetup = SerializationSetup.Create(system =>
+                        _serializers
+                            .Select(r => SerializerDetails.Create(r.Id, r.SerializerFactory(system), r.TypeBindings))
+                            .ToImmutableHashSet());
+
+                    actorSystemSetup = actorSystemSetup.And(serializationSetup);
                 }
 
                 /*
