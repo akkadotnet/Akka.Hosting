@@ -33,7 +33,7 @@ namespace Akka.Persistence.SqlServer.Hosting
             string connectionString, SqlPersistenceMode mode = SqlPersistenceMode.Both)
         {
             Config journalConfiguration = @$"
-            akka.persistence{{
+            akka.persistence {{
                 journal {{
                     plugin = ""akka.persistence.journal.sql-server""
                     sql-server {{
@@ -47,19 +47,19 @@ namespace Akka.Persistence.SqlServer.Hosting
                 }}
             }}";
 
-            Config snapshotStoreConfig = $@"
-             akka.persistence {{
+            Config snapshotStoreConfig = @$"
+            akka.persistence {{
                 snapshot-store {{
                     plugin = ""akka.persistence.snapshot-store.sql-server""
                     sql-server {{
                         class = ""Akka.Persistence.SqlServer.Snapshot.SqlServerSnapshotStore, Akka.Persistence.SqlServer""
-			            schema-name = dbo
-			            table-name = SnapshotStore
-			            auto-initialize = on
-                        connection-string = """ + connectionString + @"""
+                        schema-name = dbo
+                        table-name = SnapshotStore
+                        auto-initialize = on
+                        connection-string = ""{connectionString}""
                     }}
                 }}
-        }}";
+            }}";
 
             var finalConfig = journalConfiguration;
 
