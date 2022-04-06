@@ -29,8 +29,10 @@ namespace Akka.Persistence.SqlServer.Hosting
     /// </summary>
     public static class AkkaPersistenceSqlServerHostingExtensions
     {
-        public static AkkaConfigurationBuilder WithSqlServerPersistence(this AkkaConfigurationBuilder builder,
-            string connectionString, SqlPersistenceMode mode = SqlPersistenceMode.Both)
+        public static AkkaConfigurationBuilder WithSqlServerPersistence(
+            this AkkaConfigurationBuilder builder,
+            string connectionString,
+            SqlPersistenceMode mode = SqlPersistenceMode.Both)
         {
             Config journalConfiguration = @$"
             akka.persistence {{
@@ -61,23 +63,19 @@ namespace Akka.Persistence.SqlServer.Hosting
                 }}
             }}";
 
-            var finalConfig = journalConfiguration;
-
-            switch (mode)
+            var finalConfig = mode switch
             {
-                case SqlPersistenceMode.Both:
-                    finalConfig = finalConfig.WithFallback(snapshotStoreConfig)
-                        .WithFallback(SqlReadJournal.DefaultConfiguration());
-                    break;
-                case SqlPersistenceMode.Journal:
-                    finalConfig = finalConfig.WithFallback(SqlReadJournal.DefaultConfiguration());
-                    break;
-                case SqlPersistenceMode.SnapshotStore:
-                    finalConfig = snapshotStoreConfig;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
-            }
+                SqlPersistenceMode.Both => journalConfiguration
+                    .WithFallback(snapshotStoreConfig)
+                    .WithFallback(SqlReadJournal.DefaultConfiguration()),
+
+                SqlPersistenceMode.Journal => journalConfiguration
+                    .WithFallback(SqlReadJournal.DefaultConfiguration()),
+
+                SqlPersistenceMode.SnapshotStore => snapshotStoreConfig,
+
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid SqlPersistenceMode defined.")
+            };
 
             return builder.AddHocon(finalConfig.WithFallback(SqlServerPersistence.DefaultConfiguration()));
         }

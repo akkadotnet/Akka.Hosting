@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>$(LibraryFramework)</TargetFramework>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Akka.Persistence.SqlServer Microsoft.Extensions.Hosting support.</Description>
+    <Description>Akka.Persistence.PostgreSql Microsoft.Extensions.Hosting support.</Description>
     <LangVersion>9</LangVersion>
   </PropertyGroup>
 
@@ -16,6 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Persistence.Query.Sql" Version="$(AkkaVersion)" />
-    <PackageReference Include="Akka.Persistence.SqlServer" Version="1.4.35" />
+    <PackageReference Include="Akka.Persistence.PostgreSql" Version="1.4.35" />
   </ItemGroup>
 </Project>
