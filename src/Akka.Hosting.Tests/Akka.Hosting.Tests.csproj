@@ -1,5 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>    
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
     <TargetFramework>$(TestsNetCoreFramework)</TargetFramework>
   </PropertyGroup>
 
@@ -13,5 +13,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
   </ItemGroup>
-
 </Project>

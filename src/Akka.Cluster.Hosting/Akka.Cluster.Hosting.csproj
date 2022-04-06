@@ -1,20 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>$(LibraryFramework)</TargetFramework>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Akka.Cluster and Akka.Cluster.Sharding Microsoft.Extensions.Hosting support.</Description>
     <LangVersion>9</LangVersion>
   </PropertyGroup>
-    <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-    </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Akka.Cluster.Sharding" Version="$(AkkaVersion)" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj" />
+  </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Akka.Cluster.Sharding" Version="$(AkkaVersion)" />
+  </ItemGroup>
 </Project>
