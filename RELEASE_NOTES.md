@@ -1,2 +1,2 @@
-## [0.1.4] / 02 April 2022
-- Added `WithCustomSerializer`  method to make it easy to add additional `Serializer` instances to an `ActorSystem`
+## [0.1.5] / 06 April 2022
+- Added `Akka.Persistence.PostgreSql.Hosting` NuGet package to support Postgres users.
