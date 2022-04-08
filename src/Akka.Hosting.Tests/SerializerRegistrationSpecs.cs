@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Akka.Hosting.Tests
 {
-    public class SerializerRegistrationTests
+    public class SerializerRegistrationSpecs
     {
         public interface IUseCustomSerializer
         {
