@@ -14,15 +14,16 @@ namespace Akka.Hosting
         private readonly AkkaConfigurationBuilder _configurationBuilder;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-        public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, IHostApplicationLifetime hostApplicationLifetime)
+        public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, ActorSystem system, IHostApplicationLifetime hostApplicationLifetime)
         {
+            _actorSystem = system;
             _configurationBuilder = configurationBuilder;
             _hostApplicationLifetime = hostApplicationLifetime;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _actorSystem = await _configurationBuilder.StartAsync();
+            await _configurationBuilder.StartAsync( _actorSystem);
 
             async Task TerminationHook()
             {

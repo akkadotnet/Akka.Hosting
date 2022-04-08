@@ -55,7 +55,8 @@ namespace Akka.Hosting
     /// </summary>
     internal sealed class SerializerRegistration
     {
-        public SerializerRegistration(string id, ImmutableHashSet<Type> typeBindings, Func<ExtendedActorSystem, Serializer> serializerFactory)
+        public SerializerRegistration(string id, ImmutableHashSet<Type> typeBindings,
+            Func<ExtendedActorSystem, Serializer> serializerFactory)
         {
             Id = id;
             TypeBindings = typeBindings;
@@ -63,9 +64,9 @@ namespace Akka.Hosting
         }
 
         public string Id { get; }
-        
+
         public Func<ExtendedActorSystem, Serializer> SerializerFactory { get; }
-        
+
         public ImmutableHashSet<Type> TypeBindings { get; }
     }
 
@@ -190,7 +191,8 @@ namespace Akka.Hosting
         }
 
         public AkkaConfigurationBuilder WithCustomSerializer(
-            string serializerIdentifier, IEnumerable<Type> boundTypes, Func<ExtendedActorSystem, Serializer> serializerFactory)
+            string serializerIdentifier, IEnumerable<Type> boundTypes,
+            Func<ExtendedActorSystem, Serializer> serializerFactory)
         {
             var serializerRegistration = new SerializerRegistration(serializerIdentifier,
                 boundTypes.ToImmutableHashSet(), serializerFactory);
@@ -208,55 +210,50 @@ namespace Akka.Hosting
                 // start the IHostedService which will run Akka.NET
                 _serviceCollection.AddHostedService<AkkaHostedService>();
 
-                /*
-            * Build setups
-            */
-                var sp = _serviceCollection.BuildServiceProvider();
-                var diSetup = DependencyResolverSetup.Create(sp);
-                var bootstrapSetup = BootstrapSetup.Create().WithConfig(Configuration.GetOrElse(Config.Empty));
-                if (ActorRefProvider.HasValue) // only set the provider when explicitly required
-                {
-                    bootstrapSetup = bootstrapSetup.WithActorRefProvider(ActorRefProvider.Value);
-                }
-
-                var actorSystemSetup = bootstrapSetup.And(diSetup);
-                foreach (var setup in _setups)
-                {
-                    actorSystemSetup = actorSystemSetup.And(setup);
-                }
-                
-                /* check to see if we have any custom serializers that need to be registered */
-                if (_serializers.Count > 0)
-                {
-                    var serializationSetup = SerializationSetup.Create(system =>
-                        _serializers
-                            .Select(r => SerializerDetails.Create(r.Id, r.SerializerFactory(system), r.TypeBindings))
-                            .ToImmutableHashSet());
-
-                    actorSystemSetup = actorSystemSetup.And(serializationSetup);
-                }
-
-                /*
-                 * Start ActorSystem
-                 */
-                var sys = ActorSystem.Create(_actorSystemName, actorSystemSetup);
-
-                Sys = sys;
 
                 // register as singleton - not interested in supporting multi-Sys use cases
-                _serviceCollection.AddSingleton<ActorSystem>(sys);
+                _serviceCollection.AddSingleton<ActorSystem>(sp =>
+                {
+                    /*
+                     * Build setups
+                     */
+                    var diSetup = DependencyResolverSetup.Create(sp);
+                    var bootstrapSetup = BootstrapSetup.Create().WithConfig(Configuration.GetOrElse(Config.Empty));
+                    if (ActorRefProvider.HasValue) // only set the provider when explicitly required
+                    {
+                        bootstrapSetup = bootstrapSetup.WithActorRefProvider(ActorRefProvider.Value);
+                    }
 
-                var actorRegistry = ActorRegistry.For(sys);
-                _serviceCollection.AddSingleton(actorRegistry);
+                    var actorSystemSetup = bootstrapSetup.And(diSetup);
+                    foreach (var setup in _setups)
+                    {
+                        actorSystemSetup = actorSystemSetup.And(setup);
+                    }
+
+                    /* check to see if we have any custom serializers that need to be registered */
+                    if (_serializers.Count > 0)
+                    {
+                        var serializationSetup = SerializationSetup.Create(system =>
+                            _serializers
+                                .Select(r =>
+                                    SerializerDetails.Create(r.Id, r.SerializerFactory(system), r.TypeBindings))
+                                .ToImmutableHashSet());
+
+                        actorSystemSetup = actorSystemSetup.And(serializationSetup);
+                    }
+
+                    /*
+                     * Start ActorSystem
+                     */
+                    var sys = ActorSystem.Create(_actorSystemName, actorSystemSetup);
+
+                    Sys = sys;
+                    return sys;
+                });
+
+                _serviceCollection.AddSingleton<ActorRegistry>(sp =>
+                    ActorRegistry.For(sp.GetRequiredService<ActorSystem>()));
             }
-        }
-
-        internal Task<ActorSystem> StartAsync()
-        {
-            if (!_complete)
-                throw new InvalidOperationException("Cannot start Sys - Builder is not marked as complete.");
-
-            return StartAsync(Sys.Value);
         }
 
         internal async Task<ActorSystem> StartAsync(ActorSystem sys)

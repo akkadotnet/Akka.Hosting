@@ -41,7 +41,7 @@ public class DiSanityCheckSpecs
         var host = new HostBuilder()
         .ConfigureServices(services =>
         {
-            services.AddSingleton<IMySingletonInterface>(new MySingletonImpl());
+            services.AddSingleton<IMySingletonInterface, MySingletonImpl>();
             testSetup(services);
         }).Build();
 
