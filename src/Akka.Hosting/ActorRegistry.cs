@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Akka.Actor;
@@ -24,7 +25,7 @@ namespace Akka.Hosting
     ///
     /// If you are adding every single actor in your <see cref="ActorSystem"/> to the registry you are definitely using it wrong.
     /// </remarks>
-    public class ActorRegistry : IExtension
+    public class ActorRegistry : IActorRegistry, IExtension
     {
         private readonly ConcurrentDictionary<Type, IActorRef> _actorRegistrations =
             new ConcurrentDictionary<Type, IActorRef>();
@@ -105,10 +106,75 @@ namespace Akka.Hosting
         {
             return _actorRegistrations.GetEnumerator();
         }
+        /// <summary>
+        /// Allows enumerated access to the collection of all registered actors.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
-        public static ActorRegistry For(ActorSystem actorSystem)
+        public static IActorRegistry For(ActorSystem actorSystem)
         {
             return actorSystem.WithExtension<ActorRegistry, ActorRegistryExtension>();
         }
+        }
+    
+    /// <summary>
+    /// Represents a read-only collection of <see cref="IActorRef"/> instances keyed by the actor name.
+    /// </summary>
+    public interface IReadOnlyActorRegistry : IEnumerable<KeyValuePair<Type, IActorRef>>
+    {
+        /// <summary>
+        /// Try to retrieve an <see cref="IActorRef"/> with the given <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
+        /// <returns><c>true</c> if an actor with this key exists, <c>false</c> otherwise.</returns>
+        bool TryGet<TKey>(out IActorRef actor);
+        
+        /// <summary>
+        /// Try to retrieve an <see cref="IActorRef"/> with the given <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="key">The key for a particular actor.</param>
+        /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
+        /// <returns><c>true</c> if an actor with this key exists, <c>false</c> otherwise.</returns>
+        bool TryGet(Type key, out IActorRef actor);
+        
+        /// <summary>
+        /// Fetches the <see cref="IActorRef"/> by key.
+        /// </summary>
+        /// <typeparam name="TKey">The key type to retrieve this actor.</typeparam>
+        /// <returns>If found, the underlying <see cref="IActorRef"/>.
+        /// If not found, returns <see cref="ActorRefs.Nobody"/>.</returns>
+        IActorRef Get<TKey>();
+    }
+
+    /// <summary>
+    /// An abstraction to allow <see cref="IActorRef"/> instances to be injected to non-Akka classes (such as controllers and SignalR Hubs).
+    /// </summary>
+    /// <remarks>
+    /// Should only be used for top-level actors that need to be accessed from inside or outside the <see cref="ActorSystem"/>.
+    ///
+    /// If you are adding every single actor in your <see cref="ActorSystem"/> to the registry you are definitely using it wrong.
+    /// </remarks>
+    public interface IActorRegistry: IReadOnlyActorRegistry
+    {
+        /// <summary>
+        /// Attempts to register an actor with the registry.
+        /// </summary>
+        /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
+        /// <param name="overwrite">If <c>true</c>, allows overwriting of a previous actor with the same key. Defaults to <c>false</c>.</param>
+        /// <returns><c>true</c> if the actor was set to this key in the registry, <c>false</c> otherwise.</returns>
+        bool TryRegister<TKey>(IActorRef actor, bool overwrite = false);
+
+        /// <summary>
+        /// Attempts to register an actor with the registry.
+        /// </summary>
+        /// <param name="key">The key for a particular actor.</param>
+        /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
+        /// <param name="overwrite">If <c>true</c>, allows overwriting of a previous actor with the same key. Defaults to <c>false</c>.</param>
+        /// <returns><c>true</c> if the actor was set to this key in the registry, <c>false</c> otherwise.</returns>
+        bool TryRegister(Type key, IActorRef actor, bool overwrite = false);
     }
 }
