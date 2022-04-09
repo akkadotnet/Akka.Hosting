@@ -28,13 +28,10 @@ namespace Akka.Hosting
         /// </remarks>
         public static IServiceCollection AddAkka(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder> builder)
         {
-            var b = new AkkaConfigurationBuilder(services, actorSystemName);
-            builder(b);
-            
-            // registers the hosted services and begins execution
-            b.Build();
-
-            return services;
+            return AddAkka(services, actorSystemName, (configurationBuilder, provider) =>
+            {
+                builder(configurationBuilder);
+            });
         }
         
         /// <summary>
@@ -50,14 +47,21 @@ namespace Akka.Hosting
         /// Starts a background <see cref="IHostedService"/> that runs the <see cref="ActorSystem"/>
         /// and manages its lifecycle in accordance with Akka.NET best practices.
         /// </remarks>
-        public static IServiceCollection AddAkka(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder, ServiceProvider> builder)
+        public static IServiceCollection AddAkka(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder, IServiceProvider> builder)
         {
             var b = new AkkaConfigurationBuilder(services, actorSystemName);
-            var sp = services.BuildServiceProvider();
-            builder(b, sp);
+            services.AddSingleton<AkkaConfigurationBuilder>(sp =>
+            {
+                
+                builder(b, sp);
+                return b;
+            });
             
             // registers the hosted services and begins execution
-            b.Build();
+            b.Bind();
+            
+            // start the IHostedService which will run Akka.NET
+            services.AddHostedService<AkkaHostedService>();
 
             return services;
         }

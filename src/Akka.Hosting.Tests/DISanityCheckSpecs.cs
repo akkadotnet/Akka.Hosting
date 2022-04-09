@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.DependencyInjection;
@@ -41,10 +42,10 @@ public class DiSanityCheckSpecs
         var host = new HostBuilder()
         .ConfigureServices(services =>
         {
-            services.AddSingleton<IMySingletonInterface>(new MySingletonImpl());
+            services.AddSingleton<IMySingletonInterface, MySingletonImpl>();
             testSetup(services);
         }).Build();
-
+        
         await host.StartAsync();
         return host;
     }
