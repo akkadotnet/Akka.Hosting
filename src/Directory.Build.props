@@ -2,8 +2,8 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.1.5</VersionPrefix>
-    <PackageReleaseNotes>• Added Akka.Persistence.PostgreSql.Hosting NuGet package to support Postgres users.</PackageReleaseNotes>
+    <VersionPrefix>0.2.0</VersionPrefix>
+    <PackageReleaseNotes>• [Bugfix: Fixed issues with duplicate IServiceProvider registration](https://github.com/akkadotnet/Akka.Hosting/pull/32)%2C this could cause multiple instances of dependencies to be instantiated since Akka.Hosting creating multiple IServiceProvider instances during the construction process. This has been resolved.</PackageReleaseNotes>
     <PackageIconUrl>
     </PackageIconUrl>
     <PackageProjectUrl>
