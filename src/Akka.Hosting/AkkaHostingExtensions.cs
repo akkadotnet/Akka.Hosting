@@ -54,7 +54,6 @@ namespace Akka.Hosting
             {
                 
                 builder(b, sp);
-                
                 return b;
             });
             

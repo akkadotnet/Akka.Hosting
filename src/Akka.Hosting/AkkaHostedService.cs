@@ -31,6 +31,7 @@ namespace Akka.Hosting
         {
             try
             {
+                _configurationBuilder.Build(_serviceProvider);
                 _actorSystem = _serviceProvider.GetRequiredService<ActorSystem>();
                 await _configurationBuilder.StartAsync(_actorSystem);
                 var actorRegistry = _serviceProvider.GetRequiredService<ActorRegistry>();
