@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Actor.Dsl;
 using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
@@ -211,12 +212,12 @@ namespace Akka.Hosting
             });
         }
 
-        private  static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
+        private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
         {
             return sp =>
             {
                 var config = sp.GetRequiredService<AkkaConfigurationBuilder>();
-                
+
                 /*
                  * Build setups
                  */
@@ -249,25 +250,20 @@ namespace Akka.Hosting
                  * Start ActorSystem
                  */
                 var sys = ActorSystem.Create(config.ActorSystemName, actorSystemSetup);
-                    
+
                 return sys;
             };
         }
 
-        internal void Build(IServiceProvider sp)
+        internal Task<ActorSystem> StartAsync(IServiceProvider sp)
         {
-            if (!_complete)
-            {
-                _complete = true;
-
-                Sys = sp.GetRequiredService<ActorSystem>();
-            }
+            return StartAsync(sp.GetRequiredService<ActorSystem>());
         }
 
         internal async Task<ActorSystem> StartAsync(ActorSystem sys)
         {
-            if (!_complete)
-                throw new InvalidOperationException("Cannot start Sys - Builder is not marked as complete.");
+            if (_complete) return sys;
+            _complete = true;
 
             /*
              * Start Actors

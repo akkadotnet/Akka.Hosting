@@ -19,10 +19,11 @@ namespace Akka.Hosting
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
         private readonly ILogger<AkkaHostedService> _logger;
 
-        public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, IServiceProvider serviceProvider, ILogger<AkkaHostedService> logger)
+        public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, IServiceProvider serviceProvider,
+            ILogger<AkkaHostedService> logger, IHostApplicationLifetime applicationLifetime)
         {
             _configurationBuilder = configurationBuilder;
-            _hostApplicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
+            _hostApplicationLifetime = applicationLifetime;
             _serviceProvider = serviceProvider;
             _logger = logger;
         }
@@ -31,10 +32,8 @@ namespace Akka.Hosting
         {
             try
             {
-                _configurationBuilder.Build(_serviceProvider);
                 _actorSystem = _serviceProvider.GetRequiredService<ActorSystem>();
                 await _configurationBuilder.StartAsync(_actorSystem);
-                var actorRegistry = _serviceProvider.GetRequiredService<ActorRegistry>();
 
                 async Task TerminationHook()
                 {
@@ -48,18 +47,18 @@ namespace Akka.Hosting
                 TerminationHook();
 #pragma warning restore CS4014
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.Log(LogLevel.Critical, ex, "Unable to start AkkaHostedService - shutting down application");
                 _hostApplicationLifetime.StopApplication();
             }
-            
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             // run full CoordinatedShutdown on the Sys
-            await CoordinatedShutdown.Get(_actorSystem).Run(CoordinatedShutdown.ClrExitReason.Instance).ConfigureAwait(false);
+            await CoordinatedShutdown.Get(_actorSystem).Run(CoordinatedShutdown.ClrExitReason.Instance)
+                .ConfigureAwait(false);
         }
     }
 }
