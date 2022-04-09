@@ -275,22 +275,9 @@ namespace Akka.Hosting
             {
                 // first step during timeout is to remove our registration
                 var d = (ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>>)dict;
-                var removed = false;
-                while (!removed)
-                {
-                    if(d.TryGetValue(key, out var registrations))
-                    {
-                        var original = registrations;
-                        registrations = registrations.Remove(waitingRegistration);
-                        if (d.TryUpdate(key, registrations, original))
-                            removed = true;
-                    }
-                    else // no key exists
-                    {
-                        removed = true;
-                    }
-                }
-                
+                d.AddOrUpdate(key, type => ImmutableHashSet<WaitForActorRegistration>.Empty,
+                    (type, set) => set.Remove(waitingRegistration));
+
                 // next, cancel the task
                 waitingRegistration.Waiter.TrySetCanceled(ct);
             };
