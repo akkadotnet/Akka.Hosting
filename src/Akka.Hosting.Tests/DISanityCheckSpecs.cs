@@ -44,7 +44,7 @@ public class DiSanityCheckSpecs
             services.AddSingleton<IMySingletonInterface, MySingletonImpl>();
             testSetup(services);
         }).Build();
-
+        
         await host.StartAsync();
         return host;
     }

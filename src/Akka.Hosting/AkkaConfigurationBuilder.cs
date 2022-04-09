@@ -72,10 +72,10 @@ namespace Akka.Hosting
 
     public sealed class AkkaConfigurationBuilder
     {
-        private readonly string _actorSystemName;
-        private readonly IServiceCollection _serviceCollection;
-        private readonly HashSet<SerializerRegistration> _serializers = new HashSet<SerializerRegistration>();
-        private readonly HashSet<Setup> _setups = new HashSet<Setup>();
+        internal readonly string ActorSystemName;
+        internal readonly IServiceCollection ServiceCollection;
+        internal readonly HashSet<SerializerRegistration> Serializers = new HashSet<SerializerRegistration>();
+        internal readonly HashSet<Setup> Setups = new HashSet<Setup>();
 
         /// <summary>
         /// The currently configured <see cref="ProviderSelection"/>.
@@ -99,8 +99,8 @@ namespace Akka.Hosting
 
         public AkkaConfigurationBuilder(IServiceCollection serviceCollection, string actorSystemName)
         {
-            _serviceCollection = serviceCollection;
-            _actorSystemName = actorSystemName;
+            ServiceCollection = serviceCollection;
+            ActorSystemName = actorSystemName;
         }
 
         internal AkkaConfigurationBuilder AddSetup(Setup setup)
@@ -124,7 +124,7 @@ namespace Akka.Hosting
                 return this;
             }
 
-            _setups.Add(setup);
+            Setups.Add(setup);
             return this;
         }
 
@@ -196,63 +196,71 @@ namespace Akka.Hosting
         {
             var serializerRegistration = new SerializerRegistration(serializerIdentifier,
                 boundTypes.ToImmutableHashSet(), serializerFactory);
-            _serializers.Add(serializerRegistration);
+            Serializers.Add(serializerRegistration);
             return this;
         }
 
-        internal void Build()
+        internal void Bind()
+        {
+            // register as singleton - not interested in supporting multi-Sys use cases
+            ServiceCollection.AddSingleton<ActorSystem>(ActorSystemFactory());
+
+            ServiceCollection.AddSingleton<ActorRegistry>(sp =>
+            {
+                return ActorRegistry.For(sp.GetRequiredService<ActorSystem>());
+            });
+        }
+
+        private  static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
+        {
+            return sp =>
+            {
+                var config = sp.GetRequiredService<AkkaConfigurationBuilder>();
+                
+                /*
+                 * Build setups
+                 */
+                var diSetup = DependencyResolverSetup.Create(sp);
+                var bootstrapSetup = BootstrapSetup.Create().WithConfig(config.Configuration.GetOrElse(Config.Empty));
+                if (config.ActorRefProvider.HasValue) // only set the provider when explicitly required
+                {
+                    bootstrapSetup = bootstrapSetup.WithActorRefProvider(config.ActorRefProvider.Value);
+                }
+
+                var actorSystemSetup = bootstrapSetup.And(diSetup);
+                foreach (var setup in config.Setups)
+                {
+                    actorSystemSetup = actorSystemSetup.And(setup);
+                }
+
+                /* check to see if we have any custom serializers that need to be registered */
+                if (config.Serializers.Count > 0)
+                {
+                    var serializationSetup = SerializationSetup.Create(system =>
+                        config.Serializers
+                            .Select(r =>
+                                SerializerDetails.Create(r.Id, r.SerializerFactory(system), r.TypeBindings))
+                            .ToImmutableHashSet());
+
+                    actorSystemSetup = actorSystemSetup.And(serializationSetup);
+                }
+
+                /*
+                 * Start ActorSystem
+                 */
+                var sys = ActorSystem.Create(config.ActorSystemName, actorSystemSetup);
+                    
+                return sys;
+            };
+        }
+
+        internal void Build(IServiceProvider sp)
         {
             if (!_complete)
             {
                 _complete = true;
-                _serviceCollection.AddSingleton<AkkaConfigurationBuilder>(this);
 
-                // start the IHostedService which will run Akka.NET
-                _serviceCollection.AddHostedService<AkkaHostedService>();
-
-
-                // register as singleton - not interested in supporting multi-Sys use cases
-                _serviceCollection.AddSingleton<ActorSystem>(sp =>
-                {
-                    /*
-                     * Build setups
-                     */
-                    var diSetup = DependencyResolverSetup.Create(sp);
-                    var bootstrapSetup = BootstrapSetup.Create().WithConfig(Configuration.GetOrElse(Config.Empty));
-                    if (ActorRefProvider.HasValue) // only set the provider when explicitly required
-                    {
-                        bootstrapSetup = bootstrapSetup.WithActorRefProvider(ActorRefProvider.Value);
-                    }
-
-                    var actorSystemSetup = bootstrapSetup.And(diSetup);
-                    foreach (var setup in _setups)
-                    {
-                        actorSystemSetup = actorSystemSetup.And(setup);
-                    }
-
-                    /* check to see if we have any custom serializers that need to be registered */
-                    if (_serializers.Count > 0)
-                    {
-                        var serializationSetup = SerializationSetup.Create(system =>
-                            _serializers
-                                .Select(r =>
-                                    SerializerDetails.Create(r.Id, r.SerializerFactory(system), r.TypeBindings))
-                                .ToImmutableHashSet());
-
-                        actorSystemSetup = actorSystemSetup.And(serializationSetup);
-                    }
-
-                    /*
-                     * Start ActorSystem
-                     */
-                    var sys = ActorSystem.Create(_actorSystemName, actorSystemSetup);
-
-                    Sys = sys;
-                    return sys;
-                });
-
-                _serviceCollection.AddSingleton<ActorRegistry>(sp =>
-                    ActorRegistry.For(sp.GetRequiredService<ActorSystem>()));
+                Sys = sp.GetRequiredService<ActorSystem>();
             }
         }
 
