@@ -90,6 +90,7 @@ namespace Akka.Cluster.Hosting
                 switch (builder.ActorRefProvider.Value)
                 {
                     case ProviderSelection.Cluster _:
+                    case ProviderSelection.Custom _:
                         return hoconBuilder; // no-op
                 }
             }

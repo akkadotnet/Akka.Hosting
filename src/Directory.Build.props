@@ -2,8 +2,8 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.2.0</VersionPrefix>
-    <PackageReleaseNotes>• [Bugfix: Fixed issues with duplicate IServiceProvider registration](https://github.com/akkadotnet/Akka.Hosting/pull/32)%2C this could cause multiple instances of dependencies to be instantiated since Akka.Hosting creating multiple IServiceProvider instances during the construction process. This has been resolved.</PackageReleaseNotes>
+    <VersionPrefix>0.2.1</VersionPrefix>
+    <PackageReleaseNotes>• Bugfix: when using Akka.Remote or Akka.Cluster%2C don't override any custom ProviderSelections provided by the user.</PackageReleaseNotes>
     <PackageIconUrl>
     </PackageIconUrl>
     <PackageProjectUrl>

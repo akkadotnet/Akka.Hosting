@@ -38,6 +38,7 @@ namespace Akka.Remote.Hosting
                 {
                     case ProviderSelection.Cluster _:
                     case ProviderSelection.Remote _:
+                    case ProviderSelection.Custom _:
                         return hoconBuilder; // no-op
                 }
             }
