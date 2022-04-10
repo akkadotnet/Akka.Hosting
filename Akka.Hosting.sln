@@ -31,6 +31,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{EF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.SqlSharding", "src\Examples\Akka.Hosting.SqlSharding\Akka.Hosting.SqlSharding.csproj", "{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
