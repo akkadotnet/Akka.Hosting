@@ -12,7 +12,7 @@ Consists of the following packages:
 4. `Akka.Persistence.SqlServer.Hosting` - used for Akka.Persistence.SqlServer support.
 5. `Akka.Persistence.PostgreSql.Hosting` - used for Akka.Persistence.PostgreSql support.
 
-See the ["Introduction to Akka.Hosting - HOCONless, "Pit of Success" Akka.NET Runtime and Configuration" video with details here](https://www.youtube.com/watch?v=Mnb9W9ClnB0) for a walkthrough of the library and how it can save you a tremendous amount of time and trouble.
+See the ["Introduction to Akka.Hosting - HOCONless, "Pit of Success" Akka.NET Runtime and Configuration" video](https://www.youtube.com/watch?v=Mnb9W9ClnB0) for a walkthrough of the library and how it can save you a tremendous amount of time and trouble.
 
 ## Summary
 
