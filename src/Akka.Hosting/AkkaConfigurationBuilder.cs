@@ -210,6 +210,7 @@ namespace Akka.Hosting
             {
                 return ActorRegistry.For(sp.GetRequiredService<ActorSystem>());
             });
+
         }
 
         private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
@@ -252,6 +253,7 @@ namespace Akka.Hosting
                 var sys = ActorSystem.Create(config.ActorSystemName, actorSystemSetup);
 
                 return sys;
+            };
         }
 
         internal Task<ActorSystem> StartAsync(IServiceProvider sp)

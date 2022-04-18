@@ -115,7 +115,7 @@ namespace Akka.Hosting
             return GetEnumerator();
         }
 
-        public static IActorRegistry For(ActorSystem actorSystem)
+        public static ActorRegistry For(ActorSystem actorSystem)
         {
             return actorSystem.WithExtension<ActorRegistry, ActorRegistryExtension>();
         }
