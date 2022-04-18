@@ -210,7 +210,16 @@ namespace Akka.Hosting
             {
                 return ActorRegistry.For(sp.GetRequiredService<ActorSystem>());
             });
-
+            
+            ServiceCollection.AddSingleton<IActorRegistry>(sp =>
+            {
+                return sp.GetRequiredService<ActorRegistry>();
+            });
+            
+            ServiceCollection.AddSingleton<IReadOnlyActorRegistry>(sp =>
+            {
+                return sp.GetRequiredService<ActorRegistry>();
+            });
         }
 
         private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
