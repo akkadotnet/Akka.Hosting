@@ -48,7 +48,7 @@ namespace Akka.Hosting
     /// <summary>
     /// Delegate used to instantiate <see cref="IActorRef"/>s once the <see cref="ActorSystem"/> has booted.
     /// </summary>
-    public delegate Task ActorStarter(ActorSystem system, ActorRegistry registry);
+    public delegate Task ActorStarter(ActorSystem system, IActorRegistry registry);
 
     /// <summary>
     /// Used to help populate a <see cref="SerializationSetup"/> upon starting the <see cref="ActorSystem"/>,
@@ -166,9 +166,9 @@ namespace Akka.Hosting
             }
         }
 
-        private static ActorStarter ToAsyncStarter(Action<ActorSystem, ActorRegistry> nonAsyncStarter)
+        private static ActorStarter ToAsyncStarter(Action<ActorSystem, IActorRegistry> nonAsyncStarter)
         {
-            Task Starter(ActorSystem f, ActorRegistry registry)
+            Task Starter(ActorSystem f, IActorRegistry registry)
             {
                 nonAsyncStarter(f, registry);
                 return Task.CompletedTask;
@@ -177,7 +177,7 @@ namespace Akka.Hosting
             return Starter;
         }
 
-        public AkkaConfigurationBuilder StartActors(Action<ActorSystem, ActorRegistry> starter)
+        public AkkaConfigurationBuilder StartActors(Action<ActorSystem, IActorRegistry> starter)
         {
             if (_complete) return this;
             _actorStarters.Add(ToAsyncStarter(starter));
@@ -209,6 +209,16 @@ namespace Akka.Hosting
             ServiceCollection.AddSingleton<ActorRegistry>(sp =>
             {
                 return ActorRegistry.For(sp.GetRequiredService<ActorSystem>());
+            });
+            
+            ServiceCollection.AddSingleton<IActorRegistry>(sp =>
+            {
+                return sp.GetRequiredService<ActorRegistry>();
+            });
+            
+            ServiceCollection.AddSingleton<IReadOnlyActorRegistry>(sp =>
+            {
+                return sp.GetRequiredService<ActorRegistry>();
             });
         }
 
