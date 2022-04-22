@@ -111,7 +111,7 @@ namespace Akka.Hosting
         /// <param name="actorStarter">A <see cref="ActorStarter"/> delegate
         /// for configuring and starting actors.</param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithActors(this AkkaConfigurationBuilder builder, Action<ActorSystem, ActorRegistry> actorStarter)
+        public static AkkaConfigurationBuilder WithActors(this AkkaConfigurationBuilder builder, Action<ActorSystem, IActorRegistry> actorStarter)
         {
             return builder.StartActors(actorStarter);
         }

@@ -1,2 +1,2 @@
-## [0.2.1] / 09 April 2022
-- Bugfix: when using Akka.Remote or Akka.Cluster, don't override any custom `ProviderSelection`s provided by the user.
+## [0.2.2] / 10 April 2022
+- [Bugfix: Akka.Remote.Hosting doesn't support `public-hostname` correctly](https://github.com/akkadotnet/Akka.Hosting/issues/36)

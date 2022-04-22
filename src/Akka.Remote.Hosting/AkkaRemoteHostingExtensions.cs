@@ -8,6 +8,11 @@ namespace Akka.Remote.Hosting
     {
         private static AkkaConfigurationBuilder BuildRemoteHocon(this AkkaConfigurationBuilder builder, string hostname, int port, string publicHostname = null, int? publicPort = null)
         {
+            if (string.IsNullOrEmpty(publicHostname))
+            {
+                publicHostname = hostname;
+                hostname = "0.0.0.0"; // bind to all addresses by default
+            }
             var config = $@"
             akka.remote.dot-netty.tcp.hostname = ""{hostname}""
             akka.remote.dot-netty.tcp.public-hostname = ""{publicHostname ?? hostname}""
@@ -30,7 +35,7 @@ namespace Akka.Remote.Hosting
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder WithRemoting(this AkkaConfigurationBuilder builder, string hostname, int port, string publicHostname = null, int? publicPort = null)
         {
-            var hoconBuilder = BuildRemoteHocon(builder, hostname, port);
+            var hoconBuilder = BuildRemoteHocon(builder, hostname, port, publicHostname, publicPort);
         
             if (builder.ActorRefProvider.HasValue)
             {
