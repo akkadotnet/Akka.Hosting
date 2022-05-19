@@ -18,7 +18,7 @@
     <TestsNetCoreFramework>net6.0</TestsNetCoreFramework>
     <NBenchVersion>1.2.2</NBenchVersion>
     <XunitVersion>2.4.1</XunitVersion>
-    <TestSdkVersion>17.1.0</TestSdkVersion>
+    <TestSdkVersion>17.2.0</TestSdkVersion>
     <AkkaVersion>1.4.38</AkkaVersion>
     <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
   </PropertyGroup>
