@@ -49,14 +49,14 @@ namespace Akka.Hosting
             if (!TryRegister<TKey>(actor, overwrite))
             {
                 throw new DuplicateActorRegistryException(
-                    $"An actor for type {typeof(TKey)} has already been . Call `Register(IActorRef, bool overwrite=true)` to avoid this error or use a different key.");
+                    $"An actor for type {typeof(TKey)} has already been registered. Call `Register(IActorRef, bool overwrite=true)` to avoid this error or use a different key.");
             }
         }
 
         /// <summary>
         /// Attempts to register an actor with the registry.
         /// </summary>
-        /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
+        /// <param name="actor">The <see cref="IActorRef"/> to register.</param>
         /// <param name="overwrite">If <c>true</c>, allows overwriting of a previous actor with the same key. Defaults to <c>false</c>.</param>
         /// <returns><c>true</c> if the actor was set to this key in the registry, <c>false</c> otherwise.</returns>
         public bool TryRegister<TKey>(IActorRef actor, bool overwrite = false)
@@ -68,7 +68,7 @@ namespace Akka.Hosting
         /// Attempts to register an actor with the registry.
         /// </summary>
         /// <param name="key">The key for a particular actor.</param>
-        /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
+        /// <param name="actor">The <see cref="IActorRef"/> to register.</param>
         /// <param name="overwrite">If <c>true</c>, allows overwriting of a previous actor with the same key. Defaults to <c>false</c>.</param>
         /// <returns><c>true</c> if the actor was set to this key in the registry, <c>false</c> otherwise.</returns>
         public bool TryRegister(Type key, IActorRef actor, bool overwrite = false)
