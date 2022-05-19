@@ -284,7 +284,7 @@ namespace Akka.Cluster.Hosting
         public static AkkaConfigurationBuilder WithSingleton<TKey>(this AkkaConfigurationBuilder builder,
             string singletonName, Props actorProps, ClusterSingletonOptions options = null, bool createProxyToo = true)
         {
-            builder.WithActors((system, registry) =>
+            return builder.WithActors((system, registry) =>
             {
                 options ??= new ClusterSingletonOptions();
                 var clusterSingletonManagerSettings =
@@ -315,16 +315,58 @@ namespace Akka.Cluster.Hosting
                         singletonProxySettings = singletonProxySettings.WithBufferSize(options.BufferSize.Value);
                     }
 
-                    var singletonProxyProps = ClusterSingletonProxy.Props($"/user/{singletonManagerRef.Path.Name}",
-                        singletonProxySettings);
-                    var singletonProxy = system.ActorOf(singletonProxyProps, $"{singletonManagerRef.Path.Name}-proxy");
-
-                    // TODO: should throw here if duplicate key used
-                    registry.TryRegister<TKey>(singletonProxy);
+                    CreateAndRegisterSingletonProxy<TKey>(singletonManagerRef.Path.Name, singletonProxySettings, system, registry);
                 }
             });
+        }
 
-            return builder;
+        private static void CreateAndRegisterSingletonProxy<TKey>(string singletonActorName,
+            ClusterSingletonProxySettings singletonProxySettings, ActorSystem system, IActorRegistry registry)
+        {
+            var singletonProxyProps = ClusterSingletonProxy.Props($"/user/{singletonActorName}",
+                singletonProxySettings);
+            var singletonProxy = system.ActorOf(singletonProxyProps, $"{singletonActorName}-proxy");
+
+            // TODO: should throw here if duplicate key used
+            registry.TryRegister<TKey>(singletonProxy);
+        }
+
+        /// <summary>
+        /// Creates a <see cref="ClusterSingletonProxy"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        /// <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="singletonName">The name of this singleton instance. Will also be used in the <see cref="ActorPath"/> for the <see cref="ClusterSingletonManager"/> and
+        /// optionally, the <see cref="ClusterSingletonProxy"/> created by this method.</param>
+        /// <param name="options">Optional. The set of options for configuring the <see cref="ClusterSingletonProxy"/>.</param>
+        /// <param name="singletonManagerPath">Optional. By default Akka.Hosting will assume the <see cref="ClusterSingletonManager"/> is hosted at "/user/{singletonName}" - but
+        /// if for some reason the path is different you can use this property to override that value.</param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithSingletonProxy<TKey>(this AkkaConfigurationBuilder builder,
+            string singletonName, ClusterSingletonOptions options = null, string singletonManagerPath = null)
+        {
+            return builder.WithActors((system, registry) =>
+            {
+                options ??= new ClusterSingletonOptions();
+
+                var singletonProxySettings =
+                    ClusterSingletonProxySettings.Create(system).WithSingletonName(singletonName);
+
+                if (!string.IsNullOrEmpty(options.Role))
+                {
+                    singletonProxySettings = singletonProxySettings.WithRole(options.Role);
+                }
+                
+                if (options.BufferSize != null)
+                {
+                    singletonProxySettings = singletonProxySettings.WithBufferSize(options.BufferSize.Value);
+                }
+
+                singletonManagerPath ??= $"/user/{singletonName}";
+                
+                CreateAndRegisterSingletonProxy<TKey>(singletonManagerPath, singletonProxySettings, system, registry);
+            });
         }
     }
 }

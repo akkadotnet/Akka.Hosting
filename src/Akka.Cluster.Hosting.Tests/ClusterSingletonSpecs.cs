@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
@@ -32,9 +33,10 @@ public class ClusterSingletonSpecs
         }
     }
 
-    private async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, string clusterRole)
+    private async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, ClusterOptions options)
     {
         var tcs = new TaskCompletionSource();
+        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         var host = new HostBuilder()
             .ConfigureServices(collection =>
@@ -43,7 +45,7 @@ public class ClusterSingletonSpecs
                 {
                     configurationBuilder
                         .WithRemoting("localhost", 0)
-                        .WithClustering(new ClusterOptions() { Roles = new[] { clusterRole } })
+                        .WithClustering(options)
                         .WithActors((system, registry) =>
                         {
                             var extSystem = (ExtendedActorSystem)system;
@@ -53,16 +55,22 @@ public class ClusterSingletonSpecs
                         .WithActors(async (system, registry) =>
                         {
                             var cluster = Cluster.Get(system);
-                            var myAddress = cluster.SelfAddress;
-                            await cluster.JoinAsync(myAddress); // force system to wait until we're up
-                            tcs.SetResult();
+                            cluster.RegisterOnMemberUp(() =>
+                            {
+                                tcs.SetResult();
+                            });  
+                            if (options.SeedNodes == null || options.SeedNodes.Length == 0)
+                            {
+                                var myAddress = cluster.SelfAddress;
+                                await cluster.JoinAsync(myAddress); // force system to wait until we're up
+                            }
                         });
                     specBuilder(configurationBuilder);
                 });
             }).Build();
 
-        await host.StartAsync();
-        await tcs.Task;
+        await host.StartAsync(cancellationTokenSource.Token);
+        await (tcs.Task.WaitAsync(cancellationTokenSource.Token));
 
         return host;
     }
@@ -73,7 +81,7 @@ public class ClusterSingletonSpecs
         // arrange
         using var host = await CreateHost(
             builder => { builder.WithSingleton<MySingletonActor>("my-singleton", MySingletonActor.MyProps); },
-            "my-host");
+            new ClusterOptions(){ Roles = new[] { "my-host"}});
 
         var registry = host.Services.GetRequiredService<ActorRegistry>();
         var singletonProxy = registry.Get<MySingletonActor>();
@@ -87,5 +95,18 @@ public class ClusterSingletonSpecs
         respond.Should().Be("hit");
 
         await host.StopAsync();
+    }
+
+    [Fact]
+    public async Task Should_launch_ClusterSingleton_and_Proxy_separately()
+    {
+        // arrange
+        using var singletonHost = await CreateHost(
+            builder => { builder.WithSingleton<MySingletonActor>("my-singleton", MySingletonActor.MyProps); },
+            new ClusterOptions(){ Roles = new[] { "my-host"}});
+        
+        // act
+        
+        // assert
     }
 }
