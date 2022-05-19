@@ -323,6 +323,8 @@ namespace Akka.Cluster.Hosting
                     registry.TryRegister<TKey>(singletonProxy);
                 }
             });
+
+            return builder;
         }
     }
 }
