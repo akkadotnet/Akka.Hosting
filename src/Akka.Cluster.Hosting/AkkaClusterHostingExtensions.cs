@@ -315,20 +315,19 @@ namespace Akka.Cluster.Hosting
                         singletonProxySettings = singletonProxySettings.WithBufferSize(options.BufferSize.Value);
                     }
 
-                    CreateAndRegisterSingletonProxy<TKey>(singletonManagerRef.Path.Name, singletonProxySettings, system, registry);
+                    CreateAndRegisterSingletonProxy<TKey>($"/user/{singletonManagerRef.Path.Name}", singletonManagerRef.Path.Name, singletonProxySettings, system, registry);
                 }
             });
         }
 
-        private static void CreateAndRegisterSingletonProxy<TKey>(string singletonActorName,
+        private static void CreateAndRegisterSingletonProxy<TKey>(string singletonActorName, string singletonActorPath,
             ClusterSingletonProxySettings singletonProxySettings, ActorSystem system, IActorRegistry registry)
         {
-            var singletonProxyProps = ClusterSingletonProxy.Props($"/user/{singletonActorName}",
+            var singletonProxyProps = ClusterSingletonProxy.Props(singletonActorPath,
                 singletonProxySettings);
             var singletonProxy = system.ActorOf(singletonProxyProps, $"{singletonActorName}-proxy");
-
-            // TODO: should throw here if duplicate key used
-            registry.TryRegister<TKey>(singletonProxy);
+            
+            registry.Register<TKey>(singletonProxy);
         }
 
         /// <summary>
@@ -365,7 +364,7 @@ namespace Akka.Cluster.Hosting
 
                 singletonManagerPath ??= $"/user/{singletonName}";
                 
-                CreateAndRegisterSingletonProxy<TKey>(singletonManagerPath, singletonProxySettings, system, registry);
+                CreateAndRegisterSingletonProxy<TKey>(singletonName, singletonManagerPath, singletonProxySettings, system, registry);
             });
         }
     }
