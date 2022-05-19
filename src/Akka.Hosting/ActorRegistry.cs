@@ -18,6 +18,18 @@ namespace Akka.Hosting
     }
 
     /// <summary>
+    /// Thrown when the same key is used twice in the registry and overwriting is not allowed.
+    /// </summary>
+    public sealed class DuplicateActorRegistryException : Exception
+    {
+
+        public DuplicateActorRegistryException(string message) : base(message)
+        {
+            
+        }
+    }
+
+    /// <summary>
     /// Mutable, but thread-safe <see cref="ActorRegistry"/>.
     /// </summary>
     /// <remarks>
@@ -29,6 +41,17 @@ namespace Akka.Hosting
     {
         private readonly ConcurrentDictionary<Type, IActorRef> _actorRegistrations =
             new ConcurrentDictionary<Type, IActorRef>();
+
+        /// <inheritdoc cref="IActorRegistry.Register{TKey}"/>
+        /// <exception cref="DuplicateActorRegistryException">Thrown when the same value is inserted twice and overwriting is not allowed.</exception>
+        public void Register<TKey>(IActorRef actor, bool overwrite = false)
+        {
+            if (!TryRegister<TKey>(actor, overwrite))
+            {
+                throw new DuplicateActorRegistryException(
+                    $"An actor for type {typeof(TKey)} has already been . Call `Register(IActorRef, bool overwrite=true)` to avoid this error or use a different key.");
+            }
+        }
 
         /// <summary>
         /// Attempts to register an actor with the registry.
@@ -160,6 +183,13 @@ namespace Akka.Hosting
     /// </remarks>
     public interface IActorRegistry: IReadOnlyActorRegistry
     {
+        /// <summary>
+        /// Registers an actor into the registry. Throws an exception upon failure.
+        /// </summary>
+        /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
+        /// <param name="overwrite">If <c>true</c>, allows overwriting of a previous actor with the same key. Defaults to <c>false</c>.</param>
+        void Register<TKey>(IActorRef actor, bool overwrite = false);
+        
         /// <summary>
         /// Attempts to register an actor with the registry.
         /// </summary>
