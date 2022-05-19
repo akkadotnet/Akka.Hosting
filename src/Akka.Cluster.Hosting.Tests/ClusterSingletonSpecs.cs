@@ -101,12 +101,30 @@ public class ClusterSingletonSpecs
     public async Task Should_launch_ClusterSingleton_and_Proxy_separately()
     {
         // arrange
+
+        var singletonOptions = new ClusterSingletonOptions() { Role = "my-host" };
         using var singletonHost = await CreateHost(
-            builder => { builder.WithSingleton<MySingletonActor>("my-singleton", MySingletonActor.MyProps); },
+            builder => { builder.WithSingleton<MySingletonActor>("my-singleton", MySingletonActor.MyProps, singletonOptions, createProxyToo:false); },
             new ClusterOptions(){ Roles = new[] { "my-host"}});
+
+        var singletonSystem = singletonHost.Services.GetRequiredService<ActorSystem>();
+        var address = Cluster.Get(singletonSystem).SelfAddress;
+        
+        using var singletonProxyHost =  await CreateHost(
+            builder => { builder.WithSingletonProxy<MySingletonActor>("my-singleton", singletonOptions); },
+            new ClusterOptions(){ Roles = new[] { "proxy" }, SeedNodes = new Address[]{ address } });
+        
+        var registry = singletonProxyHost.Services.GetRequiredService<ActorRegistry>();
+        var singletonProxy = registry.Get<MySingletonActor>();
         
         // act
         
+        // verify round-trip to the singleton proxy and back
+        var respond = await singletonProxy.Ask<string>("hit", TimeSpan.FromSeconds(3));
+
         // assert
+        respond.Should().Be("hit");
+
+        await Task.WhenAll(singletonHost.StopAsync(), singletonProxyHost.StopAsync());
     }
 }
