@@ -1,17 +1,27 @@
 using System;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
+using Akka.TestKit.Xunit2.Internals;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Akka.Cluster.Hosting.Tests;
 
 public class ClusterSingletonSpecs
 {
+    public ClusterSingletonSpecs(ITestOutputHelper output)
+    {
+        Output = output;
+    }
+
+    public ITestOutputHelper Output { get; }
+    
     private class MySingletonActor : ReceiveActor
     {
         public static Props MyProps => Props.Create(() => new MySingletonActor());
@@ -22,7 +32,7 @@ public class ClusterSingletonSpecs
         }
     }
 
-    private static async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, string clusterRole)
+    private async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, string clusterRole)
     {
         var tcs = new TaskCompletionSource();
 
@@ -34,6 +44,12 @@ public class ClusterSingletonSpecs
                     configurationBuilder
                         .WithRemoting("localhost", 0)
                         .WithClustering(new ClusterOptions() { Roles = new[] { clusterRole } })
+                        .WithActors((system, registry) =>
+                        {
+                            var extSystem = (ExtendedActorSystem)system;
+                            var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(Output)), "log-test");
+                            logger.Tell(new InitializeLogger(system.EventStream));
+                        })
                         .WithActors(async (system, registry) =>
                         {
                             var cluster = Cluster.Get(system);
