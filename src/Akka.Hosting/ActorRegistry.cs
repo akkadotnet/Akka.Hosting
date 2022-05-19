@@ -44,8 +44,12 @@ namespace Akka.Hosting
 
         /// <inheritdoc cref="IActorRegistry.Register{TKey}"/>
         /// <exception cref="DuplicateActorRegistryException">Thrown when the same value is inserted twice and overwriting is not allowed.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when a <c>null</c> <see cref="IActorRef"/> is registered.</exception>
         public void Register<TKey>(IActorRef actor, bool overwrite = false)
         {
+            if (actor == null)
+                throw new ArgumentNullException(nameof(actor), "Cannot register null actors");
+            
             if (!TryRegister<TKey>(actor, overwrite))
             {
                 throw new DuplicateActorRegistryException(
@@ -73,6 +77,9 @@ namespace Akka.Hosting
         /// <returns><c>true</c> if the actor was set to this key in the registry, <c>false</c> otherwise.</returns>
         public bool TryRegister(Type key, IActorRef actor, bool overwrite = false)
         {
+            if (actor == null)
+                return false;
+            
             if (!overwrite)
                 return _actorRegistrations.TryAdd(key, actor);
             else

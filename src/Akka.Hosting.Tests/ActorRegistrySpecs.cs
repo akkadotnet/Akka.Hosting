@@ -36,4 +36,18 @@ public class ActorRegistrySpecs
         // assert
         register.Should().NotThrow<DuplicateActorRegistryException>();
     }
+    
+    [Fact]
+    public void Should_throw_NullReferenceException_for_Null_IActorRef()
+    {
+        // arrange
+        var registry = new ActorRegistry();
+
+        // act
+
+        var register = () => registry.Register<Nobody>(null);
+
+        // assert
+        register.Should().Throw<ArgumentNullException>();
+    }
 }
