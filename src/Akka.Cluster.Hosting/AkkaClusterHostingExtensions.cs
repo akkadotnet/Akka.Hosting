@@ -315,7 +315,7 @@ namespace Akka.Cluster.Hosting
                         singletonProxySettings = singletonProxySettings.WithBufferSize(options.BufferSize.Value);
                     }
 
-                    CreateAndRegisterSingletonProxy<TKey>($"/user/{singletonManagerRef.Path.Name}", singletonManagerRef.Path.Name, singletonProxySettings, system, registry);
+                    CreateAndRegisterSingletonProxy<TKey>(singletonManagerRef.Path.Name, $"/user/{singletonManagerRef.Path.Name}", singletonProxySettings, system, registry);
                 }
             });
         }
