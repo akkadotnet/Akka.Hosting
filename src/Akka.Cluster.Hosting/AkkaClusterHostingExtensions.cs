@@ -26,6 +26,13 @@ namespace Akka.Cluster.Hosting
         public Address[] SeedNodes { get; set; }
     }
 
+    public sealed class ClusterSingletonOptions
+    {
+        public int? BufferSize { get; set; } = null;
+        public string Role { get; set; }
+        public object TerminationMessage { get; set; }
+    }
+
     public sealed class ShardOptions
     {
         public StateStoreMode StateStoreMode { get; set; } = StateStoreMode.DData;
@@ -125,6 +132,9 @@ namespace Akka.Cluster.Hosting
                         .WithRole(shardOptions.Role)
                         .WithRememberEntities(shardOptions.RememberEntities)
                         .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
+
+                // TODO: should throw here if duplicate key used
+
                 registry.TryRegister<TKey>(shardRegion);
             });
         }
@@ -162,6 +172,9 @@ namespace Akka.Cluster.Hosting
                         .WithRole(shardOptions.Role)
                         .WithRememberEntities(shardOptions.RememberEntities)
                         .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
+
+                // TODO: should throw here if duplicate key used
+
                 registry.TryRegister<TKey>(shardRegion);
             });
         }
@@ -191,6 +204,9 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, extractEntityId, extractShardId);
+
+                // TODO: should throw here if duplicate key used
+
                 registry.TryRegister<TKey>(shardRegionProxy);
             });
         }
@@ -215,6 +231,9 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, messageExtractor);
+
+                // TODO: should throw here if duplicate key used
+
                 registry.TryRegister<TKey>(shardRegionProxy);
             });
         }
@@ -237,12 +256,72 @@ namespace Akka.Cluster.Hosting
             {
                 middle = middle.AddHocon($"akka.cluster.pub-sub = \"{role}\"");
             }
-                
+
             return middle.WithActors((system, registry) =>
             {
                 // force the initialization
                 var mediator = DistributedPubSub.Get(system).Mediator;
                 registry.TryRegister<DistributedPubSub>(mediator);
+            });
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ClusterSingletonManager"/> to host an actor created via <see cref="actorProps"/>.
+        ///
+        /// If <see cref="createProxyToo"/> is set to <c>true</c> then this method will also create a <see cref="ClusterSingletonProxy"/> that
+        /// will be added to the <see cref="ActorRegistry"/> using the key <see cref="TKey"/>. Otherwise this method will register nothing with
+        /// the <see cref="ActorRegistry"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="singletonName">The name of this singleton instance. Will also be used in the <see cref="ActorPath"/> for the <see cref="ClusterSingletonManager"/> and
+        /// optionally, the <see cref="ClusterSingletonProxy"/> created by this method.</param>
+        /// <param name="actorProps">The underlying actor type. SHOULD NOT BE CREATED USING <see cref="ClusterSingletonManager.Props"/></param>
+        /// <param name="options">Optional. The set of options for configuring both the <see cref="ClusterSingletonManager"/> and
+        /// optionally, the <see cref="ClusterSingletonProxy"/>.</param>
+        /// <param name="createProxyToo">When set to <c>true></c>, creates a <see cref="ClusterSingletonProxy"/> that automatically points to the <see cref="ClusterSingletonManager"/> created by this method.</param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/> when <see cref="createProxyToo"/> is set to <c>true</c>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithSingleton<TKey>(this AkkaConfigurationBuilder builder,
+            string singletonName, Props actorProps, ClusterSingletonOptions options = null, bool createProxyToo = true)
+        {
+            builder.WithActors((system, registry) =>
+            {
+                options ??= new ClusterSingletonOptions();
+                var clusterSingletonManagerSettings =
+                    ClusterSingletonManagerSettings.Create(system).WithSingletonName(singletonName);
+
+                var singletonProxySettings =
+                    ClusterSingletonProxySettings.Create(system).WithSingletonName(singletonName);
+
+                if (!string.IsNullOrEmpty(options.Role))
+                {
+                    clusterSingletonManagerSettings = clusterSingletonManagerSettings.WithRole(options.Role);
+                    singletonProxySettings = singletonProxySettings.WithRole(options.Role);
+                }
+
+                var singletonProps = options is { TerminationMessage: { } }
+                    ? ClusterSingletonManager.Props(actorProps, clusterSingletonManagerSettings)
+                    : ClusterSingletonManager.Props(actorProps, options.TerminationMessage,
+                        clusterSingletonManagerSettings);
+
+                var singletonManagerRef = system.ActorOf(singletonProps, singletonName);
+
+                // create a proxy that can talk to the singleton we just created
+                // and add it to the ActorRegistry
+                if (createProxyToo)
+                {
+                    if (options.BufferSize != null)
+                    {
+                        singletonProxySettings = singletonProxySettings.WithBufferSize(options.BufferSize.Value);
+                    }
+
+                    var singletonProxyProps = ClusterSingletonProxy.Props($"/user/{singletonManagerRef.Path.Name}",
+                        singletonProxySettings);
+                    var singletonProxy = system.ActorOf(singletonProps, $"{singletonManagerRef.Path.Name}-proxy");
+
+                    // TODO: should throw here if duplicate key used
+                    registry.TryRegister<TKey>(singletonProxy);
+                }
             });
         }
     }
