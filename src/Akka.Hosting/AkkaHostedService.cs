@@ -14,6 +14,7 @@ namespace Akka.Hosting
     internal sealed class AkkaHostedService : IHostedService
     {
         private ActorSystem _actorSystem;
+        private CoordinatedShutdown _coordinatedShutdown; // grab a reference to CoordinatedShutdown early
         private readonly IServiceProvider _serviceProvider;
         private readonly AkkaConfigurationBuilder _configurationBuilder;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
@@ -33,6 +34,7 @@ namespace Akka.Hosting
             try
             {
                 _actorSystem = _serviceProvider.GetRequiredService<ActorSystem>();
+                _coordinatedShutdown = CoordinatedShutdown.Get(_actorSystem);
                 await _configurationBuilder.StartAsync(_actorSystem);
 
                 async Task TerminationHook()
@@ -56,8 +58,15 @@ namespace Akka.Hosting
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
+            // ActorSystem may have failed to start - skip shutdown sequence if that's the case
+            // so error message doesn't get conflated.
+            if (_coordinatedShutdown == null)
+            {
+                return;
+            }
+            
             // run full CoordinatedShutdown on the Sys
-            await CoordinatedShutdown.Get(_actorSystem).Run(CoordinatedShutdown.ClrExitReason.Instance)
+            await _coordinatedShutdown.Run(CoordinatedShutdown.ClrExitReason.Instance)
                 .ConfigureAwait(false);
         }
     }
