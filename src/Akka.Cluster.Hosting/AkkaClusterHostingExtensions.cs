@@ -268,7 +268,7 @@ namespace Akka.Cluster.Hosting
         /// <summary>
         /// Creates a new <see cref="ClusterSingletonManager"/> to host an actor created via <see cref="actorProps"/>.
         ///
-        /// If <see cref="createProxyToo"/> is set to <c>true</c> then this method will also create a <see cref="ClusterSingletonProxy"/> that
+        /// If <paramref name="createProxyToo"/> is set to <c>true</c> then this method will also create a <see cref="ClusterSingletonProxy"/> that
         /// will be added to the <see cref="ActorRegistry"/> using the key <see cref="TKey"/>. Otherwise this method will register nothing with
         /// the <see cref="ActorRegistry"/>.
         /// </summary>
@@ -279,7 +279,7 @@ namespace Akka.Cluster.Hosting
         /// <param name="options">Optional. The set of options for configuring both the <see cref="ClusterSingletonManager"/> and
         /// optionally, the <see cref="ClusterSingletonProxy"/>.</param>
         /// <param name="createProxyToo">When set to <c>true></c>, creates a <see cref="ClusterSingletonProxy"/> that automatically points to the <see cref="ClusterSingletonManager"/> created by this method.</param>
-        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/> when <see cref="createProxyToo"/> is set to <c>true</c>.</typeparam>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/> when <paramref name="createProxyToo"/> is set to <c>true</c>.</typeparam>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder WithSingleton<TKey>(this AkkaConfigurationBuilder builder,
             string singletonName, Props actorProps, ClusterSingletonOptions options = null, bool createProxyToo = true)
