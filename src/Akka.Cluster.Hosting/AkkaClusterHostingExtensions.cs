@@ -299,7 +299,7 @@ namespace Akka.Cluster.Hosting
                     singletonProxySettings = singletonProxySettings.WithRole(options.Role);
                 }
 
-                var singletonProps = options is { TerminationMessage: { } }
+                var singletonProps = options.TerminationMessage == null
                     ? ClusterSingletonManager.Props(actorProps, clusterSingletonManagerSettings)
                     : ClusterSingletonManager.Props(actorProps, options.TerminationMessage,
                         clusterSingletonManagerSettings);
@@ -317,7 +317,7 @@ namespace Akka.Cluster.Hosting
 
                     var singletonProxyProps = ClusterSingletonProxy.Props($"/user/{singletonManagerRef.Path.Name}",
                         singletonProxySettings);
-                    var singletonProxy = system.ActorOf(singletonProps, $"{singletonManagerRef.Path.Name}-proxy");
+                    var singletonProxy = system.ActorOf(singletonProxyProps, $"{singletonManagerRef.Path.Name}-proxy");
 
                     // TODO: should throw here if duplicate key used
                     registry.TryRegister<TKey>(singletonProxy);
