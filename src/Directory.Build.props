@@ -2,8 +2,11 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.2.2</VersionPrefix>
-    <PackageReleaseNotes>• [Bugfix: Akka.Remote.Hosting doesn't support public-hostname correctly](https://github.com/akkadotnet/Akka.Hosting/issues/36)</PackageReleaseNotes>
+    <VersionPrefix>0.3.0</VersionPrefix>
+    <PackageReleaseNotes>• [Add interfaces for the ActorRegistry to allow mocking in tests](https://github.com/akkadotnet/Akka.Hosting/pull/42)
+• [Fixed: Akka.Hosting NRE upon shutdown](https://github.com/akkadotnet/Akka.Hosting/pull/49)
+• [added throw-able ActorRegistry.Register method](https://github.com/akkadotnet/Akka.Hosting/pull/50)
+• [Akka.Cluster.Hosting: adding ClusterSingleton hosting methods](https://github.com/akkadotnet/Akka.Hosting/pull/51)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
