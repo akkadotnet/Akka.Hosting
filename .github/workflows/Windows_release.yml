@@ -27,6 +27,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Make build.sh executable
+        run: chmod +x ./build.sh
+      - name: Make build.cmd executable
+        run: chmod +x ./build.cmd
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 5.0.*
@@ -44,4 +48,5 @@ jobs:
         run: ./build.cmd NuGet
         env:
           Nuget_Key: ${{ secrets.NUGET_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ toJSON(github) }}

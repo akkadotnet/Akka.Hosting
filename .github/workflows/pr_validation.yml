@@ -32,6 +32,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Make build.sh executable
+        run: chmod +x ./build.sh
+      - name: Make build.cmd executable
+        run: chmod +x ./build.cmd
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 5.0.*
@@ -45,8 +49,8 @@ jobs:
             .nuke/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj') }}
-      - name: Run './build.cmd RunTests'
-        run: ./build.cmd RunTests
+      - name: Run './build.cmd All'
+        run: ./build.cmd All
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
   ubuntu-latest:
@@ -54,6 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Make build.sh executable
+        run: chmod +x ./build.sh
+      - name: Make build.cmd executable
+        run: chmod +x ./build.cmd
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 5.0.*
@@ -67,7 +75,7 @@ jobs:
             .nuke/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj') }}
-      - name: Run './build.cmd RunTests'
-        run: ./build.cmd RunTests
+      - name: Run './build.cmd All'
+        run: ./build.cmd All
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}

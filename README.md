@@ -2,16 +2,17 @@
 
 > **BETA**: this project is currently in beta status as part of the [Akka.NET v1.5 development effort](https://getakka.net/community/whats-new/akkadotnet-v1.5.html), but the packages published in this repository will be backwards compatible for Akka.NET v1.4 users.
 
-HOCON-less configuration, application lifecycle management, `ActorSystem` startup, and actor instantiation for [Akka.NET](https
-://getakka.net/).
+HOCON-less configuration, application lifecycle management, `ActorSystem` startup, and actor instantiation for [Akka.NET](https://getakka.net/).
 
 Consists of the following packages:
 
-1. Akka.Hosting - core, needed for everything
-2. Akka.Remote.Hosting - enables Akka.Remote configuration
-3. Akka.Cluster.Hosting - used for Akka.Cluster, Akka.Cluster.Sharding
-4. Akka.Persistence.SqlServer.Hosting - used for Akka.Persistence.SqlServer support.
+1. `Akka.Hosting` - core, needed for everything
+2. `Akka.Remote.Hosting` - enables Akka.Remote configuration
+3. `Akka.Cluster.Hosting` - used for Akka.Cluster, Akka.Cluster.Sharding
+4. `Akka.Persistence.SqlServer.Hosting` - used for Akka.Persistence.SqlServer support.
+5. `Akka.Persistence.PostgreSql.Hosting` - used for Akka.Persistence.PostgreSql support.
 
+See the ["Introduction to Akka.Hosting - HOCONless, "Pit of Success" Akka.NET Runtime and Configuration" video](https://www.youtube.com/watch?v=Mnb9W9ClnB0) for a walkthrough of the library and how it can save you a tremendous amount of time and trouble.
 
 ## Summary
 
@@ -30,7 +31,7 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 {
     configurationBuilder
         .WithRemoting("localhost", 8110)
-        .WithClustering(new ClusterOptions(){ Roles = new[]{ "myRole" }, 
+        .WithClustering(new ClusterOptions(){ Roles = new[]{ "myRole" },
             SeedNodes = new[]{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110")}})
         .WithActors((system, registry) =>
     {
@@ -59,7 +60,7 @@ app.Run();
 
 No HOCON. Automatically runs all Akka.NET application lifecycle best practices behind the scene. Automatically binds the `ActorSystem` and the `ActorRegistry`, another new 1.5 feature, to the `IServiceCollection` so they can be safely consumed via both actors and non-Akka.NET parts of users' .NET applications.
 
-This should be open to extension in other child plugins, such as Akka.Persistence.SqlServer:
+This should be open to extension in other child plugins, such as `Akka.Persistence.SqlServer`:
 
 ```csharp
 builder.Services.AddAkka("MyActorSystem", configurationBuilder =>

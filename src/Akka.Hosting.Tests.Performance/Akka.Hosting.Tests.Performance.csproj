@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>$(TestsNetCoreFramework)</TargetFramework>
@@ -13,5 +12,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
   </ItemGroup>
-
 </Project>
