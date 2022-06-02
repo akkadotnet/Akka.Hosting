@@ -223,7 +223,7 @@
     <TestsNetCoreFramework>net6.0</TestsNetCoreFramework>
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>17.2.0</TestSdkVersion>
-    <AkkaVersion>1.4.38</AkkaVersion>
+    <AkkaVersion>1.4.39</AkkaVersion>
     <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
   </PropertyGroup>
 
