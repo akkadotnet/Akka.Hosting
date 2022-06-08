@@ -254,7 +254,7 @@ namespace Akka.Cluster.Hosting
             var middle = builder.AddHocon(DistributedPubSub.DefaultConfig());
             if (!string.IsNullOrEmpty(role)) // add role config
             {
-                middle = middle.AddHocon($"akka.cluster.pub-sub = \"{role}\"");
+                middle = middle.AddHocon($"akka.cluster.pub-sub.role = \"{role}\"");
             }
 
             return middle.WithActors((system, registry) =>
