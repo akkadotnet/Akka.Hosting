@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster.Tools.PublishSubscribe;
-using Akka.Configuration;
 using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
@@ -17,23 +16,65 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Cluster.Hosting.Tests;
 
-public class DistributedPubSubSpecs: TestKit.Xunit2.TestKit
+public class DistributedPubSubSpecs : IAsyncLifetime
 {
     private readonly ITestOutputHelper _helper;
+    private readonly Action<AkkaConfigurationBuilder> _specBuilder;
+    private readonly ClusterOptions _clusterOptions;    
+    private IHost _host;
     private ActorSystem _system;
     private ILoggingAdapter _log;
     private Cluster _cluster;
+    private TestKit.Xunit2.TestKit _testKit;
 
-    public DistributedPubSubSpecs(ITestOutputHelper helper) : base(Config.Empty, nameof(DistributedPubSubSpecs), helper)
+    private IActorRef _mediator;
+
+    public DistributedPubSubSpecs(ITestOutputHelper helper)
     {
         _helper = helper;
+        _specBuilder = _ => { };
+        _clusterOptions = new ClusterOptions { Roles = new[] { "my-host" } };
     }
     
-    private async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, ClusterOptions options)
+    // Issue #55 https://github.com/akkadotnet/Akka.Hosting/issues/55
+    [Fact]
+    public Task Should_launch_distributed_pub_sub_with_roles()
+    {
+        var testProbe = _testKit.CreateTestProbe(_system);
+
+        // act
+        testProbe.Send(_mediator, new Subscribe("testSub", testProbe));
+        var response = testProbe.ExpectMsg<SubscribeAck>();
+
+        // assert
+        response.Subscribe.Topic.Should().Be("testSub");
+        response.Subscribe.Ref.Should().Be(testProbe);
+
+        return Task.CompletedTask;
+    }
+    
+    [Fact]
+    public Task Distributed_pub_sub_should_work()
+    {
+        const string topic = "testSub";
+        
+        var subscriber = _testKit.CreateTestProbe(_system);
+        var publisher = _testKit.CreateTestProbe(_system);
+
+        subscriber.Send(_mediator, new Subscribe(topic, subscriber));
+        subscriber.ExpectMsg<SubscribeAck>();
+
+        publisher.Send(_mediator, new Publish(topic, "test message"));
+        subscriber.ExpectMsg("test message");
+
+        return Task.CompletedTask;
+    }
+
+    public async Task InitializeAsync()
     {
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
-        var host = new HostBuilder()
+        _host = new HostBuilder()
             .ConfigureLogging(builder =>
             {
                 builder.AddProvider(new XUnitLoggerProvider(_helper, LogLevel.Information));
@@ -44,12 +85,12 @@ public class DistributedPubSubSpecs: TestKit.Xunit2.TestKit
                     .AddAkka("TestSys", (configurationBuilder, _) =>
                     {
                         configurationBuilder
-                            .AddHocon(Sys.Settings.Config)
+                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig)
                             .WithRemoting("localhost", 0)
-                            .WithClustering(options)
+                            .WithClustering(_clusterOptions)
                             .WithActors((system, _) =>
                             {
-                                InitializeLogger(system);
+                                _testKit = new TestKit.Xunit2.TestKit(system, _helper);
                                 _system = system;
                                 _log = Logging.GetLogger(system, this);
                                 _cluster = Cluster.Get(system);
@@ -57,44 +98,28 @@ public class DistributedPubSubSpecs: TestKit.Xunit2.TestKit
                                 _log.Info("Distributed pub-sub test system initialized.");
                             })
                             .WithDistributedPubSub("pub-sub-host");
-                        specBuilder(configurationBuilder);
+                        _specBuilder(configurationBuilder);
                     });
             }).Build();
         
-        await host.StartAsync(cancellationTokenSource.Token);
-        return host;
-    }
-
-    // Issue #55 https://github.com/akkadotnet/Akka.Hosting/issues/55
-    [Fact]
-    public async Task Should_launch_distributed_pub_sub_with_roles()
-    {
-        using var host = await CreateHost(
-            _ => { },
-            new ClusterOptions{ Roles = new[] { "my-host"} });
+        await _host.StartAsync(cancellationTokenSource.Token);
 
         // Lifetime should be healthy
-        var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+        var lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
         lifetime.ApplicationStopped.IsCancellationRequested.Should().BeFalse();
         lifetime.ApplicationStopping.IsCancellationRequested.Should().BeFalse();
         
         // Join cluster
         var myAddress = _cluster.SelfAddress;
-        await _cluster.JoinAsync(myAddress); // force system to wait until we're up
+        await _cluster.JoinAsync(myAddress, cancellationTokenSource.Token); // force system to wait until we're up
 
         // Prepare test
-        var registry = host.Services.GetRequiredService<ActorRegistry>();
-        var mediator = registry.Get<DistributedPubSub>();
-        var probe = CreateTestProbe(_system);
+        var registry = _host.Services.GetRequiredService<ActorRegistry>();
+        _mediator = registry.Get<DistributedPubSub>();
+    }
 
-        // act
-        probe.Send(mediator, new Subscribe("testSub", probe));
-        var response = probe.ExpectMsg<SubscribeAck>();
-
-        // assert
-        response.Subscribe.Topic.Should().Be("testSub");
-        response.Subscribe.Ref.Should().Be(probe);
-
-        await host.StopAsync();
+    public async Task DisposeAsync()
+    {
+        await _host.StopAsync();
     }
 }
