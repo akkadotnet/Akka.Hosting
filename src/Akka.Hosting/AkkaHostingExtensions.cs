@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
@@ -88,6 +89,21 @@ namespace Akka.Hosting
             HoconAddMode addMode = HoconAddMode.Append)
         {
             return builder.AddHoconConfiguration(hocon, addMode);
+        }
+
+        /// <summary>
+        /// Automatically loads the given HOCON file from <see cref="hoconFilePath"/>
+        /// and inserts it into the <see cref="ActorSystem"/>s' configuration.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="hoconFilePath">The path to the HOCON file. Can be relative or absolute.</param>
+        /// <param name="addMode">The <see cref="HoconAddMode"/> - defaults to appending this HOCON as a fallback.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder AddHoconFile(this AkkaConfigurationBuilder builder, string hoconFilePath,
+            HoconAddMode addMode = HoconAddMode.Append)
+        {
+            var hoconText = ConfigurationFactory.ParseString(File.ReadAllText(hoconFilePath));
+            return AddHocon(builder, hoconText, addMode);
         }
 
         /// <summary>
