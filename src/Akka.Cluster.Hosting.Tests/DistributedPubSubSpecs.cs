@@ -47,6 +47,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
         var response = testProbe.ExpectMsg<SubscribeAck>();
 
         // assert
+        _system.Settings.Config.GetString("akka.cluster.pub-sub.role").Should().Be("my-host");
         response.Subscribe.Topic.Should().Be("testSub");
         response.Subscribe.Ref.Should().Be(testProbe);
 
@@ -97,7 +98,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
                                 
                                 _log.Info("Distributed pub-sub test system initialized.");
                             })
-                            .WithDistributedPubSub("pub-sub-host");
+                            .WithDistributedPubSub("my-host");
                         _specBuilder(configurationBuilder);
                     });
             }).Build();
