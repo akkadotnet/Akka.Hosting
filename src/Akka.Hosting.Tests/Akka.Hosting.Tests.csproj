@@ -13,4 +13,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="test.hocon" />
+    <Content Include="test.hocon">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
