@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Akka.Actor;
 using Akka.Cluster.Sharding;
 using Akka.Cluster.Tools.Client;
 using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Cluster.Tools.Singleton;
+using Akka.Configuration;
 using Akka.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Akka.Cluster.Hosting
 {
@@ -365,6 +370,48 @@ namespace Akka.Cluster.Hosting
                 singletonManagerPath ??= $"/user/{singletonName}";
                 
                 CreateAndRegisterSingletonProxy<TKey>(singletonName, singletonManagerPath, singletonProxySettings, system, registry);
+            });
+        }
+
+        /// <summary>
+        /// Configures a <see cref="ClusterClientReceptionist"/> for the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="configure">An action that can be used to configure the receptionist settings</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClientReceptionist(
+            this AkkaConfigurationBuilder builder,
+            Action<ClusterClientReceptionistOptions> configure = null)
+        {
+            var options = new ClusterClientReceptionistOptions();
+            configure?.Invoke(options);
+            builder.AddHocon(options.ToConfig(), HoconAddMode.Prepend);
+            return builder;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        /// <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="configure">The settings builder for configuring the <see cref="ClusterClient"/>.</param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClient<TKey>(
+            this AkkaConfigurationBuilder builder,
+            Action<ClusterClientOptions> configure)
+        {
+            if (configure == null)
+                throw new ArgumentNullException(nameof(configure));
+            
+            return builder.WithActors((system, registry) =>
+            {
+                var options = new ClusterClientOptions();
+                configure(options);
+                
+                var settings = options.Apply(ClusterClientSettings.Create(system));
+                var clusterClient = system.ActorOf(ClusterClient.Props(settings));
+                registry.TryRegister<TKey>(clusterClient);
             });
         }
     }
