@@ -435,6 +435,49 @@ namespace Akka.Cluster.Hosting
             });
         }
 
+        /// <summary>
+        /// Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        /// <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="initialContactAddresses"> <para>
+        /// List of node addresses where the <see cref="ClusterClientReceptionist"/> are located that will be used as seed
+        /// to discover all of the receptionists in the cluster.
+        /// </para>
+        /// <para>
+        /// This should look something like "akka.tcp://systemName@networkAddress:2552"
+        /// </para></param>
+        /// <param name="receptionistActorName">The name of the <see cref="ClusterClientReceptionist"/> actor.
+        /// Defaults to "receptionist"
+        /// </param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClient<TKey>(
+            this AkkaConfigurationBuilder builder,
+            IEnumerable<Address> initialContactAddresses,
+            string receptionistActorName = "receptionist")
+            => builder.WithClusterClient<TKey>(initialContactAddresses
+                .Select(address => new RootActorPath(address) / "system" / receptionistActorName)
+                .ToList());
+
+        /// <summary>
+        /// Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        /// <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="initialContacts"> <para>
+        /// List of actor paths that will be used as a seed to discover all of the receptionists in the cluster.
+        /// </para>
+        /// <para>
+        /// This should look something like "akka.tcp://systemName@networkAddress:2552/system/receptionist"
+        /// </para></param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClient<TKey>(
+            this AkkaConfigurationBuilder builder,
+            IEnumerable<string> initialContacts)
+            => builder.WithClusterClient<TKey>(initialContacts.Select(ActorPath.Parse).ToList());
+
         internal static ClusterClientSettings CreateClusterClientSettings(Config config, IEnumerable<ActorPath> initialContacts)
         {
             var clientConfig = config.GetConfig("akka.cluster.client");
