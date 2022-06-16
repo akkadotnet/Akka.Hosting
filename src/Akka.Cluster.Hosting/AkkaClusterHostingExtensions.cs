@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -377,42 +378,81 @@ namespace Akka.Cluster.Hosting
         /// Configures a <see cref="ClusterClientReceptionist"/> for the <see cref="ActorSystem"/>
         /// </summary>
         /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="configure">An action that can be used to configure the receptionist settings</param>
+        /// <param name="name">Actor name of the ClusterReceptionist actor under the system path, by default it is /system/receptionist</param>
+        /// <param name="role">Checks that the receptionist only start on members tagged with this role. All members are used if empty.</param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder WithClusterClientReceptionist(
             this AkkaConfigurationBuilder builder,
-            Action<ClusterClientReceptionistOptions> configure = null)
+            string name = "receptionist",
+            string role = null)
         {
-            var options = new ClusterClientReceptionistOptions();
-            configure?.Invoke(options);
-            builder.AddHocon(options.ToConfig(), HoconAddMode.Prepend);
+            builder.AddHocon(CreateReceptionistConfig(name, role), HoconAddMode.Prepend);
             return builder;
         }
 
+        internal static Config CreateReceptionistConfig(string name, string role)
+        {
+            const string root = "akka.cluster.client.receptionist.";
+            
+            var sb = new StringBuilder()
+                .Append(root).Append("name:").AppendLine(QuoteIfNeeded(name));
+            
+            if(!string.IsNullOrEmpty(role))
+                sb.Append(root).Append("role:").AppendLine(QuoteIfNeeded(role));
+
+            return ConfigurationFactory.ParseString(sb.ToString());
+        }
+        
         /// <summary>
         /// Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
         /// <see cref="TKey"/>.
         /// </summary>
         /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="configure">The settings builder for configuring the <see cref="ClusterClient"/>.</param>
+        /// <param name="initialContacts"> <para>
+        /// List of <see cref="ClusterClientReceptionist"/> <see cref="ActorPath"/> that will be used as a seed
+        /// to discover all of the receptionists in the cluster.
+        /// </para>
+        /// <para>
+        /// This should look something like "akka.tcp://systemName@networkAddress:2552/system/receptionist"
+        /// </para></param>
         /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder WithClusterClient<TKey>(
             this AkkaConfigurationBuilder builder,
-            Action<ClusterClientOptions> configure)
+            IList<ActorPath> initialContacts)
         {
-            if (configure == null)
-                throw new ArgumentNullException(nameof(configure));
+            if (initialContacts == null)
+                throw new ArgumentNullException(nameof(initialContacts));
+
+            if (initialContacts.Count < 1)
+                throw new ArgumentException("Must specify at least one initial contact", nameof(initialContacts));
             
             return builder.WithActors((system, registry) =>
             {
-                var options = new ClusterClientOptions();
-                configure(options);
-                
-                var settings = options.Apply(ClusterClientSettings.Create(system));
-                var clusterClient = system.ActorOf(ClusterClient.Props(settings));
+                var clusterClient = system.ActorOf(ClusterClient.Props(
+                    CreateClusterClientSettings(system.Settings.Config, initialContacts)));
                 registry.TryRegister<TKey>(clusterClient);
             });
         }
+
+        internal static ClusterClientSettings CreateClusterClientSettings(Config config, IEnumerable<ActorPath> initialContacts)
+        {
+            var clientConfig = config.GetConfig("akka.cluster.client");
+            return ClusterClientSettings.Create(clientConfig)
+                .WithInitialContacts(initialContacts.ToImmutableHashSet());
+        }
+        
+        #region Helper functions
+
+        private static readonly Regex EscapeRegex = new Regex("[ \t:]{1}", RegexOptions.Compiled);
+        
+        private static string QuoteIfNeeded(string text)
+        {
+            return text == null 
+                ? "" : EscapeRegex.IsMatch(text) 
+                    ? $"\"{text}\"" : text;
+        }
+
+        #endregion
     }
 }
