@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
+    <ProjectReference Include="..\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup>
