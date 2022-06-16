@@ -27,6 +27,29 @@ namespace Akka.Persistence.Hosting
         public AkkaPersistenceJournalBuilder AddEventAdapter<TAdapter>(string eventAdapterName,
             IEnumerable<Type> boundTypes) where TAdapter : IEventAdapter
         {
+            AddAdapter<TAdapter>(eventAdapterName, boundTypes);
+
+            return this;
+        }
+
+        public AkkaPersistenceJournalBuilder AddReadEventAdapter<TAdapter>(string eventAdapterName,
+            IEnumerable<Type> boundTypes) where TAdapter : IReadEventAdapter
+        {
+            AddAdapter<TAdapter>(eventAdapterName, boundTypes);
+
+            return this;
+        }
+        
+        public AkkaPersistenceJournalBuilder AddWriteEventAdapter<TAdapter>(string eventAdapterName,
+            IEnumerable<Type> boundTypes) where TAdapter : IWriteEventAdapter
+        {
+            AddAdapter<TAdapter>(eventAdapterName, boundTypes);
+
+            return this;
+        }
+        
+        private void AddAdapter<TAdapter>(string eventAdapterName, IEnumerable<Type> boundTypes)
+        {
             Adapters[eventAdapterName] = typeof(TAdapter);
             foreach (var t in boundTypes)
             {
@@ -34,8 +57,6 @@ namespace Akka.Persistence.Hosting
                     Bindings[t] = new HashSet<string>();
                 Bindings[t].Add(eventAdapterName);
             }
-
-            return this;
         }
 
         /// <summary>
@@ -46,10 +67,10 @@ namespace Akka.Persistence.Hosting
             // useless configuration - don't bother.
             if (Adapters.Count == 0 || Bindings.Count == 0)
                 return;
-            
+
             var adapters = new StringBuilder()
                 .Append($"akka.persistence.journal.{JournalId}").Append("{")
-                    .AppendLine("event-adapters {");
+                .AppendLine("event-adapters {");
             foreach (var kv in Adapters)
             {
                 adapters.AppendLine($"{kv.Key} = \"{kv.Value.TypeQualifiedName()}\"");
@@ -67,7 +88,7 @@ namespace Akka.Persistence.Hosting
             Builder.AddHocon(finalHocon, HoconAddMode.Prepend);
         }
     }
-    
+
     /// <summary>
     /// The set of options for generic Akka.Persistence.
     /// </summary>
@@ -88,7 +109,7 @@ namespace Akka.Persistence.Hosting
         {
             var jBuilder = new AkkaPersistenceJournalBuilder(journalId, builder);
             journalBuilder(jBuilder);
-            
+
             // build and inject the HOCON
             jBuilder.Build();
             return builder;
