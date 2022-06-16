@@ -1,29 +1,11 @@
 ﻿using System;
 using Akka.Configuration;
 using Akka.Hosting;
+using Akka.Persistence.Hosting;
 using Akka.Persistence.Query.Sql;
 
 namespace Akka.Persistence.PostgreSql.Hosting
 {
-    public enum SqlPersistenceMode
-    {
-        /// <summary>
-        /// Sets both the akka.persistence.journal and the akka.persistence.snapshot-store to use
-        /// Akka.Persistence.PostgreSql.
-        /// </summary>
-        Both,
-
-        /// <summary>
-        /// Sets ONLY the akka.persistence.journal to use Akka.Persistence.PostgreSql.
-        /// </summary>
-        Journal,
-
-        /// <summary>
-        /// Sets ONLY the akka.persistence.snapshot-store to use Akka.Persistence.PostgreSql.
-        /// </summary>
-        SnapshotStore,
-    }
-
     /// <summary>
     /// Extension methods for Akka.Persistence.PostgreSql
     /// </summary>
@@ -32,12 +14,12 @@ namespace Akka.Persistence.PostgreSql.Hosting
         public static AkkaConfigurationBuilder WithPostgreSqlPersistence(
             this AkkaConfigurationBuilder builder,
             string connectionString,
-            SqlPersistenceMode mode = SqlPersistenceMode.Both,
+            PersistenceMode mode = PersistenceMode.Both,
             string schemaName = "public",
             bool autoInitialize = false,
             StoredAsType storedAsType = StoredAsType.ByteA,
             bool sequentialAccess = false,
-            bool useBigintIdentityForOrderingColumn = false)
+            bool useBigintIdentityForOrderingColumn = false, Action<AkkaPersistenceJournalBuilder> configurator = null)
         {
             var storedAs = storedAsType switch
             {
@@ -88,17 +70,22 @@ namespace Akka.Persistence.PostgreSql.Hosting
 
             var finalConfig = mode switch
             {
-                SqlPersistenceMode.Both => journalConfiguration
+                PersistenceMode.Both => journalConfiguration
                     .WithFallback(snapshotStoreConfig)
                     .WithFallback(SqlReadJournal.DefaultConfiguration()),
 
-                SqlPersistenceMode.Journal => journalConfiguration
+                PersistenceMode.Journal => journalConfiguration
                     .WithFallback(SqlReadJournal.DefaultConfiguration()),
 
-                SqlPersistenceMode.SnapshotStore => snapshotStoreConfig,
+                PersistenceMode.SnapshotStore => snapshotStoreConfig,
 
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid SqlPersistenceMode defined.")
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid PersistenceMode defined.")
             };
+            
+            if (configurator != null) // configure event adapters
+            {
+                builder.WithJournal("postgresql", configurator);
+            }
 
             return builder.AddHocon(finalConfig.WithFallback(PostgreSqlPersistence.DefaultConfiguration()));
         }

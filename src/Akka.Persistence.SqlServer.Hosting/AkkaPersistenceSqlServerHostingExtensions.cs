@@ -1,38 +1,30 @@
 ﻿using System;
+using Akka.Actor;
 using Akka.Configuration;
 using Akka.Hosting;
+using Akka.Persistence.Hosting;
 using Akka.Persistence.Query.Sql;
 
 namespace Akka.Persistence.SqlServer.Hosting
 {
-    public enum SqlPersistenceMode
-    {
-        /// <summary>
-        /// Sets both the akka.persistence.journal and the akka.persistence.snapshot-store to use
-        /// Akka.Persistence.SqlServer.
-        /// </summary>
-        Both,
-
-        /// <summary>
-        /// Sets ONLY the akka.persistence.journal to use Akka.Persistence.SqlServer.
-        /// </summary>
-        Journal,
-
-        /// <summary>
-        /// Sets ONLY the akka.persistence.snapshot-store to use Akka.Persistence.SqlServer.
-        /// </summary>
-        SnapshotStore,
-    }
-
     /// <summary>
     /// Extension methods for Akka.Persistence.SqlServer
     /// </summary>
     public static class AkkaPersistenceSqlServerHostingExtensions
     {
+        /// <summary>
+        /// Adds Akka.Persistence.SqlServer to this <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="mode"></param>
+        /// <param name="configurator"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static AkkaConfigurationBuilder WithSqlServerPersistence(
             this AkkaConfigurationBuilder builder,
             string connectionString,
-            SqlPersistenceMode mode = SqlPersistenceMode.Both)
+            PersistenceMode mode = PersistenceMode.Both, Action<AkkaPersistenceJournalBuilder> configurator = null)
         {
             Config journalConfiguration = @$"
             akka.persistence {{
@@ -65,17 +57,22 @@ namespace Akka.Persistence.SqlServer.Hosting
 
             var finalConfig = mode switch
             {
-                SqlPersistenceMode.Both => journalConfiguration
+                PersistenceMode.Both => journalConfiguration
                     .WithFallback(snapshotStoreConfig)
                     .WithFallback(SqlReadJournal.DefaultConfiguration()),
 
-                SqlPersistenceMode.Journal => journalConfiguration
+                PersistenceMode.Journal => journalConfiguration
                     .WithFallback(SqlReadJournal.DefaultConfiguration()),
 
-                SqlPersistenceMode.SnapshotStore => snapshotStoreConfig,
+                PersistenceMode.SnapshotStore => snapshotStoreConfig,
 
                 _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid SqlPersistenceMode defined.")
             };
+
+            if (configurator != null) // configure event adapters
+            {
+                builder.WithJournal("sql-server", configurator);
+            }
 
             return builder.AddHocon(finalConfig.WithFallback(SqlServerPersistence.DefaultConfiguration()));
         }
