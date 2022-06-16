@@ -8,6 +8,24 @@ using Akka.Util;
 
 namespace Akka.Persistence.Hosting
 {
+    public enum PersistenceMode
+    {
+        /// <summary>
+        /// Sets both the akka.persistence.journal and the akka.persistence.snapshot-store to use this plugin.
+        /// </summary>
+        Both,
+
+        /// <summary>
+        /// Sets ONLY the akka.persistence.journal to use this plugin.
+        /// </summary>
+        Journal,
+
+        /// <summary>
+        /// Sets ONLY the akka.persistence.snapshot-store to use this plugin.
+        /// </summary>
+        SnapshotStore,
+    }
+    
     /// <summary>
     /// Used to help build journal configurations
     /// </summary>
