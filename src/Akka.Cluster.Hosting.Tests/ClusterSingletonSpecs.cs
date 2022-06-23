@@ -14,26 +14,10 @@ using Xunit.Abstractions;
 
 namespace Akka.Cluster.Hosting.Tests;
 
-public class ClusterSingletonSpecs
+public static class TestHelper
 {
-    public ClusterSingletonSpecs(ITestOutputHelper output)
-    {
-        Output = output;
-    }
 
-    public ITestOutputHelper Output { get; }
-    
-    private class MySingletonActor : ReceiveActor
-    {
-        public static Props MyProps => Props.Create(() => new MySingletonActor());
-
-        public MySingletonActor()
-        {
-            ReceiveAny(_ => Sender.Tell(_));
-        }
-    }
-
-    private async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, ClusterOptions options)
+    public static async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, ClusterOptions options, ITestOutputHelper output)
     {
         var tcs = new TaskCompletionSource();
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -49,7 +33,7 @@ public class ClusterSingletonSpecs
                         .WithActors((system, registry) =>
                         {
                             var extSystem = (ExtendedActorSystem)system;
-                            var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(Output)), "log-test");
+                            var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(output)), "log-test");
                             logger.Tell(new InitializeLogger(system.EventStream));
                         })
                         .WithActors(async (system, registry) =>
@@ -74,17 +58,37 @@ public class ClusterSingletonSpecs
 
         return host;
     }
+}
+
+public class ClusterSingletonSpecs
+{
+    public ClusterSingletonSpecs(ITestOutputHelper output)
+    {
+        Output = output;
+    }
+
+    public ITestOutputHelper Output { get; }
+    
+    private class MySingletonActor : ReceiveActor
+    {
+        public static Props MyProps => Props.Create(() => new ClusterSingletonSpecs.MySingletonActor());
+
+        public MySingletonActor()
+        {
+            ReceiveAny(_ => Sender.Tell(_));
+        }
+    }
 
     [Fact]
     public async Task Should_launch_ClusterSingletonAndProxy()
     {
         // arrange
-        using var host = await CreateHost(
-            builder => { builder.WithSingleton<MySingletonActor>("my-singleton", MySingletonActor.MyProps); },
-            new ClusterOptions(){ Roles = new[] { "my-host"}});
+        using var host = await TestHelper.CreateHost(
+            builder => { builder.WithSingleton<ClusterSingletonSpecs.MySingletonActor>("my-singleton", MySingletonActor.MyProps); },
+            new ClusterOptions(){ Roles = new[] { "my-host"}}, Output);
 
         var registry = host.Services.GetRequiredService<ActorRegistry>();
-        var singletonProxy = registry.Get<MySingletonActor>();
+        var singletonProxy = registry.Get<ClusterSingletonSpecs.MySingletonActor>();
 
         // act
         
@@ -103,19 +107,19 @@ public class ClusterSingletonSpecs
         // arrange
 
         var singletonOptions = new ClusterSingletonOptions() { Role = "my-host" };
-        using var singletonHost = await CreateHost(
-            builder => { builder.WithSingleton<MySingletonActor>("my-singleton", MySingletonActor.MyProps, singletonOptions, createProxyToo:false); },
-            new ClusterOptions(){ Roles = new[] { "my-host"}});
+        using var singletonHost = await TestHelper.CreateHost(
+            builder => { builder.WithSingleton<ClusterSingletonSpecs.MySingletonActor>("my-singleton", MySingletonActor.MyProps, singletonOptions, createProxyToo:false); },
+            new ClusterOptions(){ Roles = new[] { "my-host"}}, Output);
 
         var singletonSystem = singletonHost.Services.GetRequiredService<ActorSystem>();
         var address = Cluster.Get(singletonSystem).SelfAddress;
         
-        using var singletonProxyHost =  await CreateHost(
-            builder => { builder.WithSingletonProxy<MySingletonActor>("my-singleton", singletonOptions); },
-            new ClusterOptions(){ Roles = new[] { "proxy" }, SeedNodes = new Address[]{ address } });
+        using var singletonProxyHost =  await TestHelper.CreateHost(
+            builder => { builder.WithSingletonProxy<ClusterSingletonSpecs.MySingletonActor>("my-singleton", singletonOptions); },
+            new ClusterOptions(){ Roles = new[] { "proxy" }, SeedNodes = new Address[]{ address } }, Output);
         
         var registry = singletonProxyHost.Services.GetRequiredService<ActorRegistry>();
-        var singletonProxy = registry.Get<MySingletonActor>();
+        var singletonProxy = registry.Get<ClusterSingletonSpecs.MySingletonActor>();
         
         // act
         
