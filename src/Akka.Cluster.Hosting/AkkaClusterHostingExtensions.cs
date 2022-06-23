@@ -138,10 +138,8 @@ namespace Akka.Cluster.Hosting
                         .WithRole(shardOptions.Role)
                         .WithRememberEntities(shardOptions.RememberEntities)
                         .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
-
-                // TODO: should throw here if duplicate key used
-
-                registry.TryRegister<TKey>(shardRegion);
+                
+                registry.Register<TKey>(shardRegion);
             });
         }
 
@@ -179,9 +177,44 @@ namespace Akka.Cluster.Hosting
                         .WithRememberEntities(shardOptions.RememberEntities)
                         .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
 
-                // TODO: should throw here if duplicate key used
+                registry.Register<TKey>(shardRegion);
+            });
+        }
+        
+        public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
+            string typeName,
+            Func<ActorSystem, IActorRegistry, Func<string, Props>> compositePropsFactory, IMessageExtractor messageExtractor, ShardOptions shardOptions)
+        {
+            return builder.WithActors(async (system, registry) =>
+            {
+                var entityPropsFactory = compositePropsFactory(system, registry);
+                
+                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
+                    ClusterShardingSettings.Create(system)
+                        .WithRole(shardOptions.Role)
+                        .WithRememberEntities(shardOptions.RememberEntities)
+                        .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
 
-                registry.TryRegister<TKey>(shardRegion);
+                registry.Register<TKey>(shardRegion);
+            });
+        }
+
+        public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
+            string typeName,
+            Func<ActorSystem, IActorRegistry, Func<string, Props>> compositePropsFactory, ExtractEntityId extractEntityId,
+            ExtractShardId extractShardId, ShardOptions shardOptions)
+        {
+            return builder.WithActors(async (system, registry) =>
+            {
+                var entityPropsFactory = compositePropsFactory(system, registry);
+                
+                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
+                    ClusterShardingSettings.Create(system)
+                        .WithRole(shardOptions.Role)
+                        .WithRememberEntities(shardOptions.RememberEntities)
+                        .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
+
+                registry.Register<TKey>(shardRegion);
             });
         }
 
@@ -210,10 +243,8 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, extractEntityId, extractShardId);
-
-                // TODO: should throw here if duplicate key used
-
-                registry.TryRegister<TKey>(shardRegionProxy);
+                
+                registry.Register<TKey>(shardRegionProxy);
             });
         }
 
@@ -237,10 +268,8 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, messageExtractor);
-
-                // TODO: should throw here if duplicate key used
-
-                registry.TryRegister<TKey>(shardRegionProxy);
+                
+                registry.Register<TKey>(shardRegionProxy);
             });
         }
 
@@ -267,7 +296,7 @@ namespace Akka.Cluster.Hosting
             {
                 // force the initialization
                 var mediator = DistributedPubSub.Get(system).Mediator;
-                registry.TryRegister<DistributedPubSub>(mediator);
+                registry.Register<DistributedPubSub>(mediator);
             });
         }
 
