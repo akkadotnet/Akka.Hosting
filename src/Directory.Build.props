@@ -2,10 +2,8 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.3.1</VersionPrefix>
-    <PackageReleaseNotes>• [Fixed: WithDistributedPubSub throws NullReferenceException](https://github.com/akkadotnet/Akka.Hosting/issues/55)
-• [Introduced AddHoconFile method](https://github.com/akkadotnet/Akka.Hosting/pull/58)
-• [Upgraded to Akka.NET 1.4.39](https://github.com/akkadotnet/akka.net/releases/tag/1.4.39)</PackageReleaseNotes>
+    <VersionPrefix>0.3.4</VersionPrefix>
+    <PackageReleaseNotes>• [Adds ActorRegistry-capable overloads to the WithShardRegion&lt;TKey&gt; methods](https://github.com/akkadotnet/Akka.Hosting/pull/70)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
