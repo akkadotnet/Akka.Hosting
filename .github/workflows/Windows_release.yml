@@ -26,7 +26,7 @@ jobs:
     name: windows-latest
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Make build.sh executable
         run: chmod +x ./build.sh
       - name: Make build.cmd executable
@@ -49,4 +49,3 @@ jobs:
         env:
           Nuget_Key: ${{ secrets.NUGET_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_CONTEXT: ${{ toJSON(github) }}

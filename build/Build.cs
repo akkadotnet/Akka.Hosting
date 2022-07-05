@@ -26,8 +26,9 @@ using static Nuke.Common.Tools.Git.GitTasks;
 using Octokit;
 using Nuke.Common.Utilities;
 
-[CheckBuildProjectConfigurations]
 [ShutdownDotNetAfterServerBuild]
+[DotNetVerbosityMapping]
+[UnsetVisualStudioEnvironmentVariables]
 partial class Build : NukeBuild
 {
     /// Support plugins are available for:
