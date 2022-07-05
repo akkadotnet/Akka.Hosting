@@ -220,8 +220,9 @@
     <TestsNetCoreFramework>net6.0</TestsNetCoreFramework>
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>17.2.0</TestSdkVersion>
+	<XunitRunneVisualstudio>2.4.5</XunitRunneVisualstudio>
     <AkkaVersion>1.4.39</AkkaVersion>
-    <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
+    <MicrosoftExtensionsVersion>6.0.1</MicrosoftExtensionsVersion>
   </PropertyGroup>
 
   <!-- SourceLink support for all Akka.NET projects -->
