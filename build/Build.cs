@@ -126,7 +126,8 @@ partial class Build : NukeBuild
           var projects = SourceDirectory.GlobFiles("**/*.csproj")
           .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj"));
           foreach (var project in projects)
-          {              
+          {
+              Information(EnvironmentInfo.GetVariable<string>("GITHUB_CONTEXT"));
               Information(BuildNumber.ToString());
               Information(PreReleaseVersionSuffix);
               Information(VersionSuffix); 
