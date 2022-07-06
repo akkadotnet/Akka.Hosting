@@ -272,10 +272,10 @@ partial class Build : NukeBuild
             */
             var platform = EnvironmentInfo.Platform switch
             {
-                PlatformFamily.Windows => $@"{GetProgramFiles()}\Unity\Hub\Editor\{version}\Editor\Unity.exe",
-                PlatformFamily.OSX => $"/Applications/Unity/Hub/Editor/{version}/Unity.app/Contents/MacOS/Unity",
-                _ => throw new Exception($"Cannot determine Unity Hub installation path for '{version}'.")
-            }; ;
+                PlatformFamily.Windows => $@"./src/**/*.Tests.csproj",
+                PlatformFamily.OSX => $"./src/**/*.Tests.csproj",
+                _ => throw new Exception($"Cannot determine Unity Hub installation path for.")
+            }; 
             
             var projects = Solution.GetProjects("*.Tests");
             foreach (var project in projects)
