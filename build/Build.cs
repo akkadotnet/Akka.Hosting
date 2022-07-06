@@ -229,11 +229,54 @@ partial class Build : NukeBuild
                 Information($"  {releaseAsset.BrowserDownloadUrl}");
             }
         });
+    /*
+     public static Dictionary<PlatformFamily, string> OsFriendlyName = new Dictionary<PlatformFamily, string>
+	{
+		{ PlatformFamily.Unknown, "" },
+		{ PlatformFamily.Windows, "Windows" },
+		{ PlatformFamily.Linux, "Linux" },
+		{ PlatformFamily.OSX, "macOS" },
+	};
+     */
     Target RunTests => _ => _
         .Description("Runs all the unit tests")
         .DependsOn(Compile)
         .Executes(() =>
         {
+            //EnvironmentInfo.HomeDirectory
+            //EnvironmentInfo.FQDN
+            /* string homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
+            Environment.OSVersion.Platform == PlatformID.MacOSX)
+                    ? Environment.GetEnvironmentVariable("HOME")
+                    : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+            if (EnvironmentInfo.IsWin)
+                {
+                    DotNetTasks.DotNet($"dev-certs https -ep {homePath}/.aspnet/https/cert.pfx -p {pass}");
+                }
+                else if (EnvironmentInfo.IsLinux || EnvironmentInfo.IsOsx)
+                {
+                    DotNetTasks.DotNet($"dev-certs https -v -ep ~/.aspnet/https/cert.pfx -p {pass}");
+                }
+                else
+                {
+                    throw new Exception("Unsuported OS. Cetificates cannot be generates!");
+                }
+
+            var execute = EnvironmentInfo.IsWin && Full;
+            Serilog.Log.Information($"Should compile for Universal Windows: {execute}");
+            if (!execute) return;
+
+            /// Determines if the current system is a Windows system
+            [<System.Obsolete("Use Fake.Core.Environment instead (FAKE0001 - package: Fake.Core.Environment)")>]
+            let isWindows = Environment.OSVersion.Platform = PlatformID.Win32NT
+            */
+            var platform = EnvironmentInfo.Platform switch
+            {
+                PlatformFamily.Windows => $@"{GetProgramFiles()}\Unity\Hub\Editor\{version}\Editor\Unity.exe",
+                PlatformFamily.OSX => $"/Applications/Unity/Hub/Editor/{version}/Unity.app/Contents/MacOS/Unity",
+                _ => throw new Exception($"Cannot determine Unity Hub installation path for '{version}'.")
+            }; ;
+            
             var projects = Solution.GetProjects("*.Tests");
             foreach (var project in projects)
             {
@@ -253,6 +296,7 @@ partial class Build : NukeBuild
                 }
             }
         });
+   
     Target SignClient => _ => _
         .Unlisted()
         .After(CreateNuget)
