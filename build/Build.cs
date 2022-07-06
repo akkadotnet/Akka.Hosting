@@ -126,11 +126,6 @@ partial class Build : NukeBuild
           .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj"));
           foreach (var project in projects)
           {
-              Information(BuildNumber().ToString());
-              Information(PreReleaseVersionSuffix());
-              Information(VersionSuffix); 
-              Information("https://github.com/akkadotnet/Akka.Hosting/pull/73 <-- @Ebere Abanonu need to figure out why this broke and how to");
-
               DotNetPack(s => s
                   .SetProject(project)
                   .SetConfiguration(Configuration)
