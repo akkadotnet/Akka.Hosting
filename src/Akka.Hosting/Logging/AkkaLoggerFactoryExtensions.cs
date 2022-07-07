@@ -13,7 +13,7 @@ namespace Akka.Hosting.Logging
 {
     public static class AkkaLoggerFactoryExtensions
     {
-        public static AkkaConfigurationBuilder WithLoggerFactoryLogger(
+        public static AkkaConfigurationBuilder WithLoggerFactory(
             this AkkaConfigurationBuilder builder,
             ILoggerFactory loggerFactory,
             string timestampFormat = LoggerFactoryLogger.DefaultTimeStampFormat)
