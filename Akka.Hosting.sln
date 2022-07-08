@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.Hosting", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.Hosting.Tests", "src\Akka.Persistence.Hosting.Tests\Akka.Persistence.Hosting.Tests.csproj", "{876DE0B6-5FA8-4F79-876E-92EF5E9E7011}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{876DE0B6-5FA8-4F79-876E-92EF5E9E7011}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{876DE0B6-5FA8-4F79-876E-92EF5E9E7011}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{876DE0B6-5FA8-4F79-876E-92EF5E9E7011}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,5 +115,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
+		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 	EndGlobalSection
 EndGlobal
