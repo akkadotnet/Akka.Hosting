@@ -158,10 +158,6 @@ partial class Build : NukeBuild
                 DotNetNuGetPush(s => s
                  .SetTimeout(TimeSpan.FromMinutes(10).Minutes)
                  .SetTargetPath(package)
-                 //.SetRuntime(platform)
-                 //.SetSelfContained(false)
-                 //.SetPublishSingleFile(true)
-                 //.SetPublishTrimmed(false)
                  .SetSource(NugetPublishUrl)
                  .SetSymbolSource(SymbolsPublishUrl)
                  .SetApiKey(NugetKey));
@@ -171,10 +167,6 @@ partial class Build : NukeBuild
                 DotNetNuGetPush(s => s
                   .SetTimeout(TimeSpan.FromMinutes(10).Minutes)
                   .SetTargetPath(package)
-                  //.SetRuntime(platform)
-                  //.SetSelfContained(false)
-                  //.SetPublishSingleFile(true)
-                  //.SetPublishTrimmed(false)
                   .SetSource(NugetPublishUrl)
                   .SetApiKey(NugetKey));
             }
