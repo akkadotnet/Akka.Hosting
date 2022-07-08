@@ -25,9 +25,11 @@ using Nuke.Common.Tools.SignClient;
 using static Nuke.Common.Tools.Git.GitTasks;
 using Octokit;
 using Nuke.Common.Utilities;
+using Nuke.Common.CI.GitHubActions;
 
-[CheckBuildProjectConfigurations]
 [ShutdownDotNetAfterServerBuild]
+[DotNetVerbosityMapping]
+[UnsetVisualStudioEnvironmentVariables]
 partial class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -45,7 +47,6 @@ partial class Build : NukeBuild
 
     [Parameter] string NugetPublishUrl = "https://api.nuget.org/v3/index.json";
 
-    [Parameter][Secret] string GitHubToken;
     [Parameter][Secret] string NugetKey;
 
     [Parameter] int Port = 8090;
@@ -74,23 +75,22 @@ partial class Build : NukeBuild
     public string ChangelogFile => RootDirectory / "RELEASE_NOTES.md";
     public AbsolutePath DocFxDir => RootDirectory / "docs";
     public AbsolutePath DocFxDirJson => DocFxDir / "docfx.json";
-
     readonly Solution Solution = ProjectModelTasks.ParseSolution(RootDirectory.GlobFiles("*.sln").FirstOrDefault());
-
-    static readonly JsonElement? _githubContext = string.IsNullOrWhiteSpace(EnvironmentInfo.GetVariable<string>("GITHUB_CONTEXT")) ?
-        null
-        : JsonSerializer.Deserialize<JsonElement>(EnvironmentInfo.GetVariable<string>("GITHUB_CONTEXT"));
-
-    //let hasTeamCity = (not (buildNumber = "0")) // check if we have the TeamCity environment variable for build # set
-    static readonly int BuildNumber = _githubContext.HasValue ? int.Parse(_githubContext.Value.GetProperty("run_number").GetString()) : 0;
-
-    static readonly string PreReleaseVersionSuffix = "beta" + (BuildNumber > 0 ? BuildNumber : DateTime.UtcNow.Ticks.ToString());
+    GitHubActions GitHubActions => GitHubActions.Instance;
+    private  long BuildNumber()
+    {
+        return GitHubActions.RunNumber;
+    }    
+    private string PreReleaseVersionSuffix()
+    {
+        return "beta" + (BuildNumber() > 0 ? BuildNumber() : DateTime.UtcNow.Ticks.ToString());
+    } 
     public ChangeLog Changelog => ReadChangelog(ChangelogFile);
 
     public ReleaseNotes ReleaseNotes => Changelog.ReleaseNotes.OrderByDescending(s => s.Version).FirstOrDefault() ?? throw new ArgumentException("Bad Changelog File. Version Should Exist");
 
     private string VersionFromReleaseNotes => ReleaseNotes.Version.IsPrerelease ? ReleaseNotes.Version.OriginalVersion : "";
-    private string VersionSuffix => NugetPrerelease == "dev" ? PreReleaseVersionSuffix : NugetPrerelease == "" ? VersionFromReleaseNotes : NugetPrerelease;
+    private string VersionSuffix => NugetPrerelease == "dev" ? PreReleaseVersionSuffix() : NugetPrerelease == "" ? VersionFromReleaseNotes : NugetPrerelease;
     public string ReleaseVersion => ReleaseNotes.Version?.ToString() ?? throw new ArgumentException("Bad Changelog File. Define at least one version");
     GitHubClient GitHubClient;
     Target Clean => _ => _
@@ -175,18 +175,18 @@ partial class Build : NukeBuild
     });
     Target AuthenticatedGitHubClient => _ => _
         .Unlisted()
-        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubToken))
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubActions.Token))
         .Executes(() =>
         {
             GitHubClient = new GitHubClient(new ProductHeaderValue("nuke-build"))
             {
-                Credentials = new Credentials(GitHubToken, AuthenticationType.Bearer)
+                Credentials = new Credentials(GitHubActions.Token, AuthenticationType.Bearer)
             };
         });
     Target GitHubRelease => _ => _
         .Unlisted()
         .Description("Creates a GitHub release (or amends existing) and uploads the artifact")
-        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubToken))
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubActions.Token))
         .DependsOn(AuthenticatedGitHubClient)
         .Executes(async () =>
         {
@@ -194,9 +194,12 @@ partial class Build : NukeBuild
             var releaseNotes = GetNuGetReleaseNotes(ChangelogFile);
             Release release;
             var releaseName = $"{version}";
+
             if (!VersionSuffix.IsNullOrWhiteSpace())
                 releaseName = $"{version}-{VersionSuffix}";
+
             var identifier = GitRepository.Identifier.Split("/");
+
             var (gitHubOwner, repoName) = (identifier[0], identifier[1]);
             try
             {
