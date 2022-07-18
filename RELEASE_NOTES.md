@@ -1,2 +1,2 @@
-## [0.3.4] / 23 June 2022
-- [Adds `ActorRegistry`-capable overloads to the `WithShardRegion<TKey>` methods](https://github.com/akkadotnet/Akka.Hosting/pull/70)
+## [0.4.0] / 18 July 2022
+- [Add `Microsoft.Extensions.Logging.ILoggerFactory` logging support](https://github.com/akkadotnet/Akka.Hosting/pull/72)
