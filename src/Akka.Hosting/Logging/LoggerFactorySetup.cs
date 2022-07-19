@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting.Logging
 {
-    internal class LoggerFactorySetup : Setup
+    public class LoggerFactorySetup : Setup
     {
         public LoggerFactorySetup(ILoggerFactory loggerFactory)
         {
