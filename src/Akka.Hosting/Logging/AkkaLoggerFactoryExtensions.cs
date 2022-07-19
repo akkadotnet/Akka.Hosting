@@ -16,12 +16,14 @@ namespace Akka.Hosting.Logging
 {
     public static class AkkaLoggerFactoryExtensions
     {
-        public static AkkaConfigurationBuilder WithLoggerFactory(this AkkaConfigurationBuilder builder)
+        public static AkkaConfigurationBuilder WithLoggerFactory(this AkkaConfigurationBuilder builder, ILoggerFactory loggerFactory)
         {
-            return builder.AddHocon("akka.loggers = [\"Akka.Hosting.Logging.LoggerFactoryLogger, Akka.Hosting\"]");
+            return builder
+                .AddHocon("akka.loggers = [\"Akka.Hosting.Logging.LoggerFactoryLogger, Akka.Hosting\"]")
+                .AddSetup(new LoggerFactorySetup(loggerFactory));
         }
         
-        public static AkkaConfigurationBuilder AddLoggerFactory(this AkkaConfigurationBuilder builder)
+        public static AkkaConfigurationBuilder AddLoggerFactory(this AkkaConfigurationBuilder builder, ILoggerFactory loggerFactory)
         {
             var loggers = builder.Configuration.HasValue
                 ? builder.Configuration.Value.GetStringList("akka.loggers")
@@ -31,7 +33,8 @@ namespace Akka.Hosting.Logging
                 loggers.Add("Akka.Event.DefaultLogger");
             
             loggers.Add("Akka.Hosting.Logging.LoggerFactoryLogger, Akka.Hosting");
-            return builder.AddHocon($"akka.loggers = [{string.Join(", ", loggers.Select(s => $"\"{s}\""))}]");
+            return builder.AddHocon($"akka.loggers = [{string.Join(", ", loggers.Select(s => $"\"{s}\""))}]")
+                .AddSetup(new LoggerFactorySetup(loggerFactory));
         }
         
     }

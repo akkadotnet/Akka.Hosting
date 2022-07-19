@@ -9,8 +9,6 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
-using Akka.Configuration;
-using Akka.DependencyInjection;
 using Akka.Dispatch;
 using Akka.Event;
 using Microsoft.Extensions.Logging;
@@ -26,12 +24,13 @@ namespace Akka.Hosting.Logging
 
         private readonly ConcurrentDictionary<Type, ILogger> _loggerCache = new ConcurrentDictionary<Type, ILogger>();
         private readonly ILoggingAdapter _log = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
-        private ILoggerFactory _loggerFactory;
+        private readonly ILoggerFactory _loggerFactory;
         private readonly string _messageFormat;
 
         public LoggerFactoryLogger()
         {
             _messageFormat = string.Format(DefaultMessageFormat, DefaultTimeStampFormat);
+            _loggerFactory = Context.System.Settings.Setup.Get<LoggerFactorySetup>().Value.LoggerFactory;
         }
 
         protected override void PostStop()
@@ -44,11 +43,6 @@ namespace Akka.Hosting.Logging
             switch (message)
             {
                 case InitializeLogger _:
-                    var resolver = DependencyResolver.For(Context.System);
-                    _loggerFactory = resolver.Resolver.GetService<ILoggerFactory>();
-                    if (_loggerFactory == null)
-                        throw new ConfigurationException("Could not find any ILoggerFactory service inside ServiceProvider");
-                    
                     _log.Info($"{nameof(LoggerFactoryLogger)} started");
                     Sender.Tell(new LoggerInitialized());
                     return true;
