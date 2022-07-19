@@ -9,14 +9,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Akka.Actor;
 using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Event;
 
 namespace Akka.Hosting.Logging
 {
-    public class LoggerSetup
+    public sealed class LoggerSetup
     {
         private readonly List<Type> _loggers = new List<Type> { typeof(DefaultLogger) };
         internal AkkaConfigurationBuilder Builder { get; }
