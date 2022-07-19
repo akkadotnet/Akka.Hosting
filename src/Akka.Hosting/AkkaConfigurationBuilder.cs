@@ -11,7 +11,6 @@ using Akka.DependencyInjection;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceProvider = Microsoft.Extensions.DependencyInjection.ServiceProvider;
 
 namespace Akka.Hosting
 {
