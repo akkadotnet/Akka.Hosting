@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Dispatch;
 using Akka.Event;
 
 namespace Akka.Hosting.Logging
@@ -56,7 +57,7 @@ namespace Akka.Hosting.Logging
         /// Register a logger
         /// </summary>
         /// <returns>This <see cref="LoggerSetup"/> instance</returns>
-        public LoggerSetup AddLogger<T>() where T: ActorBase
+        public LoggerSetup AddLogger<T>() where T: IRequiresMessageQueue<ILoggerMessageQueueSemantics>
         {
             var logger = typeof(T);
             var methodInfo = logger.GetMethod(
