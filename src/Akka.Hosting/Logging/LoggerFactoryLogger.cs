@@ -143,7 +143,7 @@ namespace Akka.Hosting.Logging
                 case Event.LogLevel.WarningLevel:
                     return LogLevel.Warning;
                 case Event.LogLevel.ErrorLevel:
-                    return LogLevel.Warning;
+                    return LogLevel.Error;
                 default:
                     // Should never reach this code path
                     return LogLevel.Error;
