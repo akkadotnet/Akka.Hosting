@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
+using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Event;
 using Microsoft.Extensions.Logging;
@@ -30,7 +31,12 @@ namespace Akka.Hosting.Logging
         public LoggerFactoryLogger()
         {
             _messageFormat = string.Format(DefaultMessageFormat, DefaultTimeStampFormat);
-            _loggerFactory = Context.System.Settings.Setup.Get<LoggerFactorySetup>().Value.LoggerFactory;
+            var setup = Context.System.Settings.Setup.Get<LoggerFactorySetup>();
+            if (!setup.HasValue) 
+                throw new ConfigurationException(
+                    $"Could not start {nameof(LoggerFactoryLogger)}, the required setup class " +
+                    $"{nameof(LoggerFactorySetup)} could not be found. Have you added this to the ActorSystem setup?");
+            _loggerFactory = setup.Value.LoggerFactory;
         }
 
         protected override void PostStop()
