@@ -3,6 +3,7 @@ using System.IO;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
+using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ServiceProvider = Microsoft.Extensions.DependencyInjection.ServiceProvider;
@@ -53,7 +54,7 @@ namespace Akka.Hosting
             var b = new AkkaConfigurationBuilder(services, actorSystemName);
             services.AddSingleton<AkkaConfigurationBuilder>(sp =>
             {
-                
+                b.ServiceProvider = new Option<IServiceProvider>(sp);
                 builder(b, sp);
                 return b;
             });
