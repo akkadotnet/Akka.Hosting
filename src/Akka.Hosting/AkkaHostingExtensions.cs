@@ -54,7 +54,6 @@ namespace Akka.Hosting
             var b = new AkkaConfigurationBuilder(services, actorSystemName);
             services.AddSingleton<AkkaConfigurationBuilder>(sp =>
             {
-                b.ServiceProvider = new Option<IServiceProvider>(sp);
                 builder(b, sp);
                 return b;
             });

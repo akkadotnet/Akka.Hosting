@@ -45,8 +45,6 @@ namespace Akka.Hosting.Logging
         /// <returns>the original <see cref="LoggerSetup"/> used to configure the logger system</returns>
         public static LoggerSetup AddLoggerFactory(this LoggerSetup setup)
         {
-            var builder = setup.Builder;
-            LoggerFactoryLogger.ConfigureHosting(builder);
             setup.AddLogger(typeof(LoggerFactoryLogger));
             return setup;
         }
@@ -60,7 +58,7 @@ namespace Akka.Hosting.Logging
         public static LoggerSetup AddLoggerFactory(this LoggerSetup setup, ILoggerFactory loggerFactory)
         {
             var builder = setup.Builder;
-            LoggerFactoryLogger.ConfigureHosting(builder, loggerFactory);
+            builder.AddSetup(new LoggerFactorySetup(loggerFactory));
             setup.AddLogger(typeof(LoggerFactoryLogger));
             return setup;
         }

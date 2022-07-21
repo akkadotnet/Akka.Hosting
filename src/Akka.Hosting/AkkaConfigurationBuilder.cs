@@ -94,13 +94,6 @@ namespace Akka.Hosting
         /// Used to hold a reference to the <see cref="Sys"/> being started.
         /// </summary>
         internal Option<ActorSystem> Sys { get; set; } = Option<ActorSystem>.None;
-        
-        /// <summary>
-        /// INTERNAL API.
-        ///
-        /// Used to hold a reference to the dependency injection <see cref="ServiceProvider"/> being used to setup the <see cref="ActorSystem"/>.
-        /// </summary>
-        internal Option<IServiceProvider> ServiceProvider { get; set; } = Option<IServiceProvider>.None;
 
         private readonly HashSet<ActorStarter> _actorStarters = new HashSet<ActorStarter>();
         private bool _complete = false;

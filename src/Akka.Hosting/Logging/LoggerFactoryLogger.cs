@@ -20,23 +20,6 @@ namespace Akka.Hosting.Logging
 {
     public class LoggerFactoryLogger: ActorBase, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
-        internal static void ConfigureHosting(AkkaConfigurationBuilder builder)
-        {
-            var serviceProvider = builder.ServiceProvider;
-            if (serviceProvider.IsEmpty)
-                throw new ConfigurationException("Could not retrieve ServiceProvider from AkkaConfigurationBuilder");
-
-            ConfigureHosting(builder, serviceProvider.Value.GetRequiredService<ILoggerFactory>());
-        }
-        
-        internal static void ConfigureHosting(AkkaConfigurationBuilder builder, ILoggerFactory loggerFactory)
-        {
-            if (loggerFactory is null)
-                throw new ArgumentNullException(nameof(loggerFactory));
-            
-            builder.AddSetup(new LoggerFactorySetup(loggerFactory));
-        }
-        
         public const string DefaultTimeStampFormat = "yy/MM/dd-HH:mm:ss.ffff";
         private const string DefaultMessageFormat = "[{{Timestamp:{0}}}][{{SourceContext}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
         private static readonly Event.LogLevel[] AllLogLevels = Enum.GetValues(typeof(Event.LogLevel)).Cast<Event.LogLevel>().ToArray();
