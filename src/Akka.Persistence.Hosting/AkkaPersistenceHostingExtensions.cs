@@ -132,5 +132,44 @@ namespace Akka.Persistence.Hosting
             jBuilder.Build();
             return builder;
         }
+        
+        public static AkkaConfigurationBuilder WithInMemoryJournal(this AkkaConfigurationBuilder builder)
+        {
+            return WithInMemoryJournal(builder, journalBuilder => { });
+        }
+
+        public static AkkaConfigurationBuilder WithInMemoryJournal(this AkkaConfigurationBuilder builder,
+            Action<AkkaPersistenceJournalBuilder> journalBuilder)
+        {
+            builder.WithJournal("inmem", journalBuilder);
+
+            const string liveConfig = @"akka.persistence.journal.plugin = akka.persistence.journal.inmem
+                akka.persistence.journal.inmem {
+                # Class name of the plugin.
+                class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
+                # Dispatcher for the plugin actor.
+                plugin-dispatcher = ""akka.actor.default-dispatcher""
+            }";
+
+            builder.AddHocon(liveConfig, HoconAddMode.Prepend);
+            
+            return builder;
+        }
+
+        public static AkkaConfigurationBuilder WithInMemorySnapshotStore(this AkkaConfigurationBuilder builder)
+        {
+            const string liveConfig = @"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.inmem
+            # In-memory snapshot store plugin.
+            akka.persistence.snapshot-store.inmem {
+            # Class name of the plugin.
+            class = ""Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence""
+            # Dispatcher for the plugin actor.
+            plugin-dispatcher = ""akka.actor.default-dispatcher""
+        }";
+
+            builder.AddHocon(liveConfig, HoconAddMode.Prepend);
+            
+            return builder;
+        }
     }
 }
