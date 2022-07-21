@@ -5,15 +5,42 @@ using Akka.Cluster.Hosting;
 using Akka.Event;
 using Akka.Hosting.Logging;
 using Akka.Hosting.LoggingDemo;
+using Akka.Logger.Serilog;
 using Akka.Remote.Hosting;
+using Serilog;
+using LogLevel = Akka.Event.LogLevel;
+
+Serilog.Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .MinimumLevel.Debug()
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider) =>
 {
     configurationBuilder
-        .AddHocon("akka.loglevel = DEBUG")
-        .WithLoggerFactory()
+        .ConfigureLoggers(setup =>
+        {
+            // Example: This sets the minimum log level
+            setup.LogLevel = LogLevel.DebugLevel;
+            
+            // Example: Clear all loggers
+            setup.ClearLoggers();
+            
+            // Example: Add the default logger
+            // NOTE: You can also use setup.AddLogger<DefaultLogger>();
+            setup.AddDefaultLogger();
+            
+            // Example: Add the ILoggerFactory logger
+            // NOTE:
+            //   - You can also use setup.AddLogger<LoggerFactoryLogger>();
+            //   - To use a specific ILoggerFactory instance, you can use setup.AddLoggerFactory(myILoggerFactory);
+            setup.AddLoggerFactory();
+            
+            // Example: Adding a serilog logger
+            setup.AddLogger<SerilogLogger>();
+        })
         .WithRemoting("localhost", 8110)
         .WithClustering(new ClusterOptions(){ Roles = new[]{ "myRole" }, 
             SeedNodes = new[]{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110")}})

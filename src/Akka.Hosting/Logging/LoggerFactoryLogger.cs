@@ -5,12 +5,11 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
 using Akka.Configuration;
-using Akka.DependencyInjection;
 using Akka.Dispatch;
 using Akka.Event;
 using Microsoft.Extensions.Logging;
@@ -21,35 +20,40 @@ namespace Akka.Hosting.Logging
     public class LoggerFactoryLogger: ActorBase, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
         public const string DefaultTimeStampFormat = "yy/MM/dd-HH:mm:ss.ffff";
-        private const string DefaultMessageFormat = "[{{Timestamp:{0}}}][{{SourceContext}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
+        private const string DefaultMessageFormat = "[{{Timestamp:{0}}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
         private static readonly Event.LogLevel[] AllLogLevels = Enum.GetValues(typeof(Event.LogLevel)).Cast<Event.LogLevel>().ToArray();
-
-        private readonly ConcurrentDictionary<Type, ILogger> _loggerCache = new ConcurrentDictionary<Type, ILogger>();
-        private readonly ILoggingAdapter _log = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
-        private ILoggerFactory _loggerFactory;
+        
+        /// <summary>
+        /// only used when we're shutting down / spinning up
+        /// </summary>
+        private readonly ILoggingAdapter _internalLogger = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
+        private readonly ILoggerFactory _loggerFactory;
+        private ILogger<ActorSystem> _akkaLogger;
         private readonly string _messageFormat;
 
         public LoggerFactoryLogger()
         {
             _messageFormat = string.Format(DefaultMessageFormat, DefaultTimeStampFormat);
+            var setup = Context.System.Settings.Setup.Get<LoggerFactorySetup>();
+            if (!setup.HasValue) 
+                throw new ConfigurationException(
+                    $"Could not start {nameof(LoggerFactoryLogger)}, the required setup class " +
+                    $"{nameof(LoggerFactorySetup)} could not be found. Have you added this to the ActorSystem setup?");
+            _loggerFactory = setup.Value.LoggerFactory;
+            _akkaLogger = _loggerFactory.CreateLogger<ActorSystem>();
         }
 
         protected override void PostStop()
         {
-            _log.Info($"{nameof(LoggerFactoryLogger)} stopped");
+            _internalLogger.Info($"{nameof(LoggerFactoryLogger)} stopped");
         }
 
         protected override bool Receive(object message)
         {
             switch (message)
-            {
+            { 
                 case InitializeLogger _:
-                    var resolver = DependencyResolver.For(Context.System);
-                    _loggerFactory = resolver.Resolver.GetService<ILoggerFactory>();
-                    if (_loggerFactory == null)
-                        throw new ConfigurationException("Could not find any ILoggerFactory service inside ServiceProvider");
-                    
-                    _log.Info($"{nameof(LoggerFactoryLogger)} started");
+                    _internalLogger.Info($"{nameof(LoggerFactoryLogger)} started");
                     Sender.Tell(new LoggerInitialized());
                     return true;
                 
@@ -64,13 +68,12 @@ namespace Akka.Hosting.Logging
         
         private void Log(LogEvent log, ActorPath path)
         {
-            var logger = _loggerCache.GetOrAdd(log.LogClass, type => _loggerFactory.CreateLogger(type));
             var message = GetMessage(log.Message);
-            logger.Log(GetLogLevel(log.LogLevel()), log.Cause, _messageFormat, GetArgs(log, path, message));
+            _akkaLogger.Log(GetLogLevel(log.LogLevel()), log.Cause, _messageFormat, GetArgs(log, path, message));
         }
 
         private static object[] GetArgs(LogEvent log, ActorPath path, object message)
-            => new []{ log.Timestamp, log.LogClass.FullName, log.LogSource, path, log.Thread.ManagedThreadId, message };
+            => new []{ log.Timestamp, log.LogSource, path, log.Thread.ManagedThreadId, message };
 
         private static object GetMessage(object obj)
         {
@@ -125,7 +128,7 @@ namespace Akka.Hosting.Logging
                 case Event.LogLevel.WarningLevel:
                     return LogLevel.Warning;
                 case Event.LogLevel.ErrorLevel:
-                    return LogLevel.Warning;
+                    return LogLevel.Error;
                 default:
                     // Should never reach this code path
                     return LogLevel.Error;

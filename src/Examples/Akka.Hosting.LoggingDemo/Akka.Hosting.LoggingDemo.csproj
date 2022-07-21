@@ -9,4 +9,9 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Akka.Logger.Serilog" Version="1.4.26" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
+    </ItemGroup>
 </Project>
