@@ -5,14 +5,13 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Event;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
@@ -24,7 +23,7 @@ namespace Akka.Hosting.Logging
         private const string DefaultMessageFormat = "[{{Timestamp:{0}}}][{{SourceContext}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
         private static readonly Event.LogLevel[] AllLogLevels = Enum.GetValues(typeof(Event.LogLevel)).Cast<Event.LogLevel>().ToArray();
 
-        private readonly ConcurrentDictionary<Type, ILogger> _loggerCache = new ConcurrentDictionary<Type, ILogger>();
+        private readonly Dictionary<Type, ILogger> _loggerCache = new Dictionary<Type, ILogger>();
         private readonly ILoggingAdapter _log = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
         private readonly ILoggerFactory _loggerFactory;
         private readonly string _messageFormat;
@@ -65,7 +64,12 @@ namespace Akka.Hosting.Logging
         
         private void Log(LogEvent log, ActorPath path)
         {
-            var logger = _loggerCache.GetOrAdd(log.LogClass, type => _loggerFactory.CreateLogger(type));
+            _loggerCache.TryGetValue(log.LogClass, out var logger);
+            if (logger == null)
+            {
+                logger = _loggerFactory.CreateLogger(log.LogClass);
+                _loggerCache[log.LogClass] = logger;
+            }
             var message = GetMessage(log.Message);
             logger.Log(GetLogLevel(log.LogLevel()), log.Cause, _messageFormat, GetArgs(log, path, message));
         }
