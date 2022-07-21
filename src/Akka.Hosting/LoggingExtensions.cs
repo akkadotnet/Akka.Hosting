@@ -6,10 +6,11 @@
 
 using System;
 using Akka.Event;
+using Akka.Hosting.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Akka.Hosting.Logging
+namespace Akka.Hosting
 {
     public static class LoggingExtensions
     {

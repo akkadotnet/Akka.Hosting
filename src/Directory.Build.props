@@ -2,8 +2,8 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.3.4</VersionPrefix>
-    <PackageReleaseNotes>• [Adds ActorRegistry-capable overloads to the WithShardRegion&lt;TKey&gt; methods](https://github.com/akkadotnet/Akka.Hosting/pull/70)</PackageReleaseNotes>
+    <VersionPrefix>0.4.0</VersionPrefix>
+    <PackageReleaseNotes>• [Add Microsoft.Extensions.Logging.ILoggerFactory logging support](https://github.com/akkadotnet/Akka.Hosting/pull/72)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting

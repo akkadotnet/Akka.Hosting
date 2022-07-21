@@ -7,13 +7,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Event;
 
-namespace Akka.Hosting.Logging
+namespace Akka.Hosting
 {
     public sealed class LoggerConfigBuilder
     {

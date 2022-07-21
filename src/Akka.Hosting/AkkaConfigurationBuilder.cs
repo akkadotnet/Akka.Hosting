@@ -8,9 +8,11 @@ using Akka.Actor.Dsl;
 using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
+using Akka.Hosting.Logging;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
 {
@@ -231,6 +233,22 @@ namespace Akka.Hosting
                 /*
                  * Build setups
                  */
+                
+                // check to see if we need a LoggerSetup
+                var hasLoggerSetup = config.Setups.Any(c => c is LoggerFactorySetup);
+                if (!hasLoggerSetup)
+                {
+                    var logger = sp.GetService<ILoggerFactory>();
+                    
+                    // on the off-chance that we're not running with ILogger support enabled
+                    // (should be a rare case that only comes up during testing)
+                    if (logger != null) 
+                    {
+                        var loggerSetup = new LoggerFactorySetup(logger);
+                        config.AddSetup(loggerSetup);
+                    }
+                }
+                
                 var diSetup = DependencyResolverSetup.Create(sp);
                 var bootstrapSetup = BootstrapSetup.Create().WithConfig(config.Configuration.GetOrElse(Config.Empty));
                 if (config.ActorRefProvider.HasValue) // only set the provider when explicitly required
