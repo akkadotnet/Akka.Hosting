@@ -20,12 +20,15 @@ namespace Akka.Hosting.Logging
     public class LoggerFactoryLogger: ActorBase, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
         public const string DefaultTimeStampFormat = "yy/MM/dd-HH:mm:ss.ffff";
-        private const string DefaultMessageFormat = "[{{Timestamp:{0}}}][{{SourceContext}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
+        private const string DefaultMessageFormat = "[{{Timestamp:{0}}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
         private static readonly Event.LogLevel[] AllLogLevels = Enum.GetValues(typeof(Event.LogLevel)).Cast<Event.LogLevel>().ToArray();
-
-        private readonly Dictionary<Type, ILogger> _loggerCache = new Dictionary<Type, ILogger>();
-        private readonly ILoggingAdapter _log = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
+        
+        /// <summary>
+        /// only used when we're shutting down / spinning up
+        /// </summary>
+        private readonly ILoggingAdapter _internalLogger = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
         private readonly ILoggerFactory _loggerFactory;
+        private ILogger<ActorSystem> _akkaLogger;
         private readonly string _messageFormat;
 
         public LoggerFactoryLogger()
@@ -37,19 +40,20 @@ namespace Akka.Hosting.Logging
                     $"Could not start {nameof(LoggerFactoryLogger)}, the required setup class " +
                     $"{nameof(LoggerFactorySetup)} could not be found. Have you added this to the ActorSystem setup?");
             _loggerFactory = setup.Value.LoggerFactory;
+            _akkaLogger = _loggerFactory.CreateLogger<ActorSystem>();
         }
 
         protected override void PostStop()
         {
-            _log.Info($"{nameof(LoggerFactoryLogger)} stopped");
+            _internalLogger.Info($"{nameof(LoggerFactoryLogger)} stopped");
         }
 
         protected override bool Receive(object message)
         {
             switch (message)
-            {
+            { 
                 case InitializeLogger _:
-                    _log.Info($"{nameof(LoggerFactoryLogger)} started");
+                    _internalLogger.Info($"{nameof(LoggerFactoryLogger)} started");
                     Sender.Tell(new LoggerInitialized());
                     return true;
                 
@@ -64,18 +68,12 @@ namespace Akka.Hosting.Logging
         
         private void Log(LogEvent log, ActorPath path)
         {
-            _loggerCache.TryGetValue(log.LogClass, out var logger);
-            if (logger == null)
-            {
-                logger = _loggerFactory.CreateLogger(log.LogClass);
-                _loggerCache[log.LogClass] = logger;
-            }
             var message = GetMessage(log.Message);
-            logger.Log(GetLogLevel(log.LogLevel()), log.Cause, _messageFormat, GetArgs(log, path, message));
+            _akkaLogger.Log(GetLogLevel(log.LogLevel()), log.Cause, _messageFormat, GetArgs(log, path, message));
         }
 
         private static object[] GetArgs(LogEvent log, ActorPath path, object message)
-            => new []{ log.Timestamp, log.LogClass.FullName, log.LogSource, path, log.Thread.ManagedThreadId, message };
+            => new []{ log.Timestamp, log.LogSource, path, log.Thread.ManagedThreadId, message };
 
         private static object GetMessage(object obj)
         {
