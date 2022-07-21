@@ -59,17 +59,6 @@ namespace Akka.Hosting.Logging
         public LoggerConfigBuilder AddLogger<T>() where T: IRequiresMessageQueue<ILoggerMessageQueueSemantics>
         {
             var logger = typeof(T);
-            var methodInfo = logger.GetMethod(
-                name: "ConfigureHosting", 
-                bindingAttr: BindingFlags.Static | BindingFlags.NonPublic,
-                binder: null,
-                types: new []{typeof(AkkaConfigurationBuilder)},
-                modifiers: null);
-            if (methodInfo != null)
-            {
-                methodInfo.Invoke(null, new object[] { Builder });
-            }
-            
             _loggers.Add(logger);
             return this;
         }
