@@ -41,9 +41,10 @@ public class LoggerFactoryLoggerSpec: IAsyncLifetime
         _echo = registry.Get<EchoActor>();
     }
 
-    public async Task DisposeAsync()
+    public Task DisposeAsync()
     {
-        await _host.StopAsync();
+        _host.Dispose();
+        return Task.CompletedTask;
     }
 
     [Fact(DisplayName = "LoggerFactoryLogger should log events")]
