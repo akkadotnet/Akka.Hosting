@@ -24,7 +24,7 @@ using Nuke.Common.Utilities;
     OnPushTags = new[] { "*" },
     AutoGenerate = false,
     InvokedTargets = new[] { nameof(NuGet) },
-    ImportSecrets = new[] { "Nuget_Key", "GITHUB_TOKEN" },
+    ImportSecrets = new[] { "Nuget_Key"},
     PublishArtifacts = true,
     EnableGitHubToken = true)
 ]
