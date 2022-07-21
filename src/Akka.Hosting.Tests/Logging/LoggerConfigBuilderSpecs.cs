@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-//  <copyright file="LoggerSetupSpec.cs" company="Akka.NET Project">
+//  <copyright file="LoggerConfigBuilderSpecs.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -12,9 +12,9 @@ using LogLevel = Akka.Event.LogLevel;
 
 namespace Akka.Hosting.Tests.Logging;
 
-public class LoggerSetupSpec
+public class LoggerConfigBuilderSpecs
 {
-    [Fact(DisplayName = "LoggerSetup should contain proper default configuration")]
+    [Fact(DisplayName = "LoggerConfigBuilder should contain proper default configuration")]
     public void LoggerSetupDefaultValues()
     {
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test")
@@ -29,7 +29,7 @@ public class LoggerSetupSpec
         loggers[0].Should().Contain("Akka.Event.DefaultLogger");
     }
     
-    [Fact(DisplayName = "LoggerSetup should override config values")]
+    [Fact(DisplayName = "LoggerConfigBuilder should override config values")]
     public void LoggerSetupOverrideValues()
     {
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test")

@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-//  <copyright file="LoggerSetup.cs" company="Akka.NET Project">
+//  <copyright file="LoggerConfigBuilder.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -15,12 +15,12 @@ using Akka.Event;
 
 namespace Akka.Hosting.Logging
 {
-    public sealed class LoggerSetup
+    public sealed class LoggerConfigBuilder
     {
         private readonly List<Type> _loggers = new List<Type> { typeof(DefaultLogger) };
         internal AkkaConfigurationBuilder Builder { get; }
 
-        internal LoggerSetup(AkkaConfigurationBuilder builder)
+        internal LoggerConfigBuilder(AkkaConfigurationBuilder builder)
         {
             Builder = builder;
         }
@@ -45,8 +45,8 @@ namespace Akka.Hosting.Logging
         /// <summary>
         /// Clear all loggers currently registered.
         /// </summary>
-        /// <returns>This <see cref="LoggerSetup"/> instance</returns>
-        public LoggerSetup ClearLoggers()
+        /// <returns>This <see cref="LoggerConfigBuilder"/> instance</returns>
+        public LoggerConfigBuilder ClearLoggers()
         {
             _loggers.Clear();
             return this;
@@ -55,8 +55,8 @@ namespace Akka.Hosting.Logging
         /// <summary>
         /// Register a logger
         /// </summary>
-        /// <returns>This <see cref="LoggerSetup"/> instance</returns>
-        public LoggerSetup AddLogger<T>() where T: IRequiresMessageQueue<ILoggerMessageQueueSemantics>
+        /// <returns>This <see cref="LoggerConfigBuilder"/> instance</returns>
+        public LoggerConfigBuilder AddLogger<T>() where T: IRequiresMessageQueue<ILoggerMessageQueueSemantics>
         {
             var logger = typeof(T);
             var methodInfo = logger.GetMethod(
