@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
@@ -145,5 +146,31 @@ namespace Akka.Hosting
             return builder.StartActors(actorStarter);
         }
         
+        /// <summary>
+        /// Adds a list of Akka.NET extensions that will be started automatically when the <see cref="ActorSystem"/>
+        /// starts up.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// // Starts distributed pub-sub, cluster metrics, and cluster bootstrap extensions at start-up
+        /// builder.WithExtensions(
+        ///     typeof(DistributedPubSubExtensionProvider),
+        ///     typeof(ClusterMetricsExtensionProvider),
+        ///     typeof(ClusterBootstrapProvider));
+        /// </code>
+        /// </example>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="extensions">A list of extension providers that will be automatically started
+        /// when the <see cref="ActorSystem"/> starts</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithExtensions(
+            this AkkaConfigurationBuilder builder,
+            params Type[] extensions)
+        {
+            builder.AddHocon(
+                $"akka.extensions=[{string.Join(", ", extensions.Select(s => $"\"{s.AssemblyQualifiedName}\""))}]", 
+                HoconAddMode.Prepend);
+            return builder;
+        }
     }
 }
