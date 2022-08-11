@@ -147,28 +147,6 @@ namespace Akka.Hosting
         }
         
         /// <summary>
-        /// Adds a <see cref="StartupTask"/> delegate that will be executed exactly once for application initialization
-        /// once the <see cref="ActorSystem"/> and all actors is started in this process.
-        /// </summary>
-        /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="startupTask">A <see cref="StartupTask"/> delegate that will be run after all actors
-        /// have been instantiated.</param>
-        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithStartup(this AkkaConfigurationBuilder builder, Action<ActorSystem, IActorRegistry> startupTask)
-            => builder.AddStartup(startupTask);
-
-        /// <summary>
-        /// Adds a <see cref="StartupTask"/> delegate that will be executed exactly once for application initialization
-        /// once the <see cref="ActorSystem"/> and all actors is started in this process.
-        /// </summary>
-        /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="startupTask">A <see cref="StartupTask"/> delegate that will be run after all actors
-        /// have been instantiated.</param>
-        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithStartup(this AkkaConfigurationBuilder builder, StartupTask startupTask)
-            => builder.AddStartup(startupTask);
-        
-        /// <summary>
         /// Adds a list of Akka.NET extensions that will be started automatically when the <see cref="ActorSystem"/>
         /// starts up.
         /// </summary>
