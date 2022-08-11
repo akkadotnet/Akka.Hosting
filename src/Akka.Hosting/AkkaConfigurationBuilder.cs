@@ -52,6 +52,8 @@ namespace Akka.Hosting
     /// </summary>
     public delegate Task ActorStarter(ActorSystem system, IActorRegistry registry);
 
+    public delegate Task StartupTask(ActorSystem system, IActorRegistry registry);
+    
     /// <summary>
     /// Used to help populate a <see cref="SerializationSetup"/> upon starting the <see cref="ActorSystem"/>,
     /// if any are added to the builder;
@@ -99,6 +101,7 @@ namespace Akka.Hosting
         internal Option<ActorSystem> Sys { get; set; } = Option<ActorSystem>.None;
 
         private readonly HashSet<ActorStarter> _actorStarters = new HashSet<ActorStarter>();
+        private readonly HashSet<StartupTask> _startupTasks = new HashSet<StartupTask>();
         private bool _complete = false;
 
         public AkkaConfigurationBuilder(IServiceCollection serviceCollection, string actorSystemName)
@@ -179,6 +182,17 @@ namespace Akka.Hosting
 
             return Starter;
         }
+        
+        private static StartupTask ToAsyncStartup(Action<ActorSystem, IActorRegistry> nonAsyncStartup)
+        {
+            Task Startup(ActorSystem f, IActorRegistry registry)
+            {
+                nonAsyncStartup(f, registry);
+                return Task.CompletedTask;
+            }
+
+            return Startup;
+        }
 
         public AkkaConfigurationBuilder StartActors(Action<ActorSystem, IActorRegistry> starter)
         {
@@ -194,6 +208,34 @@ namespace Akka.Hosting
             return this;
         }
 
+        /// <summary>
+        /// Adds a <see cref="StartupTask"/> delegate that will be executed exactly once for application initialization
+        /// once the <see cref="ActorSystem"/> and all actors is started in this process.
+        /// </summary>
+        /// <param name="startupTask">A <see cref="StartupTask"/> delegate that will be run after all actors
+        /// have been instantiated.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public AkkaConfigurationBuilder AddStartup(Action<ActorSystem, IActorRegistry> startupTask)
+        {
+            if (_complete) return this;
+            _startupTasks.Add(ToAsyncStartup(startupTask));
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a <see cref="StartupTask"/> delegate that will be executed exactly once for application initialization
+        /// once the <see cref="ActorSystem"/> and all actors is started in this process.
+        /// </summary>
+        /// <param name="startupTask">A <see cref="StartupTask"/> delegate that will be run after all actors
+        /// have been instantiated.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public AkkaConfigurationBuilder AddStartup(StartupTask startupTask)
+        {
+            if (_complete) return this;
+            _startupTasks.Add(startupTask);
+            return this;
+        }
+        
         public AkkaConfigurationBuilder WithCustomSerializer(
             string serializerIdentifier, IEnumerable<Type> boundTypes,
             Func<ExtendedActorSystem, Serializer> serializerFactory)
@@ -364,6 +406,11 @@ namespace Akka.Hosting
             foreach (var starter in _actorStarters)
             {
                 await starter(sys, registry).ConfigureAwait(false);
+            }
+
+            foreach (var startupTask in _startupTasks)
+            {
+                await startupTask(sys, registry).ConfigureAwait(false);
             }
 
             return sys;
