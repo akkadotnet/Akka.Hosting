@@ -79,6 +79,7 @@ namespace Akka.Hosting
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new HashSet<SerializerRegistration>();
         internal readonly HashSet<Setup> Setups = new HashSet<Setup>();
+        internal readonly HashSet<Type> Extensions = new HashSet<Type>();
 
         /// <summary>
         /// The currently configured <see cref="ProviderSelection"/>.
@@ -203,6 +204,33 @@ namespace Akka.Hosting
             return this;
         }
 
+        /// <summary>
+        /// Adds a list of Akka.NET extensions that will be started automatically when the <see cref="ActorSystem"/>
+        /// starts up.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// // Starts distributed pub-sub, cluster metrics, and cluster bootstrap extensions at start-up
+        /// builder.WithExtensions(
+        ///     typeof(DistributedPubSubExtensionProvider),
+        ///     typeof(ClusterMetricsExtensionProvider),
+        ///     typeof(ClusterBootstrapProvider));
+        /// </code>
+        /// </example>
+        /// <param name="extensions">An array of extension providers that will be automatically started
+        /// when the <see cref="ActorSystem"/> starts</param>
+        /// <returns>This <see cref="AkkaConfigurationBuilder"/> instance, for fluent building pattern</returns>
+        public AkkaConfigurationBuilder WithExtensions(params Type[] extensions)
+        {
+            foreach (var extension in extensions)
+            {
+                if (Extensions.Contains(extension))
+                    continue;
+                Extensions.Add(extension);
+            }
+            return this;
+        }
+        
         internal void Bind()
         {
             // register as singleton - not interested in supporting multi-Sys use cases
@@ -224,6 +252,37 @@ namespace Akka.Hosting
             });
         }
 
+        /// <summary>
+        /// Configure extensions
+        /// </summary>
+        private void AddExtensions()
+        {
+            if (Extensions.Count == 0)
+                return;
+            
+            // check to see if there are any existing extensions set up inside the current HOCON configuration
+            if (Configuration.HasValue)
+            {
+                var listedExtensions = Configuration.Value.GetStringList("akka.extensions");
+                foreach (var listedExtension in listedExtensions)
+                {
+                    var trimmed = listedExtension.Trim();
+                    
+                    // sanity check, we should not get any empty entries
+                    if (string.IsNullOrWhiteSpace(trimmed))
+                        continue;
+                    
+                    var type = Type.GetType(trimmed);
+                    if (type != null)
+                        Extensions.Add(type);
+                }
+            }
+            
+            AddHoconConfiguration(
+                $"akka.extensions = [{string.Join(", ", Extensions.Select(s => $"\"{s.AssemblyQualifiedName}\""))}]", 
+                HoconAddMode.Prepend);
+        }
+        
         private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
         {
             return sp =>
@@ -233,6 +292,9 @@ namespace Akka.Hosting
                 /*
                  * Build setups
                  */
+                
+                // Add auto-started akka extensions, if any.
+                config.AddExtensions();
                 
                 // check to see if we need a LoggerSetup
                 var hasLoggerSetup = config.Setups.Any(c => c is LoggerFactorySetup);
