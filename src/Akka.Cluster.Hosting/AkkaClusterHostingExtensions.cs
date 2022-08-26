@@ -13,8 +13,6 @@ using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Akka.Cluster.Hosting
 {
@@ -95,24 +93,41 @@ namespace Akka.Cluster.Hosting
                 switch (sbrOptions)
                 {
                     case StaticQuorumOption opt:
-                        cfgBuilder
-                            .AppendLine("akka.cluster.split-brain-resolver = static-quorum")
-                            .AppendFormat("akka.cluster.split-brain-resolver.static-quorum.quorum-size = {0}", opt.QuorumSize);
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = static-quorum
+akka.cluster.split-brain-resolver.static-quorum {{
+    quorum-size = {opt.QuorumSize}
+    role = ""{opt.Role}""
+}}");
                         break;
-                    case KeepMajorityOption _:
-                        cfgBuilder.AppendLine("akka.cluster.split-brain-resolver = keep-majority");
+                    
+                    case KeepMajorityOption opt:
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = keep-majority
+akka.cluster.split-brain-resolver.keep-majority {{
+    role = ""{opt.Role}""
+}}");
                         break;
+                    
                     case KeepOldestOption opt:
-                        cfgBuilder
-                            .AppendLine("akka.cluster.split-brain-resolver = keep-oldest")
-                            .AppendFormat("akka.cluster.split-brain-resolver.keep-oldest.down-if-alone = {0}", opt.DownIfAlone ? "true" : "false");
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = keep-oldest
+akka.cluster.split-brain-resolver.keep-oldest {{
+    down-if-alone = {(opt.DownIfAlone ? "on" : "off")}
+    role = ""{opt.Role}""
+}}");
                         break;
+                    
                     case LeaseMajorityOption opt:
-                        cfgBuilder
-                            .AppendLine("akka.cluster.split-brain-resolver = lease-majority")
-                            .AppendFormat("akka.cluster.split-brain-resolver.lease-majority.lease-implementation = {0}", opt.LeaseImplementation.AssemblyQualifiedName)
-                            .AppendFormat("akka.cluster.split-brain-resolver.lease-majority.lease-name = {0}", opt.LeaseName);
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = lease-majority
+akka.cluster.split-brain-resolver.lease-majority {{
+    lease-implementation = ""{opt.LeaseImplementation}""
+    lease-name = ""{opt.LeaseName}""
+    role = ""{opt.Role}""
+}}");
                         break;
+                    
                     default:
                         throw new ConfigurationException($"Unknown {nameof(SplitBrainResolverOption)} type: {sbrOptions.GetType()}");
                 }

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using Akka.Annotations;
 using Akka.Coordination;
 
 namespace Akka.Cluster.Hosting.SBR
@@ -86,7 +87,7 @@ namespace Akka.Cluster.Hosting.SBR
         /// <summary>
         /// A class type that extends the abstract class <see cref="Lease"/>
         /// </summary>
-        public Type LeaseImplementation { get; set; }
+        public string LeaseImplementation { get; set; }
         
         /// <summary>
         /// <para>The name of the lease.</para>
