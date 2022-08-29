@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
@@ -277,10 +278,32 @@ namespace Akka.Hosting
         {
             foreach (var extension in extensions)
             {
+                if (!typeof(IExtensionId).IsAssignableFrom(extension))
+                    throw new ConfigurationException($"Type must extends {nameof(IExtensionId)}: [{extension.FullName}]");
+                
+                var typeInfo = extension.GetTypeInfo();
+                if (typeInfo.IsAbstract || !typeInfo.IsClass)
+                    throw new ConfigurationException("Type class must not be abstract or static");
+                
                 if (Extensions.Contains(extension))
                     continue;
                 Extensions.Add(extension);
             }
+            return this;
+        }
+
+        public AkkaConfigurationBuilder WithExtension<T>() where T : IExtensionId
+        {
+            var type = typeof(T);
+            if (Extensions.Contains(type)) 
+                return this;
+            
+            var typeInfo = type.GetTypeInfo();
+            if (typeInfo.IsAbstract || !typeInfo.IsClass)
+                throw new ConfigurationException("Type class must not be abstract or static");
+
+            Extensions.Add(type);
+
             return this;
         }
         

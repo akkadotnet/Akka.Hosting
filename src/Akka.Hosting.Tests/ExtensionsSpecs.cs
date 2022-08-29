@@ -7,6 +7,7 @@
 using System;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Configuration;
 using Akka.Event;
 using Akka.TestKit.Xunit2.Internals;
 using FluentAssertions;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Hosting.Tests;
 
@@ -65,6 +67,44 @@ public class ExtensionsSpecs
         {
             builder.WithExtensions(typeof(FakeExtensionOneProvider));
             builder.WithExtensions(typeof(FakeExtensionTwoProvider));
+        });
+
+        var system = host.Services.GetRequiredService<ActorSystem>();
+        system.TryGetExtension<FakeExtensionOne>(out _).Should().BeTrue();
+        system.TryGetExtension<FakeExtensionTwo>(out _).Should().BeTrue();
+    }
+
+    [Fact(DisplayName = "WithExtensions with invalid type should throw")]
+    public void InvalidTypeShouldThrow()
+    {
+        Invoking(() =>
+        {
+            var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "mySystem");
+            builder.WithExtensions(typeof(string));
+        }).Should().Throw<ConfigurationException>();
+    }
+
+    [Fact(DisplayName = "WithExtension should not override extensions declared in HOCON")]
+    public async Task WithExtensionShouldNotOverrideHocon()
+    {
+        using var host = await StartHost((builder, _) =>
+        {
+            builder.AddHocon("akka.extensions = [\"Akka.Hosting.Tests.ExtensionsSpecs+FakeExtensionOneProvider, Akka.Hosting.Tests\"]");
+            builder.WithExtension<FakeExtensionTwoProvider>();
+        });
+
+        var system = host.Services.GetRequiredService<ActorSystem>();
+        system.TryGetExtension<FakeExtensionOne>(out _).Should().BeTrue();
+        system.TryGetExtension<FakeExtensionTwo>(out _).Should().BeTrue();
+    }
+    
+    [Fact(DisplayName = "WithExtension should be able to be called multiple times")]
+    public async Task WithExtensionCanBeCalledMultipleTimes()
+    {
+        using var host = await StartHost((builder, _) =>
+        {
+            builder.WithExtension<FakeExtensionOneProvider>();
+            builder.WithExtension<FakeExtensionTwoProvider>();
         });
 
         var system = host.Services.GetRequiredService<ActorSystem>();
