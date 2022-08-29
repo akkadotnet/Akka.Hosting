@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
 using Akka.Actor.Setup;
+using Akka.Annotations;
 using Akka.Configuration;
 using Akka.DependencyInjection;
 using Akka.Hosting.Logging;
@@ -80,9 +81,19 @@ namespace Akka.Hosting
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new HashSet<SerializerRegistration>();
-        internal readonly HashSet<Setup> Setups = new HashSet<Setup>();
         internal readonly HashSet<Type> Extensions = new HashSet<Type>();
 
+        /// <summary>
+        /// INTERNAL API.
+        /// 
+        /// <para>
+        /// Do NOT modify this field directly. This field is exposed only for testing purposes and is subject to change in the future.
+        /// </para>
+        /// Use the provided <see cref="AddSetup"/> method instead.
+        /// </summary>
+        [InternalApi]
+        public readonly HashSet<Setup> Setups = new HashSet<Setup>();
+        
         /// <summary>
         /// The currently configured <see cref="ProviderSelection"/>.
         /// </summary>
