@@ -5,14 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Akka.Actor;
+using Akka.Cluster.Hosting.SBR;
+using Akka.Cluster.SBR;
 using Akka.Cluster.Sharding;
 using Akka.Cluster.Tools.Client;
 using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Akka.Cluster.Hosting
 {
@@ -68,17 +68,72 @@ namespace Akka.Cluster.Hosting
             return builder.AddHocon(config, HoconAddMode.Prepend);
         }
 
-        private static AkkaConfigurationBuilder BuildClusterHocon(this AkkaConfigurationBuilder builder,
-            ClusterOptions options)
+        private static AkkaConfigurationBuilder BuildClusterHocon(
+            this AkkaConfigurationBuilder builder,
+            ClusterOptions options,
+            SplitBrainResolverOption sbrOptions)
         {
-            if (options == null)
+            if (options == null && sbrOptions == null)
                 return builder;
 
-            if (options.Roles is { Length: > 0 })
-                builder = builder.BuildClusterRolesHocon(options.Roles);
+            if (options != null)
+            {
+                if (options.Roles is { Length: > 0 })
+                    builder = builder.BuildClusterRolesHocon(options.Roles);
 
-            if (options.SeedNodes is { Length: > 0 })
-                builder = builder.BuildClusterSeedsHocon(options.SeedNodes);
+                if (options.SeedNodes is { Length: > 0 })
+                    builder = builder.BuildClusterSeedsHocon(options.SeedNodes);
+            }
+
+            if (sbrOptions != null)
+            {
+                var cfgBuilder = new StringBuilder()
+                    .AppendFormat("akka.cluster.downing-provider-class = \"{0}\"\n", typeof(SplitBrainResolverProvider).AssemblyQualifiedName);
+                
+                switch (sbrOptions)
+                {
+                    case StaticQuorumOption opt:
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = static-quorum
+akka.cluster.split-brain-resolver.static-quorum {{
+    quorum-size = {opt.QuorumSize}
+    role = ""{opt.Role}""
+}}");
+                        break;
+                    
+                    case KeepMajorityOption opt:
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = keep-majority
+akka.cluster.split-brain-resolver.keep-majority {{
+    role = ""{opt.Role}""
+}}");
+                        break;
+                    
+                    case KeepOldestOption opt:
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = keep-oldest
+akka.cluster.split-brain-resolver.keep-oldest {{
+    down-if-alone = {(opt.DownIfAlone ? "on" : "off")}
+    role = ""{opt.Role}""
+}}");
+                        break;
+                    
+                    case LeaseMajorityOption opt:
+                        cfgBuilder.AppendLine(@$"
+akka.cluster.split-brain-resolver.active-strategy = lease-majority
+akka.cluster.split-brain-resolver.lease-majority {{
+    lease-implementation = ""{opt.LeaseImplementation}""
+    lease-name = ""{opt.LeaseName}""
+    role = ""{opt.Role}""
+}}");
+                        break;
+                    
+                    default:
+                        throw new ConfigurationException($"Unknown {nameof(SplitBrainResolverOption)} type: {sbrOptions.GetType()}");
+                }
+
+                builder.AddHocon(cfgBuilder.ToString(), HoconAddMode.Prepend);
+            }
 
             // populate all of the possible Clustering default HOCON configurations here
             return builder.AddHocon(ClusterSharding.DefaultConfig()
@@ -92,11 +147,24 @@ namespace Akka.Cluster.Hosting
         /// </summary>
         /// <param name="builder">The builder instance being configured.</param>
         /// <param name="options">Optional. Akka.Cluster configuration parameters.</param>
+        /// <param name="sbrOptions">
+        /// Optional. Split brain resolver configuration parameters. This can be an instance of one of these classes:
+        /// <list type="bullet">
+        /// <item><see cref="StaticQuorumOption"/></item>
+        /// <item><see cref="KeepMajorityOption"/></item>
+        /// <item><see cref="KeepOldestOption"/></item>
+        /// <item><see cref="LeaseMajorityOption"/></item>
+        /// </list>
+        /// To use the default split brain resolver options, use <see cref="SplitBrainResolverOption.Default"/> which
+        /// uses the keep majority resolving strategy.
+        /// </param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithClustering(this AkkaConfigurationBuilder builder,
-            ClusterOptions options = null)
+        public static AkkaConfigurationBuilder WithClustering(
+            this AkkaConfigurationBuilder builder,
+            ClusterOptions options = null,
+            SplitBrainResolverOption sbrOptions = null)
         {
-            var hoconBuilder = BuildClusterHocon(builder, options);
+            var hoconBuilder = BuildClusterHocon(builder, options, sbrOptions);
 
             if (builder.ActorRefProvider.HasValue)
             {
