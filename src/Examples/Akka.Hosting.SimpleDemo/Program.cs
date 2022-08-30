@@ -1,37 +1,70 @@
-using Akka.Hosting;
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Cluster.Hosting;
 using Akka.Remote.Hosting;
+using Akka.Util;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace Akka.Hosting.SimpleDemo;
 
-builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+public class EchoActor : ReceiveActor
 {
-    configurationBuilder
-        .WithRemoting("localhost", 8110)
-        .WithClustering(new ClusterOptions(){ Roles = new[]{ "myRole" }, 
-            SeedNodes = new[]{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110")}})
-        .WithActors((system, registry) =>
+    private readonly string _entityId;
+    public EchoActor(string entityId)
     {
-        var echo = system.ActorOf(act =>
-        {
-            act.ReceiveAny((o, context) =>
-            {
-                context.Sender.Tell($"{context.Self} rcv {o}");
-            });
-        }, "echo");
-        registry.TryRegister<Echo>(echo); // register for DI
-    });
-});
+        _entityId = entityId;
+        ReceiveAny(message => {
+            Sender.Tell($"{Self} rcv {message}");
+        });
+    }
+}
 
-var app = builder.Build();
-
-app.MapGet("/", async (context) =>
+public class Program
 {
-    var echo = context.RequestServices.GetRequiredService<ActorRegistry>().Get<Echo>();
-    var body = await echo.Ask<string>(context.TraceIdentifier, context.RequestAborted).ConfigureAwait(false);
-    await context.Response.WriteAsync(body);
-});
+    private const int NumberOfShards = 5;
+    
+    private static Option<(string, object)> ExtractEntityId(object message)
+        => message switch {
+            string id => (id, id),
+            _ => Option<(string, object)>.None
+        };
 
-app.Run();
+    private static string? ExtractShardId(object message)
+        => message switch {
+            string id => (id.GetHashCode() % NumberOfShards).ToString(),
+            _ => null
+        };
+        
+    private static Props PropsFactory(string entityId)
+        => Props.Create(() => new EchoActor(entityId));
+        
+    public static void Main(params string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+        {
+            configurationBuilder
+                .WithRemoting(hostname: "localhost", port: 8110)
+                .WithClustering(new ClusterOptions{SeedNodes = new []{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110"), }})
+                .WithShardRegion<Echo>(
+                    typeName: "myRegion",
+                    entityPropsFactory: PropsFactory, 
+                    extractEntityId: ExtractEntityId,
+                    extractShardId: ExtractShardId,
+                    shardOptions: new ShardOptions());
+        });
+
+        var app = builder.Build();
+
+        app.MapGet("/", async (context) =>
+        {
+            var echo = context.RequestServices.GetRequiredService<ActorRegistry>().Get<Echo>();
+            var body = await echo.Ask<string>(
+                    message: context.TraceIdentifier, 
+                    cancellationToken: context.RequestAborted)
+                .ConfigureAwait(false);
+            await context.Response.WriteAsync(body);
+        });
+
+        app.Run();    
+    }
+}

@@ -85,7 +85,7 @@ namespace Akka.Cluster.Hosting.SBR
     public sealed class LeaseMajorityOption : SplitBrainResolverOption
     {
         /// <summary>
-        /// A class type that extends the abstract class <see cref="Lease"/>
+        /// The absolute HOCON path to the <see cref="Lease"/> implementation HOCON configuration block
         /// </summary>
         public string LeaseImplementation { get; set; }
         

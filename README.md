@@ -8,9 +8,17 @@ Consists of the following packages:
 
 1. `Akka.Hosting` - core, needed for everything
 2. `Akka.Remote.Hosting` - enables Akka.Remote configuration
-3. `Akka.Cluster.Hosting` - used for Akka.Cluster, Akka.Cluster.Sharding
+3. [`Akka.Cluster.Hosting`](src/Akka.Cluster.Hosting/README.md) - used for Akka.Cluster, Akka.Cluster.Sharding, and Akka.Cluster.Tools
 4. `Akka.Persistence.SqlServer.Hosting` - used for Akka.Persistence.SqlServer support.
 5. `Akka.Persistence.PostgreSql.Hosting` - used for Akka.Persistence.PostgreSql support.
+6. [`Akka.Persistence.Azure.Hosting`](https://github.com/petabridge/Akka.Persistence.Azure) - used for Akka.Persistence.Azure support. Documentation can be read [here](https://github.com/petabridge/Akka.Persistence.Azure/blob/master/README.md)
+7. [The Akka.Management Project Repository](https://github.com/akkadotnet/Akka.Management) - useful tools for managing Akka.NET clusters running inside containerized or cloud based environment. `Akka.Hosting` is embedded in each of its packages: 
+    * [`Akka.Management`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/management/Akka.Management) - core module of the management utilities which provides a central HTTP endpoint for Akka management extensions.
+    * [`Akka.Management.Cluster.Bootstrap`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/cluster.bootstrap/Akka.Management.Cluster.Bootstrap) - used to bootstrap a cluster formation inside dynamic deployment environments, relies on `Akka.Discovery` to function.
+    * [`Akka.Discovery.AwsApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/aws/Akka.Discovery.AwsApi) - provides dynamic node discovery service for AWS EC2 environment.
+    * [`Akka.Discovery.Azure`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/azure/Akka.Discovery.Azure) - provides a dynamic node discovery service for Azure PaaS ecosystem.
+    * [`Akka.Discovery.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi) - provides a dynamic node discovery service for Kubernetes clusters.
+    * [`Akka.Coordination.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi) - provides a lease-based distributed lock mechanism for Akka Split Brain Resolver, Akka.Cluster.Sharding, and Akka.Cluster.Singleton
 
 See the ["Introduction to Akka.Hosting - HOCONless, "Pit of Success" Akka.NET Runtime and Configuration" video](https://www.youtube.com/watch?v=Mnb9W9ClnB0) for a walkthrough of the library and how it can save you a tremendous amount of time and trouble.
 
@@ -156,11 +164,11 @@ Currently supported logger methods:
 - `AddDefaultLogger()`: Add the default Akka.NET console logger.
 - `AddLoggerFactory()`: Add the new `ILoggerFactory` logger.
 
-__Microsoft.Extensions.Logging.ILoggerFactory Logging Support__
+### Microsoft.Extensions.Logging.ILoggerFactory Logging Support
 
 You can now use `ILoggerFactory` from Microsoft.Extensions.Logging as one of the sinks for Akka.NET logger. This logger will use the `ILoggerFactory` service set up inside the dependency injection `ServiceProvider` as its sink.
 
-__Microsoft.Extensions.Logging Log Event Filtering__
+### Microsoft.Extensions.Logging Log Event Filtering
 
 There will be two log event filters acting on the final log input, the Akka.NET `akka.loglevel` setting and the `Microsoft.Extensions.Logging` settings, make sure that both are set correctly or some log messages will be missing.
 
