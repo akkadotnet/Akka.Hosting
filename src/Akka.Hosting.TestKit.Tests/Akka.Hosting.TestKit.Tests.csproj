@@ -14,5 +14,11 @@
         <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitVersion)" />
         <PackageReference Include="FluentAssertions" Version="6.7.0" />
     </ItemGroup>
+
+    <ItemGroup>
+      <None Update="xunit.runner.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
     
 </Project>
