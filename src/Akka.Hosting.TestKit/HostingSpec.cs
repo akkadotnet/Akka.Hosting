@@ -8,6 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Actor.Internal;
 using Akka.Annotations;
 using Akka.Configuration;
 using Akka.Hosting.TestKit.Internals;
@@ -78,17 +79,6 @@ namespace Akka.Hosting.TestKit
                     Config != null ? Config.WithFallback(TestKitBase.DefaultConfig) : TestKitBase.DefaultConfig,
                     HoconAddMode.Prepend);
 
-                /*
-                builder.ConfigureLoggers(logger =>
-                {
-                    logger.LogLevel = ToAkkaLogLevel(LogLevel);
-                    if (Output != null)
-                    {
-                        logger.AddLoggerFactory();
-                    }
-                });
-                */
-
                 ConfigureAkka(builder, provider);
             });
         }
@@ -133,7 +123,18 @@ namespace Akka.Hosting.TestKit
             }
 
             _sys = _host.Services.GetRequiredService<ActorSystem>();
-            _testKit = new TestKitBaseUnWrapper(_sys);
+            _testKit = new TestKitBaseUnWrapper(_sys, Output);
+
+            if (this is INoImplicitSender)
+            {
+                InternalCurrentActorCellKeeper.Current = null;
+            }
+            else
+            {
+                InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)_testKit.TestActor).Underlying;
+            }
+            SynchronizationContext.SetSynchronizationContext(
+                new ActorCellKeepingSynchronizationContext(InternalCurrentActorCellKeeper.Current));
 
             await BeforeTestStart();
         }
