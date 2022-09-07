@@ -12,6 +12,6 @@
 
     <ItemGroup>
       <PackageReference Include="Akka.Logger.Serilog" Version="1.4.26" />
-      <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
     </ItemGroup>
 </Project>
