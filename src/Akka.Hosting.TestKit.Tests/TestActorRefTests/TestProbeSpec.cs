@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="TestProbeSpec.cs" company="Akka.NET Project">
-//     Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
-//     Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -12,22 +12,12 @@ using Akka.TestKit;
 using Akka.TestKit.TestActors;
 using Akka.Util.Internal;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
 {
-    public class TestProbeSpec : HostingSpec
+    public class TestProbeSpec : TestKit
     {
-        public TestProbeSpec(ITestOutputHelper output) : base(nameof(TestProbeSpec), output)
-        {
-        }
-
-        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
-        {
-        }
-        
         [Fact]
         public void TestProbe_should_equal_underlying_Ref()
         {
@@ -100,8 +90,8 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
                 restarts.Current.Should().BeGreaterThan(1);
             });
         }
-
-        private class FailingActor : ActorBase
+        
+        class FailingActor : ActorBase
         {
             private AtomicCounter Restarts { get; }
             

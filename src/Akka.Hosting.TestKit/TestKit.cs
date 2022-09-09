@@ -8,11 +8,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Actor.Internal;
+using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
 using Akka.Hosting.TestKit.Internals;
 using Akka.TestKit;
+using Akka.TestKit.Xunit2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,8 +24,13 @@ using Xunit.Sdk;
 
 namespace Akka.Hosting.TestKit
 {
-    public abstract partial class HostingSpec: IAsyncLifetime
+    public abstract class TestKit: TestKitBase, IAsyncLifetime
     {
+        /// <summary>
+        /// Commonly used assertions used throughout the testkit.
+        /// </summary>
+        protected static XunitAssertions Assertions { get; } = new XunitAssertions();
+
         private IHost _host;
         public IHost Host
         {
@@ -35,16 +41,6 @@ namespace Akka.Hosting.TestKit
             }
         }
 
-        private TestKitBaseUnWrapper _testKit;
-        public Akka.TestKit.Xunit2.TestKit TestKit
-        {
-            get
-            {
-                AssertNotNull(_testKit);
-                return _testKit;
-            }
-        }
-
         public ActorRegistry ActorRegistry => Host.Services.GetRequiredService<ActorRegistry>();
         
         public TimeSpan StartupTimeout { get; }
@@ -52,9 +48,10 @@ namespace Akka.Hosting.TestKit
         public ITestOutputHelper Output { get; }
         public LogLevel LogLevel { get; }
 
-        protected HostingSpec(string actorSystemName, ITestOutputHelper output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
+        protected TestKit(string actorSystemName = null, ITestOutputHelper output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
+        : base(Assertions)
         {
-            ActorSystemName = actorSystemName;
+            ActorSystemName = actorSystemName ?? "test";
             Output = output;
             LogLevel = logLevel;
             StartupTimeout = startupTimeout ?? TimeSpan.FromSeconds(10);
@@ -122,21 +119,15 @@ namespace Akka.Hosting.TestKit
                 cts.Dispose();
             }
 
-            _sys = _host.Services.GetRequiredService<ActorSystem>();
-            _testKit = new TestKitBaseUnWrapper(_sys, Output);
-
-            if (this is INoImplicitSender)
-            {
-                InternalCurrentActorCellKeeper.Current = null;
-            }
-            else
-            {
-                InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)_testKit.TestActor).Underlying;
-            }
-            SynchronizationContext.SetSynchronizationContext(
-                new ActorCellKeepingSynchronizationContext(InternalCurrentActorCellKeeper.Current));
+            var sys = _host.Services.GetRequiredService<ActorSystem>();
+            base.InitializeTest(sys, (ActorSystemSetup)null, null, null);
 
             await BeforeTestStart();
+        }
+
+        protected sealed override void InitializeTest(ActorSystem system, ActorSystemSetup config, string actorSystemName, string testActorName)
+        {
+            // no-op, deferring InitializeTest after Host have ran
         }
 
         protected virtual Task BeforeTestStart()
@@ -152,9 +143,10 @@ namespace Akka.Hosting.TestKit
         /// to shut down the system. Otherwise a memory leak will occur.
         /// </remarks>
         /// </summary>
-        protected virtual async Task AfterAllAsync()
+        protected virtual Task AfterAllAsync()
         {
-            await ShutdownAsync();
+            Shutdown();
+            return Task.CompletedTask;
         }
 
         public async Task DisposeAsync()
@@ -163,7 +155,14 @@ namespace Akka.Hosting.TestKit
             if(_host != null)
             {
                 await _host.StopAsync();
-                _host.Dispose();
+                if (_host is IAsyncDisposable asyncDisposable)
+                {
+                    await asyncDisposable.DisposeAsync();
+                }
+                else
+                {
+                    _host.Dispose();
+                }
             }
         }
 

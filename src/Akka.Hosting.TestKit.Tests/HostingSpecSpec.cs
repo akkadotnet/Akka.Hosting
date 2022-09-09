@@ -14,7 +14,7 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.TestKit.Tests
 {
-    public class HostingSpecSpec: HostingSpec
+    public class HostingSpecSpec: TestKit
     {
         private enum Echo
         { }
@@ -42,6 +42,14 @@ namespace Akka.Hosting.TestKit.Tests
             echo.Tell("TestMessage", probe);
             var msg = probe.ExpectMsg("TestMessage");
             Log.Info(msg);
+        }
+        
+        private class SimpleEchoActor : ReceiveActor
+        {
+            public SimpleEchoActor()
+            {
+                ReceiveAny(Sender.Tell);
+            }
         }
     }
 }
