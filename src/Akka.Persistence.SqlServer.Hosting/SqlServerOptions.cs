@@ -208,7 +208,7 @@ namespace Akka.Persistence.SqlServer.Hosting
 
             if (innerSb.Length > 0)
             {
-                sb.AppendLine("akka.persistence.journal.sql-server {")
+                sb.AppendLine("akka.persistence.snapshot-store.sql-server {")
                     .Append(innerSb)
                     .AppendLine("}");
             }
