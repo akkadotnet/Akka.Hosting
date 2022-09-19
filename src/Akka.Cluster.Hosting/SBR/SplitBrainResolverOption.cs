@@ -5,12 +5,14 @@
 // -----------------------------------------------------------------------
 
 using System;
-using Akka.Annotations;
-using Akka.Coordination;
+using System.Text;
+using Akka.Actor.Setup;
+using Akka.Cluster.SBR;
+using Akka.Hosting;
 
 namespace Akka.Cluster.Hosting.SBR
 {
-    public abstract class SplitBrainResolverOption
+    public abstract class SplitBrainResolverOption: IOption
     {
         public static readonly SplitBrainResolverOption Default = new KeepMajorityOption();
         
@@ -18,6 +20,12 @@ namespace Akka.Cluster.Hosting.SBR
         /// if the <see cref="Role"/> is defined the decision is based only on members with that <see cref="Role"/>
         /// </summary>
         public string Role { get; set; }
+
+        public abstract string ConfigPath { get; }
+
+        public Type Class => typeof(SplitBrainResolverProvider);
+
+        public abstract void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
     }
 
     /// <summary>
@@ -38,10 +46,37 @@ namespace Akka.Cluster.Hosting.SBR
     /// </summary>
     public sealed class StaticQuorumOption : SplitBrainResolverOption
     {
+        public override string ConfigPath => SplitBrainResolverSettings.StaticQuorumName;
+        
         /// <summary>
         /// Minimum number of nodes that the cluster must have
         /// </summary>
-        public int QuorumSize { get; set; } = 0;
+        public int? QuorumSize { get; set; } = 0;
+        
+        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        {
+            var sb = new StringBuilder("akka.cluster {");
+            sb.AppendLine($"downing-provider-class = \"{Class.AssemblyQualifiedName}\"");
+            sb.AppendLine("split-brain-resolver {");
+            sb.AppendLine($"active-strategy = {ConfigPath}");
+
+            var innerSb = new StringBuilder();
+            if (Role != null)
+                innerSb.AppendLine($"role = {Role}");
+            if(QuorumSize != null)
+                innerSb.AppendLine($"quorum-size = {QuorumSize}");
+
+            if (innerSb.Length > 0)
+            {
+                sb.AppendLine($"{ConfigPath} {{");
+                sb.Append(innerSb);
+                sb.Append("}");
+            }
+
+            sb.Append("}}");
+
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        }
     }
 
     /// <summary>
@@ -53,6 +88,22 @@ namespace Akka.Cluster.Hosting.SBR
     /// </summary>
     public sealed class KeepMajorityOption : SplitBrainResolverOption
     {
+        public override string ConfigPath => SplitBrainResolverSettings.KeepMajorityName;
+        
+        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        {
+            var sb = new StringBuilder("akka.cluster {");
+            sb.AppendLine($"downing-provider-class = \"{Class.AssemblyQualifiedName}\"");
+            sb.AppendLine("split-brain-resolver {");
+            sb.AppendLine($"active-strategy = {ConfigPath}");
+
+            if (Role != null)
+                sb.AppendLine($"{ConfigPath}.role = {Role}");
+
+            sb.Append("}}");
+
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        }
     }
 
     /// <summary>
@@ -70,12 +121,46 @@ namespace Akka.Cluster.Hosting.SBR
     /// </summary>
     public sealed class KeepOldestOption : SplitBrainResolverOption
     {
+        public override string ConfigPath => SplitBrainResolverSettings.KeepOldestName;
+        
         /// <summary>
         /// Enable downing of the oldest node when it is partitioned from all other nodes
         /// </summary>
-        public bool DownIfAlone { get; set; } = true;
+        public bool? DownIfAlone { get; set; } = true;
+        
+        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        {
+            var sb = new StringBuilder("akka.cluster {");
+            sb.AppendLine($"downing-provider-class = \"{Class.AssemblyQualifiedName}\"");
+            sb.AppendLine("split-brain-resolver {");
+            sb.AppendLine($"active-strategy = {ConfigPath}");
+
+            var innerSb = new StringBuilder();
+            if (Role != null)
+                innerSb.AppendLine($"role = {Role}");
+            if(DownIfAlone != null)
+                innerSb.AppendLine($"down-if-alone = {DownIfAlone.ToHocon()}");
+
+            if (innerSb.Length > 0)
+            {
+                sb.AppendLine($"{ConfigPath} {{");
+                sb.Append(innerSb);
+                sb.Append("}");
+            }
+
+            sb.Append("}}");
+
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        }
     }
 
+    public abstract class LeaseOptionBase : IOption
+    {
+        public abstract string ConfigPath { get; }
+        public abstract Type Class { get; }
+        public abstract void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
+    }
+    
     /// <summary>
     /// Keep the part that can acquire the lease, and down the other part.
     /// Best effort is to keep the side that has most nodes, i.e. the majority side.
@@ -84,10 +169,13 @@ namespace Akka.Cluster.Hosting.SBR
     /// </summary>
     public sealed class LeaseMajorityOption : SplitBrainResolverOption
     {
+        public override string ConfigPath => SplitBrainResolverSettings.LeaseMajorityName;
+
         /// <summary>
-        /// The absolute HOCON path to the <see cref="Lease"/> implementation HOCON configuration block
+        /// An class instance that extends <see cref="LeaseOptionBase"/>, used to configure the lease provider used in this
+        /// <see cref="LeaseMajority"/> strategy.
         /// </summary>
-        public string LeaseImplementation { get; set; }
+        public LeaseOptionBase LeaseImplementation { get; set; }
         
         /// <summary>
         /// <para>The name of the lease.</para>
@@ -96,5 +184,28 @@ namespace Akka.Cluster.Hosting.SBR
         /// When lease-name is not defined, the name will be set to "{actor-system-name}-akka-sbr"
         /// </summary>
         public string LeaseName { get; set; }
+        
+        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        {
+            if (LeaseImplementation is null)
+                throw new NullReferenceException($"{nameof(LeaseMajorityOption)}.{nameof(LeaseImplementation)} must not be null");
+            
+            var sb = new StringBuilder("akka.cluster {");
+            sb.AppendLine($"downing-provider-class = \"{Class.AssemblyQualifiedName}\"");
+            sb.AppendLine("split-brain-resolver {");
+            sb.AppendLine($"active-strategy = {ConfigPath}");
+
+            sb.AppendLine($"{ConfigPath} {{");
+            sb.AppendLine($"lease-implementation = {LeaseImplementation.ConfigPath}");
+            if (Role != null)
+                sb.AppendLine($"role = {Role}");
+            if(LeaseName != null)
+                sb.AppendLine($"lease-name = {LeaseName}");
+
+            sb.Append("}}}");
+
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        }
+        
     }
 }

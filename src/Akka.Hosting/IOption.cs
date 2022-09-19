@@ -62,31 +62,28 @@ namespace Akka.Hosting
     /// </example>
     public interface IOption
     {
-        public interface IOption
-        {
-            /// <summary>
-            ///     The HOCON value of the HOCON path property
-            /// </summary>
-            string ConfigPath { get; }
+        /// <summary>
+        ///     The HOCON value of the HOCON path property
+        /// </summary>
+        string ConfigPath { get; }
             
-            /// <summary>
-            ///     The class <see cref="Type"/> that will be used for the HOCON class FQCN value 
-            /// </summary>
-            Type Class { get; }
+        /// <summary>
+        ///     The class <see cref="Type"/> that will be used for the HOCON class FQCN value 
+        /// </summary>
+        Type Class { get; }
             
-            /// <summary>
-            ///     Apply this option to the <paramref name="builder"/>
-            /// </summary>
-            /// <param name="builder">
-            ///     The <see cref="AkkaConfigurationBuilder"/> to be applied to
-            /// </param>
-            /// <param name="setup">
-            ///     The <see cref="Setup"/> to be applied to, if needed.
-            /// </param>
-            /// <exception cref="ArgumentNullException">
-            ///     Thrown when <see cref="Apply"/> requires a setup but it was <c>null</c>
-            /// </exception>
-            void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
-        }
+        /// <summary>
+        ///     Apply this option to the <paramref name="builder"/>
+        /// </summary>
+        /// <param name="builder">
+        ///     The <see cref="AkkaConfigurationBuilder"/> to be applied to
+        /// </param>
+        /// <param name="setup">
+        ///     The <see cref="Setup"/> to be applied to, if needed.
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     Thrown when <see cref="Apply"/> requires a setup but it was <c>null</c>
+        /// </exception>
+        void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
     }
 }

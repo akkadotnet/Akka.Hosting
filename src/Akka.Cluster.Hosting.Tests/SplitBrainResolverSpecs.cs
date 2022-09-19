@@ -159,7 +159,7 @@ public class SplitBrainResolverSpecs
             builder.AddHocon(TestLease.Configuration, HoconAddMode.Prepend);
             builder.WithClustering(sbrOptions: new LeaseMajorityOption
             {
-                LeaseImplementation = "test-lease",
+                LeaseImplementation = new TestLeaseOption(),
                 LeaseName = "myService-akka-sbr",
                 Role = "myRole"
             });

@@ -9,11 +9,12 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Actor.Setup;
+using Akka.Cluster.Hosting.SBR;
 using Akka.Configuration;
 using Akka.Coordination;
 using Akka.Event;
-using Akka.TestKit;
-using Akka.TestKit.Xunit2;
+using Akka.Hosting;
 using Akka.Util;
 
 namespace Akka.Cluster.Hosting.Tests.Lease
@@ -58,6 +59,16 @@ namespace Akka.Cluster.Hosting.Tests.Lease
         }
     }
 
+    public sealed class TestLeaseOption : LeaseOptionBase
+    {
+        public override string ConfigPath => "test-lease";
+        public override Type Class => typeof(TestLease);
+        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        {
+            // no-op
+        }
+    }
+    
     public class TestLease : Coordination.Lease
     {
         public sealed class AcquireReq : IEquatable<AcquireReq>
