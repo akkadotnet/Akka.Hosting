@@ -60,7 +60,7 @@ namespace Akka.Hosting
     ///     }
     /// </code>
     /// </example>
-    public interface IOption
+    public interface IHoconOption
     {
         /// <summary>
         ///     The HOCON value of the HOCON path property

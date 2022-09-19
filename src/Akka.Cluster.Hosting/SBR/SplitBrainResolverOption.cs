@@ -12,7 +12,7 @@ using Akka.Hosting;
 
 namespace Akka.Cluster.Hosting.SBR
 {
-    public abstract class SplitBrainResolverOption: IOption
+    public abstract class SplitBrainResolverOption: IHoconOption
     {
         public static readonly SplitBrainResolverOption Default = new KeepMajorityOption();
         
@@ -154,7 +154,7 @@ namespace Akka.Cluster.Hosting.SBR
         }
     }
 
-    public abstract class LeaseOptionBase : IOption
+    public abstract class LeaseOptionBase : IHoconOption
     {
         public abstract string ConfigPath { get; }
         public abstract Type Class { get; }
