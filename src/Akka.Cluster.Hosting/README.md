@@ -2,6 +2,23 @@
 
 This module provides `Akka.Hosting` ease-of-use extension methods for [`Akka.Cluster`](https://getakka.net/articles/clustering/cluster-overview.html), [`Akka.Cluster.Sharding`](https://getakka.net/articles/clustering/cluster-sharding.html), and `Akka.Cluster.Tools`.
 
+## Content
+
+- [Akka.Cluster](https://getakka.net/articles/clustering/cluster-overview.html)
+  - [WithClustering()](#withclustering-method)
+    - [Configure A Cluster With Split-Brain Resolver](#configure-a-cluster-with-split-brain-resolverhttpsgetakkanetarticlesclusteringsplit-brain-resolverhtml-sbr)
+- [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html)
+  - [WithShardRegion()](#withshardregion-method)
+  - [WithShardRegionProxy()](#withshardregionproxy-method)
+- [Distributed Publish-Subscribe](https://getakka.net/articles/clustering/distributed-publish-subscribe.html)
+  - [WithDistributedPubSub()](#withdistributedpubsub-method)
+- [Cluster Singleton](https://getakka.net/articles/clustering/cluster-singleton.html)
+  - [WithSingleton()](#withsingleton-method)
+  - [WithSingletonProxy()](#withsingletonproxy-method)
+- [Cluster Client](https://getakka.net/articles/clustering/cluster-client.html)
+  - [WithClusterClient()](#withclusterclient-method)
+  - [WithClusterClientReceptionist()](#withclusterclientreceptionist-method)
+
 # Akka.Cluster Extension Methods
 
 ## WithClustering Method
@@ -276,6 +293,8 @@ public static AkkaConfigurationBuilder WithShardRegionProxy<TKey>(
 * `extractShardId` __ExtractShardId__
 
   Delegate function to determine the shard id for an incoming message, only messages that passed the `extractEntityId` will be used
+
+# Akka.Cluster.Tools Extension Methods
 
 ## WithDistributedPubSub Method
 
