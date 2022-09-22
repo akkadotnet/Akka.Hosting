@@ -26,6 +26,7 @@ using static Nuke.Common.Tools.Git.GitTasks;
 using Octokit;
 using Nuke.Common.Utilities;
 using Nuke.Common.CI.GitHubActions;
+using System.Threading.Tasks;
 
 [ShutdownDotNetAfterServerBuild]
 [DotNetVerbosityMapping]
@@ -146,8 +147,7 @@ partial class Build : NukeBuild
     .After(CreateNuget, SignClient)
     .OnlyWhenDynamic(() => !NugetPublishUrl.IsNullOrEmpty())
     .OnlyWhenDynamic(() => !NugetKey.IsNullOrEmpty())
-    .Triggers(GitHubRelease)
-    .Executes(() =>
+    .Executes(async() =>
     {
         var packages = OutputNuget.GlobFiles("*.nupkg", "*.symbols.nupkg").NotNull();
         var shouldPublishSymbolsPackages = !string.IsNullOrWhiteSpace(SymbolsPublishUrl);
@@ -172,65 +172,58 @@ partial class Build : NukeBuild
             }
 
         }
+        await GitHubRelease();
     });
-    Target AuthenticatedGitHubClient => _ => _
-        .Unlisted()
-        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubActions.Token))
-        .Executes(() =>
+    async Task GitHubRelease()
+    {
+        if (string.IsNullOrWhiteSpace(GitHubActions.Token))
+            return;
+
+        GitHubClient = new GitHubClient(new ProductHeaderValue("nuke-build"))
         {
-            GitHubClient = new GitHubClient(new ProductHeaderValue("nuke-build"))
+            Credentials = new Credentials(GitHubActions.Token, AuthenticationType.Bearer)
+        };
+        var version = ReleaseNotes.Version.ToString();
+        var releaseNotes = GetNuGetReleaseNotes(ChangelogFile);
+        Release release;
+        var releaseName = $"{version}";
+
+        if (!VersionSuffix.IsNullOrWhiteSpace())
+            releaseName = $"{version}-{VersionSuffix}";
+
+        var identifier = GitRepository.Identifier.Split("/");
+
+        var (gitHubOwner, repoName) = (identifier[0], identifier[1]);
+        try
+        {
+            release = await GitHubClient.Repository.Release.Get(gitHubOwner, repoName, releaseName);
+        }
+        catch (NotFoundException)
+        {
+            var newRelease = new NewRelease(releaseName)
             {
-                Credentials = new Credentials(GitHubActions.Token, AuthenticationType.Bearer)
+                Body = releaseNotes,
+                Name = releaseName,
+                Draft = false,
+                Prerelease = GitRepository.IsOnReleaseBranch()
             };
-        });
-    Target GitHubRelease => _ => _
-        .Unlisted()
-        .Description("Creates a GitHub release (or amends existing) and uploads the artifact")
-        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubActions.Token))
-        .DependsOn(AuthenticatedGitHubClient)
-        .Executes(async () =>
+            release = await GitHubClient.Repository.Release.Create(gitHubOwner, repoName, newRelease);
+        }
+
+        foreach (var existingAsset in release.Assets)
         {
-            var version = ReleaseNotes.Version.ToString();
-            var releaseNotes = GetNuGetReleaseNotes(ChangelogFile);
-            Release release;
-            var releaseName = $"{version}";
+            await GitHubClient.Repository.Release.DeleteAsset(gitHubOwner, repoName, existingAsset.Id);
+        }
 
-            if (!VersionSuffix.IsNullOrWhiteSpace())
-                releaseName = $"{version}-{VersionSuffix}";
-
-            var identifier = GitRepository.Identifier.Split("/");
-
-            var (gitHubOwner, repoName) = (identifier[0], identifier[1]);
-            try
-            {
-                release = await GitHubClient.Repository.Release.Get(gitHubOwner, repoName, releaseName);
-            }
-            catch (NotFoundException)
-            {
-                var newRelease = new NewRelease(releaseName)
-                {
-                    Body = releaseNotes,
-                    Name = releaseName,
-                    Draft = false,
-                    Prerelease = GitRepository.IsOnReleaseBranch()
-                };
-                release = await GitHubClient.Repository.Release.Create(gitHubOwner, repoName, newRelease);
-            }
-
-            foreach (var existingAsset in release.Assets)
-            {
-                await GitHubClient.Repository.Release.DeleteAsset(gitHubOwner, repoName, existingAsset.Id);
-            }
-
-            Information($"GitHub Release {releaseName}");
-            var packages = OutputNuget.GlobFiles("*.nupkg", "*.symbols.nupkg").NotNull();
-            foreach (var artifact in packages)
-            {
-                var releaseAssetUpload = new ReleaseAssetUpload(artifact.Name, "application/zip", File.OpenRead(artifact), null);
-                var releaseAsset = await GitHubClient.Repository.Release.UploadAsset(release, releaseAssetUpload);
-                Information($"  {releaseAsset.BrowserDownloadUrl}");
-            }
-        });
+        Information($"GitHub Release {releaseName}");
+        var packages = OutputNuget.GlobFiles("*.nupkg", "*.symbols.nupkg").NotNull();
+        foreach (var artifact in packages)
+        {
+            var releaseAssetUpload = new ReleaseAssetUpload(artifact.Name, "application/zip", File.OpenRead(artifact), null);
+            var releaseAsset = await GitHubClient.Repository.Release.UploadAsset(release, releaseAssetUpload);
+            Information($"  {releaseAsset.BrowserDownloadUrl}");
+        }
+    }
     Target RunTests => _ => _
         .Description("Runs all the unit tests")
         .DependsOn(Compile)
