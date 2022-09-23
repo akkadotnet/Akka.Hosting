@@ -11,9 +11,12 @@ using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
+using Akka.Event;
+using Akka.Hosting.Logging;
 using Akka.Hosting.TestKit.Internals;
 using Akka.TestKit;
 using Akka.TestKit.Xunit2;
+using Akka.TestKit.Xunit2.Internals;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,7 +24,9 @@ using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
+#nullable enable
 namespace Akka.Hosting.TestKit
 {
     public abstract class TestKit: TestKitBase, IAsyncLifetime
@@ -31,12 +36,13 @@ namespace Akka.Hosting.TestKit
         /// </summary>
         protected static XunitAssertions Assertions { get; } = new XunitAssertions();
 
-        private IHost _host;
+        private IHost? _host;
         public IHost Host
         {
             get
             {
-                AssertNotNull(_host);
+                if(_host is null)
+                    throw new XunitException("Test has not been initialized yet");
                 return _host;
             }
         }
@@ -45,10 +51,12 @@ namespace Akka.Hosting.TestKit
         
         public TimeSpan StartupTimeout { get; }
         public string ActorSystemName { get; }
-        public ITestOutputHelper Output { get; }
+        public ITestOutputHelper? Output { get; }
         public LogLevel LogLevel { get; }
 
-        protected TestKit(string actorSystemName = null, ITestOutputHelper output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
+        private TaskCompletionSource<Done> _initialized = new TaskCompletionSource<Done>();
+
+        protected TestKit(string? actorSystemName = null, ITestOutputHelper? output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
         : base(Assertions)
         {
             ActorSystemName = actorSystemName ?? "test";
@@ -70,23 +78,48 @@ namespace Akka.Hosting.TestKit
         {
             ConfigureServices(context, services);
             
-            services.AddAkka(ActorSystemName, (builder, provider) =>
+            services.AddAkka(ActorSystemName, async (builder, provider) =>
             {
-                builder.AddHocon(
-                    Config != null ? Config.WithFallback(TestKitBase.DefaultConfig) : TestKitBase.DefaultConfig,
-                    HoconAddMode.Prepend);
+                builder.AddHocon(DefaultConfig, HoconAddMode.Prepend);
+                if (Config is { })
+                    builder.AddHocon(Config, HoconAddMode.Prepend);
 
-                ConfigureAkka(builder, provider);
+                builder.ConfigureLoggers(logger =>
+                {
+                    logger.LogLevel = ToAkkaLogLevel(LogLevel);
+                    logger.ClearLoggers();
+                    logger.AddLogger<TestEventListener>();
+                });
+
+                if (Output is { })
+                {
+                    builder.StartActors(async (system, registry) =>
+                    {
+                        var extSystem = (ExtendedActorSystem)system;
+                        var logger = extSystem.SystemActorOf(Props.Create(() => new LoggerFactoryLogger()), "log-test");
+                        await logger.Ask<LoggerInitialized>(new InitializeLogger(system.EventStream));
+                    });
+                }
+
+                await ConfigureAkka(builder, provider);
+
+                builder.AddStartup((system, registry) =>
+                {
+                    base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
+                    _initialized.SetResult(Done.Instance);
+                });
             });
         }
 
-        protected virtual Config Config { get; } = null;
+        protected virtual Config? Config { get; } = null;
         
         protected virtual void ConfigureLogging(ILoggingBuilder builder)
         { }
 
-        protected virtual void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
-        { }
+        protected virtual Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        {
+            return Task.CompletedTask;
+        }
         
         [InternalApi]
         public async Task InitializeAsync()
@@ -119,9 +152,7 @@ namespace Akka.Hosting.TestKit
                 cts.Dispose();
             }
 
-            var sys = _host.Services.GetRequiredService<ActorSystem>();
-            base.InitializeTest(sys, (ActorSystemSetup)null, null, null);
-
+            await _initialized.Task;
             await BeforeTestStart();
         }
 
@@ -178,11 +209,6 @@ namespace Akka.Hosting.TestKit
                 _ => Event.LogLevel.ErrorLevel
             };
         
-        private static void AssertNotNull(object obj)
-        {
-            if(obj is null)
-                throw new XunitException("Test has not been initialized yet"); 
-        }
     }    
 }
 
