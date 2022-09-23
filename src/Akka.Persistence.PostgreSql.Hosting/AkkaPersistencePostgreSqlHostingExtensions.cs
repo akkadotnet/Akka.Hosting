@@ -1,4 +1,5 @@
 ﻿using System;
+using Akka.Actor;
 using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Hosting;
@@ -11,6 +12,41 @@ namespace Akka.Persistence.PostgreSql.Hosting
     /// </summary>
     public static class AkkaPersistencePostgreSqlHostingExtensions
     {
+        /// <summary>
+        ///     Add Akka.Persistence.PostgreSql support to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="connectionString">
+        ///     Connection string used for database access.
+        /// </param>
+        /// <param name="mode">
+        ///     Determines which settings should be added by this method call.
+        /// </param>
+        /// <param name="schemaName">
+        ///     The schema name for the journal and snapshot store table.
+        /// </param>
+        /// <param name="autoInitialize">
+        ///     Should the SQL store table be initialized automatically.
+        /// </param>
+        /// <param name="storedAsType">
+        ///     Determines how data are being de/serialized into the table.
+        /// </param>
+        /// <param name="sequentialAccess">
+        ///     Uses the `CommandBehavior.SequentialAccess` when creating SQL commands, providing a performance
+        ///     improvement for reading large BLOBS.
+        /// </param>
+        /// <param name="useBigintIdentityForOrderingColumn">
+        ///     When set to true, persistence will use `BIGINT` and `GENERATED ALWAYS AS IDENTITY` for journal table
+        ///     schema creation.
+        /// </param>
+        /// <param name="configurator">
+        ///     An Action delegate used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
         public static AkkaConfigurationBuilder WithPostgreSqlPersistence(
             this AkkaConfigurationBuilder builder,
             string connectionString,
