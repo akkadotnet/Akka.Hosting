@@ -18,6 +18,8 @@ public class LoggerConfigEnd2EndSpecs : TestKit.Xunit2.TestKit
     {
         private readonly TestLogger _logger;
 
+        public bool Created { get; private set; }
+        
         public CustomLoggingProvider(TestLogger logger)
         {
             _logger = logger;
@@ -29,6 +31,11 @@ public class LoggerConfigEnd2EndSpecs : TestKit.Xunit2.TestKit
 
         public ILogger CreateLogger(string categoryName)
         {
+            if (categoryName.Contains(nameof(ActorSystem)))
+            {
+                Created = true;
+                _logger.LogInformation("ActorSystem logger created.");
+            }
             return _logger;
         }
     }
@@ -45,10 +52,12 @@ public class LoggerConfigEnd2EndSpecs : TestKit.Xunit2.TestKit
     [Fact]
     public async Task Should_configure_LoggerFactoryLogger()
     {
+        var loggingProvider = new CustomLoggingProvider(_logger);
+        
         // arrange
         using var host = await StartHost(collection =>
         {
-            collection.AddLogging(builder => { builder.AddProvider(new CustomLoggingProvider(_logger)); });
+            collection.AddLogging(builder => { builder.AddProvider(loggingProvider); });
 
             collection.AddAkka("MySys", (builder, provider) =>
             {
@@ -56,6 +65,9 @@ public class LoggerConfigEnd2EndSpecs : TestKit.Xunit2.TestKit
                 builder.AddTestOutputLogger(_output);
             });
         });
+        
+        // Make sure that the logger has already been created
+        await AwaitConditionAsync(() => loggingProvider.Created);
         var actorSystem = host.Services.GetRequiredService<ActorSystem>();
 
         // act
