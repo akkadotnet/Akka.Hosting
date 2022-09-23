@@ -38,8 +38,8 @@ namespace Akka.Remote.Hosting
         /// Adds Akka.Remote support to this <see cref="ActorSystem"/>.
         /// </summary>
         /// <param name="builder">A configuration delegate.</param>
-        /// <param name="hostname">The hostname to bind Akka.Remote upon.</param>
-        /// <param name="port">The port to bind Akka.Remote upon.</param>
+        /// <param name="hostname">Optional. The hostname to bind Akka.Remote upon. <b>Default</b>: "0.0.0.0"</param>
+        /// <param name="port">Optional. The port to bind Akka.Remote upon. <b>Default</b>: 2552</param>
         /// <param name="publicHostname">Optional. If using hostname aliasing, this is the host we will advertise.</param>
         /// <param name="publicPort">Optional. If using port aliasing, this is the port we will advertise.</param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
