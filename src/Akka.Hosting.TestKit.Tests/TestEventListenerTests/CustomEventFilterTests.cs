@@ -14,7 +14,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests;
 public abstract class CustomEventFilterTestsBase : EventFilterTestBase
 {
     // ReSharper disable ConvertToLambdaExpression
-    public CustomEventFilterTestsBase() : base("akka.loglevel=ERROR") { }
+    public CustomEventFilterTestsBase() : base(Event.LogLevel.ErrorLevel) { }
 
     protected override void SendRawLogEventMessage(object message)
     {

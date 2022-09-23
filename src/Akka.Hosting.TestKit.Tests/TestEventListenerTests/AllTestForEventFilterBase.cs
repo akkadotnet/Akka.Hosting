@@ -11,6 +11,7 @@ using Akka.Event;
 using Akka.TestKit;
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
 using Xunit.Sdk;
 using static FluentAssertions.FluentActions;
 
@@ -21,8 +22,8 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         // ReSharper disable ConvertToLambdaExpression
         private EventFilterFactory _testingEventFilter;
 
-        protected AllTestForEventFilterBase(string config)
-            : base(config)
+        protected AllTestForEventFilterBase(LogLevel logLevel, ITestOutputHelper output = null)
+            : base(logLevel, output)
         {
         }
 

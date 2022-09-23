@@ -19,7 +19,7 @@ public abstract class DeadLettersEventFilterTestsBase : EventFilterTestBase
     private IActorRef _deadActor;
 
     // ReSharper disable ConvertToLambdaExpression
-    protected DeadLettersEventFilterTestsBase() : base("akka.loglevel=ERROR")
+    protected DeadLettersEventFilterTestsBase() : base(Event.LogLevel.ErrorLevel)
     {
     }
 

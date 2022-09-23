@@ -1,6 +1,5 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="AllTestForEventFilterBase_Instances.cs" company="Akka.NET Project">
-//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
 //     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
 // </copyright>
 //-----------------------------------------------------------------------
@@ -12,7 +11,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests;
 
 public class EventFilterDebugTests : AllTestForEventFilterBase<Debug>
 {
-    public EventFilterDebugTests() : base("akka.loglevel=DEBUG"){}
+    public EventFilterDebugTests() : base(LogLevel.DebugLevel){}
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {
@@ -27,7 +26,7 @@ public class EventFilterDebugTests : AllTestForEventFilterBase<Debug>
 
 public class CustomEventFilterDebugTests : AllTestForEventFilterBase<Debug>
 {
-    public CustomEventFilterDebugTests() : base("akka.loglevel=DEBUG") { }
+    public CustomEventFilterDebugTests() : base(LogLevel.DebugLevel) { }
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {
@@ -42,7 +41,7 @@ public class CustomEventFilterDebugTests : AllTestForEventFilterBase<Debug>
 
 public class EventFilterInfoTests : AllTestForEventFilterBase<Info>
 {
-    public EventFilterInfoTests() : base("akka.loglevel=INFO") { }
+    public EventFilterInfoTests() : base(LogLevel.InfoLevel) { }
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {
@@ -57,7 +56,7 @@ public class EventFilterInfoTests : AllTestForEventFilterBase<Info>
 
 public class CustomEventFilterInfoTests : AllTestForEventFilterBase<Info>
 {
-    public CustomEventFilterInfoTests() : base("akka.loglevel=INFO") { }
+    public CustomEventFilterInfoTests() : base(LogLevel.InfoLevel) { }
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {
@@ -73,7 +72,7 @@ public class CustomEventFilterInfoTests : AllTestForEventFilterBase<Info>
 
 public class EventFilterWarningTests : AllTestForEventFilterBase<Warning>
 {
-    public EventFilterWarningTests() : base("akka.loglevel=WARNING") { }
+    public EventFilterWarningTests() : base(LogLevel.WarningLevel) { }
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {
@@ -88,7 +87,7 @@ public class EventFilterWarningTests : AllTestForEventFilterBase<Warning>
 
 public class CustomEventFilterWarningTests : AllTestForEventFilterBase<Warning>
 {
-    public CustomEventFilterWarningTests() : base("akka.loglevel=WARNING") { }
+    public CustomEventFilterWarningTests() : base(LogLevel.WarningLevel) { }
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {
@@ -103,7 +102,7 @@ public class CustomEventFilterWarningTests : AllTestForEventFilterBase<Warning>
 
 public class EventFilterErrorTests : AllTestForEventFilterBase<Error>
 {
-    public EventFilterErrorTests() : base("akka.loglevel=ERROR") { }
+    public EventFilterErrorTests() : base(LogLevel.ErrorLevel) { }
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {
@@ -118,7 +117,7 @@ public class EventFilterErrorTests : AllTestForEventFilterBase<Error>
 
 public class CustomEventFilterErrorTests : AllTestForEventFilterBase<Error>
 {
-    public CustomEventFilterErrorTests() : base("akka.loglevel=ERROR") { }
+    public CustomEventFilterErrorTests() : base(LogLevel.ErrorLevel) { }
 
     protected override EventFilterFactory CreateTestingEventFilter()
     {

@@ -18,7 +18,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests;
 public class ExceptionEventFilterTests : EventFilterTestBase
 {
     public ExceptionEventFilterTests()
-        : base("akka.logLevel=ERROR")
+        : base(Event.LogLevel.ErrorLevel)
     {
     }
     

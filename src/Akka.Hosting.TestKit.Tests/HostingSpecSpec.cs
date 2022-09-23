@@ -6,7 +6,9 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Event;
 using Akka.TestKit.TestActors;
 using Xunit;
 using Xunit.Abstractions;
@@ -24,13 +26,14 @@ namespace Akka.Hosting.TestKit.Tests
         {
         }
 
-        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             builder.WithActors((system, registry) =>
             {
                 var echo = system.ActorOf(Props.Create(() => new SimpleEchoActor()));
                 registry.Register<Echo>(echo);
             });
+            return Task.CompletedTask;
         }
 
         [Fact]
@@ -48,7 +51,13 @@ namespace Akka.Hosting.TestKit.Tests
         {
             public SimpleEchoActor()
             {
-                ReceiveAny(Sender.Tell);
+                var log = Context.GetLogger();
+                
+                ReceiveAny(msg =>
+                {
+                    log.Info($"Received {msg}");
+                    Sender.Tell(msg);
+                });
             }
         }
     }

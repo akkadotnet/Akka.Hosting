@@ -5,27 +5,40 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using System.Threading.Tasks;
-using Akka.Configuration;
 using Akka.Event;
+using Xunit.Abstractions;
 
 namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
 {
     public abstract class EventFilterTestBase : TestKit
     {
+        private readonly LogLevel _logLevel;
+        
         /// <summary>
         /// Used to signal that the test was successful and that we should ensure no more messages were logged
         /// </summary>
         protected bool TestSuccessful;
 
-        protected EventFilterTestBase(string config)
+        protected EventFilterTestBase(LogLevel logLevel, ITestOutputHelper output = null) : base(output: output)
         {
-            Config = $"akka.loggers = [\"{typeof(ForwardAllEventsTestEventListener).AssemblyQualifiedName}\"], {(string.IsNullOrEmpty(config) ? "" : config)}";
+            _logLevel = logLevel;
         }
 
-        protected override Config Config { get; }
-
         protected abstract void SendRawLogEventMessage(object message);
+
+        protected override async Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        {
+            builder.ConfigureLoggers(logger =>
+            {
+                logger.LogLevel = _logLevel;
+                logger.ClearLoggers();
+                logger.AddLogger<ForwardAllEventsTestEventListener>();
+            });
+            
+            await base.ConfigureAkka(builder, provider);
+        }
 
         protected override async Task BeforeTestStart()
         {
