@@ -18,6 +18,11 @@ namespace Akka.Hosting.TestKit.Tests.TestKitBaseTests;
 
 public class ReceiveTests : TestKit
 {
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
+
     [Fact]
     public void ReceiveN_should_receive_correct_number_of_messages()
     {

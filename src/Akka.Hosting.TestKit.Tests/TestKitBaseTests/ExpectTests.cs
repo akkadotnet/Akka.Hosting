@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Threading.Tasks;
 using Akka.Actor;
 using FluentAssertions;
 using Xunit;
@@ -15,6 +16,11 @@ namespace Akka.Hosting.TestKit.Tests.TestKitBaseTests;
 
 public class ExpectTests : TestKit
 {
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
+
     [Fact]
     public void ExpectMsgAllOf_should_receive_correct_messages()
     {

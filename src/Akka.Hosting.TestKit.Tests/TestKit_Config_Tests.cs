@@ -7,6 +7,7 @@
 
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using Akka.TestKit;
 using FluentAssertions;
 using Xunit;
@@ -16,6 +17,11 @@ namespace Akka.Hosting.TestKit.Tests;
 // ReSharper disable once InconsistentNaming
 public class TestKit_Config_Tests : TestKit
 {
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
+
     [Fact]
     public void DefaultValues_should_be_correct()
     {

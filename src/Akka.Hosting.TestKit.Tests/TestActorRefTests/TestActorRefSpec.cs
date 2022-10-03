@@ -38,6 +38,11 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
             Assert.True(OtherThread == null || OtherThread == Thread, "Thread");
         }
 
+        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        {
+            return Task.CompletedTask;
+        }
+
         protected override async Task BeforeTestStart()
         {
             await base.BeforeTestStart();

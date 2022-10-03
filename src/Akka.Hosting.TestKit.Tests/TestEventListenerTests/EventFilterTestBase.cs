@@ -28,7 +28,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
 
         protected abstract void SendRawLogEventMessage(object message);
 
-        protected override async Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             builder.ConfigureLoggers(logger =>
             {
@@ -37,7 +37,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
                 logger.AddLogger<ForwardAllEventsTestEventListener>();
             });
             
-            await base.ConfigureAkka(builder, provider);
+            return Task.CompletedTask;
         }
 
         protected override async Task BeforeTestStart()

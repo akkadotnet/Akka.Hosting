@@ -7,6 +7,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Akka.Configuration;
 using Xunit;
 using Xunit.Sdk;
@@ -24,6 +25,11 @@ public class DilatedTests : TestKit
     private const int DiffDelta = 100; 
 
     protected override Config Config { get; } = $"akka.test.timefactor={TimeFactor}";
+
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
 
     [Fact]
     public void Dilates_correctly_using_timeFactor()

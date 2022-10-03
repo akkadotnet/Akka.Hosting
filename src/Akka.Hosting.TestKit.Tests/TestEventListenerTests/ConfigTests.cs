@@ -5,7 +5,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 
@@ -13,6 +15,11 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
 {
     public class ConfigTests : TestKit
     {
+        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        {
+            return Task.CompletedTask;
+        }
+        
         [Fact]
         public void TestEventListener_is_in_config_by_default()
         {

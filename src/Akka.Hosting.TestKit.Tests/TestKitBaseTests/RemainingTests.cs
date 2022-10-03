@@ -6,12 +6,18 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Akka.Hosting.TestKit.Tests.TestKitBaseTests;
 
 public class RemainingTests : TestKit
 {
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
+
     [Fact]
     public void Throw_if_remaining_is_called_outside_Within()
     {

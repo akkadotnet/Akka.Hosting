@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Threading.Tasks;
 using Akka.Configuration;
 using Xunit;
 using Xunit.Sdk;
@@ -15,6 +16,11 @@ namespace Akka.Hosting.TestKit.Tests.TestKitBaseTests;
 public class AwaitAssertTests : TestKit
 {
     protected override Config Config { get; } = "akka.test.timefactor=2";
+
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
 
     [Fact]
     public void AwaitAssert_must_not_throw_any_exception_when_assertion_is_valid()

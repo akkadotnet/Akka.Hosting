@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Threading.Tasks;
 using Akka.Actor;
 using FluentAssertions;
 using Xunit;
@@ -14,6 +15,11 @@ namespace Akka.Hosting.TestKit.Tests.TestFSMRefTests;
 
 public class TestFSMRefSpec : TestKit
 {
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
+    
     [Fact]
     public void A_TestFSMRef_must_allow_access_to_internal_state()
     {

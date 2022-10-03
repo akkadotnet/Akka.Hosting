@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Threading.Tasks;
 using Akka.Actor;
 using FluentAssertions;
 using Xunit;
@@ -22,6 +23,11 @@ public class IgnoreMessagesTests : TestKit
         }
 
         public string IgnoreMe { get; }
+    }
+
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
     }
 
     [Fact]

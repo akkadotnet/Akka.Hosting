@@ -116,10 +116,7 @@ namespace Akka.Hosting.TestKit
         protected virtual void ConfigureLogging(ILoggingBuilder builder)
         { }
 
-        protected virtual Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
-        {
-            return Task.CompletedTask;
-        }
+        protected abstract Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider);
         
         [InternalApi]
         public async Task InitializeAsync()

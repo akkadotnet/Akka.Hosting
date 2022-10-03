@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.TestKit;
 using Akka.TestKit.TestActors;
@@ -26,6 +27,11 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
             p.Ref.Equals(p).Should().BeTrue();
             var hs = new HashSet<IActorRef> {p, p.Ref};
             hs.Count.Should().Be(1);
+        }
+
+        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        {
+            return Task.CompletedTask;
         }
 
         /// <summary>

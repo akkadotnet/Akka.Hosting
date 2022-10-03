@@ -5,6 +5,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
 using Akka.TestKit;
@@ -15,6 +17,11 @@ namespace Akka.Hosting.TestKit.Tests;
 
 public class NoImplicitSenderSpec : TestKit, INoImplicitSender
 {
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
+
     [Fact]
     public void When_Not_ImplicitSender_then_testActor_is_not_sender()
     {
@@ -28,6 +35,11 @@ public class NoImplicitSenderSpec : TestKit, INoImplicitSender
 
 public class ImplicitSenderSpec : TestKit
 {
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        return Task.CompletedTask;
+    }
+
     [Fact]
     public void ImplicitSender_should_have_testActor_as_sender()
     {
