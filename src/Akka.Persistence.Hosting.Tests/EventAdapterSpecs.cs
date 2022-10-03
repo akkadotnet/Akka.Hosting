@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Akka.Persistence.Hosting.Tests;
 
-public class EventAdapterSpecs
+public class EventAdapterSpecs: Akka.Hosting.TestKit.TestKit
 {
     public static async Task<IHost> StartHost(Action<IServiceCollection> testSetup)
     {
@@ -79,25 +79,25 @@ public class EventAdapterSpecs
         }
     }
     
-    [Fact]
-    public async Task Should_use_correct_EventAdapter_bindings()
+    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        // arrange
-        using var host = await StartHost(collection => collection.AddAkka("MySys", builder =>
+        builder.WithJournal("sql-server", journalBuilder =>
         {
-            builder.WithJournal("sql-server", journalBuilder =>
-            {
-                journalBuilder.AddWriteEventAdapter<EventMapper1>("mapper1", new Type[] { typeof(Event1) });
-                journalBuilder.AddReadEventAdapter<ReadAdapter>("reader1", new Type[] { typeof(Event1) });
-                journalBuilder.AddEventAdapter<ComboAdapter>("combo", boundTypes: new Type[] { typeof(Event2) });
-                journalBuilder.AddWriteEventAdapter<Tagger>("tagger",
-                    boundTypes: new Type[] { typeof(Event1), typeof(Event2) });
-            });
-        }));
-
+            journalBuilder.AddWriteEventAdapter<EventMapper1>("mapper1", new Type[] { typeof(Event1) });
+            journalBuilder.AddReadEventAdapter<ReadAdapter>("reader1", new Type[] { typeof(Event1) });
+            journalBuilder.AddEventAdapter<ComboAdapter>("combo", boundTypes: new Type[] { typeof(Event2) });
+            journalBuilder.AddWriteEventAdapter<Tagger>("tagger",
+                boundTypes: new Type[] { typeof(Event1), typeof(Event2) });
+        });
+        
+        return Task.CompletedTask;
+    }
+    
+    [Fact]
+    public void Should_use_correct_EventAdapter_bindings()
+    {
         // act
-        var sys = host.Services.GetRequiredService<ActorSystem>();
-        var config = sys.Settings.Config;
+        var config = Sys.Settings.Config;
         var sqlPersistenceJournal = config.GetConfig("akka.persistence.journal.sql-server");
         
         // assert
