@@ -1,7 +1,9 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="MdHelper.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
+//      Copyright 2021 Maintainers of NUKE.
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
+//      Distributed under the MIT License.
+//      https://github.com/nuke-build/nuke/blob/master/LICENSE
 //  </copyright>
 // -----------------------------------------------------------------------
 
