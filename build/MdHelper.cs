@@ -156,13 +156,6 @@ public static class MdHelper
             }
         }
     }
-
-    private enum ParsingState
-    {
-        ReadHead,
-        ReadContent,
-        EOF
-    }
     
     [DebuggerDisplay("{" + nameof(Caption) + "} [{" + nameof(StartIndex) + "}-{" + nameof(EndIndex) + "}]")]
     private class ReleaseSection
