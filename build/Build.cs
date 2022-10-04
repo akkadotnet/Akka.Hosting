@@ -390,9 +390,26 @@ partial class Build : NukeBuild
         .Description("Install `Nuke.GlobalTool` and SignClient")
         .Executes(() =>
         {
-            DotNet($@"dotnet tool install SignClient --version 1.3.155 --tool-path ""{ToolsDir}"" ");
-            DotNet($"tool install Nuke.GlobalTool --global");
-        });
+            try
+            {
+                DotNet($@"dotnet tool install SignClient --version 1.3.155 --tool-path ""{ToolsDir}"" ");
+            }
+            catch (ProcessException pex)
+            {
+                if (!pex.Message.Contains("is already installed"))
+                    throw;
+            }
+
+            try
+            {
+                DotNet($"tool install Nuke.GlobalTool --global");
+            }
+            catch (ProcessException pex)
+            {
+                if (!pex.Message.Contains("is already installed"))
+                    throw;
+            }
+        }).ProceedAfterFailure();
 
     static void Information(string info)
     {
