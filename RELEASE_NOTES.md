@@ -16,24 +16,24 @@ The biggest difference between _Akka.Hosting.TestKit_ and _Akka.TestKit_ is that
 
 These are steps of what overridable methods gets called. Not all of the methods needs to be overriden, at the minimum, if you do not need a custom hosting environment, you need to override the `ConfigureAkka` method.
 
-1. `ConfigureLogging(ILoggingBuilder)` 
-   
+1. `ConfigureLogging(ILoggingBuilder)`
+
    Add custom logger and filtering rules on the `HostBuilder` level.
 2. `ConfigureHostConfiguration(IConfigurationBuilder)` 
-   
+
    Inject any additional hosting environment configuration here, such as faking environment variables, in the `HostBuilder` level.
-3. `ConfigureAppConfiguration(HostBuilderContext, IConfigurationBuilder)` 
-   
+3. `ConfigureAppConfiguration(HostBuilderContext, IConfigurationBuilder)`
+
    Inject the application configuration.
-4. `ConfigureServices(HostBuilderContext, IServiceCollection)` 
+4. `ConfigureServices(HostBuilderContext, IServiceCollection)`
 
    Add additional services needed by the test, such as mocked up services used inside the dependency injection.
 5. User defined HOCON configuration is injected by overriding the `Config` property, it is not passed as part of the constructor anymore.
-6. `ConfigureAkka(AkkaConfigurationBuilder, IServiceProvider)` 
+6. `ConfigureAkka(AkkaConfigurationBuilder, IServiceProvider)`
 
    This is called inside `AddAkka`, use this to configure the `AkkaConfigurationBuilder`
-7. `BeforeTestStart()` 
- 
+7. `BeforeTestStart()`
+
    This method is called after the TestKit is initialized. Move all of the codes that used to belong in the constructor here.
 
 `Akka.Hosting.TestKit` extends `Akka.TestKit.TestKitBase` directly, all testing methods are available out of the box.
@@ -66,7 +66,7 @@ public class ConfigOption : DiscoveryOptionBase
 {
     // The path value in the akka.discovery.method property above
     public string ConfigPath => "akka.discovery.config";
-    
+
     // The FQCN value in the akka.discovery.config.class property above
     public Type Class => typeof(ConfigServiceDiscovery);
 
@@ -75,28 +75,27 @@ public class ConfigOption : DiscoveryOptionBase
     {
         // Modifies Akka.NET configuration either via HOCON or setup class
         builder.AddHocon(
-            $"akka.discovery.method = {ConfigPath.ToHocon()}", 
+            $"akka.discovery.method = {ConfigPath.ToHocon()}",
             HoconAddMode.Prepend);
         builder.AddHocon($"akka.discovery.config.class = {
-            Class.AssemblyQualifiedName.ToHocon()}", 
+            Class.AssemblyQualifiedName.ToHocon()}",
             HoconAddMode.Prepend);
 
         // Rest of configuration goes here
     }
 }
 
- // Akka.Hosting extension implementation
- public static AkkaConfigurationBuilder WithDiscovery(
-     this AkkaConfigurationBuilder builder,
-     DiscoveryOptionBase discOption)
- {
-     var setup = new DiscoverySetup();
+// Akka.Hosting extension implementation
+public static AkkaConfigurationBuilder WithDiscovery(
+    this AkkaConfigurationBuilder builder,
+    DiscoveryOptionBase discOption)
+{
+    var setup = new DiscoverySetup();
 
-     // gets called here
-     discOption.Apply(builder, setup);
- }
+    // gets called here
+    discOption.Apply(builder, setup);
+}
 ```
-
 
 ## [0.4.3] / 9 September 2022
 - [Update Akka.NET from 1.4.40 to 1.4.41](https://github.com/akkadotnet/akka.net/releases/tag/1.4.41)
