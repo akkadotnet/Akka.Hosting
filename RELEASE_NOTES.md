@@ -1,5 +1,4 @@
 ## [0.5.0] / 9 October 2022
-
 * [Update Akka.NET from 1.4.41 to 1.4.43](https://github.com/akkadotnet/akka.net/releases/tag/1.4.43)
 * [Add full options support to Akka.Persistence.SqlServer.Hosting](https://github.com/akkadotnet/Akka.Hosting/pull/107)
 * [Improved Akka.Remote.Hosting implementation](https://github.com/akkadotnet/Akka.Hosting/pull/108)
