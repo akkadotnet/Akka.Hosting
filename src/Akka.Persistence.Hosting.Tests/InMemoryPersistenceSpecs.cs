@@ -13,7 +13,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Persistence.Hosting.Tests
 {
-    public class InMemoryPersistenceSpecs
+    public class InMemoryPersistenceSpecs: Akka.Hosting.TestKit.TestKit
     {
         
         private readonly ITestOutputHelper _output;
@@ -76,30 +76,26 @@ namespace Akka.Persistence.Hosting.Tests
             await host.StartAsync();
             return host;
         }
+        
+        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        {
+            builder
+                .WithInMemoryJournal()
+                .WithInMemorySnapshotStore()
+                .StartActors((system, registry) =>
+                {
+                    var myActor = system.ActorOf(Props.Create(() => new MyPersistenceActor("ac1")), "actor1");
+                    registry.Register<MyPersistenceActor>(myActor);
+                });
+            
+            return Task.CompletedTask;
+        }
 
         [Fact]
         public async Task Should_Start_ActorSystem_wth_InMemory_Persistence()
         {
             // arrange
-            using var host = await StartHost(collection => collection.AddAkka("MySys", builder =>
-            {
-                builder.WithInMemoryJournal().WithInMemorySnapshotStore()
-                    .StartActors((system, registry) =>
-                    {
-                        var myActor = system.ActorOf(Props.Create(() => new MyPersistenceActor("ac1")), "actor1");
-                        registry.Register<MyPersistenceActor>(myActor);
-                    })
-                    .WithActors((system, registry) =>
-                    {
-                        var extSystem = (ExtendedActorSystem)system;
-                        var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(_output)), "log-test");
-                        logger.Tell(new InitializeLogger(system.EventStream));
-                    });;
-            }));
-
-            var actorSystem = host.Services.GetRequiredService<ActorSystem>();
-            var actorRegistry = host.Services.GetRequiredService<ActorRegistry>();
-            var myPersistentActor = actorRegistry.Get<MyPersistenceActor>();
+            var myPersistentActor = ActorRegistry.Get<MyPersistenceActor>();
             
             // act
             var resp1 = await myPersistentActor.Ask<string>(1, TimeSpan.FromSeconds(3));
@@ -111,13 +107,13 @@ namespace Akka.Persistence.Hosting.Tests
 
             // kill + recreate actor with same PersistentId
             await myPersistentActor.GracefulStop(TimeSpan.FromSeconds(3));
-            var myPersistentActor2 = actorSystem.ActorOf(Props.Create(() => new MyPersistenceActor("ac1")), "actor1a");
+            var myPersistentActor2 = Sys.ActorOf(Props.Create(() => new MyPersistenceActor("ac1")), "actor1a");
             
             var snapshot2 = await myPersistentActor2.Ask<int[]>("getall", TimeSpan.FromSeconds(3));
             snapshot2.Should().BeEquivalentTo(new[] {1, 2});
             
             // validate configs
-            var config = actorSystem.Settings.Config;
+            var config = Sys.Settings.Config;
             config.GetString("akka.persistence.journal.plugin").Should().Be("akka.persistence.journal.inmem");
             config.GetString("akka.persistence.snapshot-store.plugin").Should().Be("akka.persistence.snapshot-store.inmem");
         }
