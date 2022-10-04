@@ -1,43 +1,61 @@
 ﻿using System;
+using Akka.Actor;
 using Akka.Configuration;
 using Akka.Hosting;
+using Akka.Persistence.Hosting;
 using Akka.Persistence.Query.Sql;
 
 namespace Akka.Persistence.PostgreSql.Hosting
 {
-    public enum SqlPersistenceMode
-    {
-        /// <summary>
-        /// Sets both the akka.persistence.journal and the akka.persistence.snapshot-store to use
-        /// Akka.Persistence.PostgreSql.
-        /// </summary>
-        Both,
-
-        /// <summary>
-        /// Sets ONLY the akka.persistence.journal to use Akka.Persistence.PostgreSql.
-        /// </summary>
-        Journal,
-
-        /// <summary>
-        /// Sets ONLY the akka.persistence.snapshot-store to use Akka.Persistence.PostgreSql.
-        /// </summary>
-        SnapshotStore,
-    }
-
     /// <summary>
     /// Extension methods for Akka.Persistence.PostgreSql
     /// </summary>
     public static class AkkaPersistencePostgreSqlHostingExtensions
     {
+        /// <summary>
+        ///     Add Akka.Persistence.PostgreSql support to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="connectionString">
+        ///     Connection string used for database access.
+        /// </param>
+        /// <param name="mode">
+        ///     Determines which settings should be added by this method call.
+        /// </param>
+        /// <param name="schemaName">
+        ///     The schema name for the journal and snapshot store table.
+        /// </param>
+        /// <param name="autoInitialize">
+        ///     Should the SQL store table be initialized automatically.
+        /// </param>
+        /// <param name="storedAsType">
+        ///     Determines how data are being de/serialized into the table.
+        /// </param>
+        /// <param name="sequentialAccess">
+        ///     Uses the `CommandBehavior.SequentialAccess` when creating SQL commands, providing a performance
+        ///     improvement for reading large BLOBS.
+        /// </param>
+        /// <param name="useBigintIdentityForOrderingColumn">
+        ///     When set to true, persistence will use `BIGINT` and `GENERATED ALWAYS AS IDENTITY` for journal table
+        ///     schema creation.
+        /// </param>
+        /// <param name="configurator">
+        ///     An Action delegate used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
         public static AkkaConfigurationBuilder WithPostgreSqlPersistence(
             this AkkaConfigurationBuilder builder,
             string connectionString,
-            SqlPersistenceMode mode = SqlPersistenceMode.Both,
+            PersistenceMode mode = PersistenceMode.Both,
             string schemaName = "public",
             bool autoInitialize = false,
             StoredAsType storedAsType = StoredAsType.ByteA,
             bool sequentialAccess = false,
-            bool useBigintIdentityForOrderingColumn = false)
+            bool useBigintIdentityForOrderingColumn = false, Action<AkkaPersistenceJournalBuilder> configurator = null)
         {
             var storedAs = storedAsType switch
             {
@@ -88,17 +106,22 @@ namespace Akka.Persistence.PostgreSql.Hosting
 
             var finalConfig = mode switch
             {
-                SqlPersistenceMode.Both => journalConfiguration
+                PersistenceMode.Both => journalConfiguration
                     .WithFallback(snapshotStoreConfig)
                     .WithFallback(SqlReadJournal.DefaultConfiguration()),
 
-                SqlPersistenceMode.Journal => journalConfiguration
+                PersistenceMode.Journal => journalConfiguration
                     .WithFallback(SqlReadJournal.DefaultConfiguration()),
 
-                SqlPersistenceMode.SnapshotStore => snapshotStoreConfig,
+                PersistenceMode.SnapshotStore => snapshotStoreConfig,
 
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid SqlPersistenceMode defined.")
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid PersistenceMode defined.")
             };
+            
+            if (configurator != null) // configure event adapters
+            {
+                builder.WithJournal("postgresql", configurator);
+            }
 
             return builder.AddHocon(finalConfig.WithFallback(PostgreSqlPersistence.DefaultConfiguration()));
         }

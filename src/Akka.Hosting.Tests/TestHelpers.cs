@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Akka.Actor;
+using Akka.Event;
+using Akka.TestKit.Xunit2.Internals;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Xunit.Abstractions;
 
 namespace Akka.Hosting.Tests;
 
@@ -18,5 +22,18 @@ public static class TestHelpers
         
         await host.StartAsync();
         return host;
+    }
+
+    public static AkkaConfigurationBuilder AddTestOutputLogger(this AkkaConfigurationBuilder builder,
+        ITestOutputHelper output)
+    {
+        builder.WithActors((system, registry) =>
+        {
+            var extSystem = (ExtendedActorSystem)system;
+            var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(output)), "log-test");
+            logger.Tell(new InitializeLogger(system.EventStream));
+        });
+        
+        return builder;
     }
 }

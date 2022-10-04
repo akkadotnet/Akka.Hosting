@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Akka.Actor;
+using Akka.Cluster.Hosting.SBR;
 using Akka.Cluster.Sharding;
 using Akka.Cluster.Tools.Client;
 using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Cluster.Tools.Singleton;
+using Akka.Configuration;
 using Akka.Hosting;
 
 namespace Akka.Cluster.Hosting
@@ -62,17 +67,24 @@ namespace Akka.Cluster.Hosting
             return builder.AddHocon(config, HoconAddMode.Prepend);
         }
 
-        private static AkkaConfigurationBuilder BuildClusterHocon(this AkkaConfigurationBuilder builder,
-            ClusterOptions options)
+        private static AkkaConfigurationBuilder BuildClusterHocon(
+            this AkkaConfigurationBuilder builder,
+            ClusterOptions options,
+            SplitBrainResolverOption sbrOptions)
         {
-            if (options == null)
+            if (options == null && sbrOptions == null)
                 return builder;
 
-            if (options.Roles is { Length: > 0 })
-                builder = builder.BuildClusterRolesHocon(options.Roles);
+            if (options != null)
+            {
+                if (options.Roles is { Length: > 0 })
+                    builder = builder.BuildClusterRolesHocon(options.Roles);
 
-            if (options.SeedNodes is { Length: > 0 })
-                builder = builder.BuildClusterSeedsHocon(options.SeedNodes);
+                if (options.SeedNodes is { Length: > 0 })
+                    builder = builder.BuildClusterSeedsHocon(options.SeedNodes);
+            }
+
+            sbrOptions?.Apply(builder);
 
             // populate all of the possible Clustering default HOCON configurations here
             return builder.AddHocon(ClusterSharding.DefaultConfig()
@@ -86,11 +98,24 @@ namespace Akka.Cluster.Hosting
         /// </summary>
         /// <param name="builder">The builder instance being configured.</param>
         /// <param name="options">Optional. Akka.Cluster configuration parameters.</param>
+        /// <param name="sbrOptions">
+        /// Optional. Split brain resolver configuration parameters. This can be an instance of one of these classes:
+        /// <list type="bullet">
+        /// <item><see cref="StaticQuorumOption"/></item>
+        /// <item><see cref="KeepMajorityOption"/></item>
+        /// <item><see cref="KeepOldestOption"/></item>
+        /// <item><see cref="LeaseMajorityOption"/></item>
+        /// </list>
+        /// To use the default split brain resolver options, use <see cref="SplitBrainResolverOption.Default"/> which
+        /// uses the keep majority resolving strategy.
+        /// </param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder WithClustering(this AkkaConfigurationBuilder builder,
-            ClusterOptions options = null)
+        public static AkkaConfigurationBuilder WithClustering(
+            this AkkaConfigurationBuilder builder,
+            ClusterOptions options = null,
+            SplitBrainResolverOption sbrOptions = null)
         {
-            var hoconBuilder = BuildClusterHocon(builder, options);
+            var hoconBuilder = BuildClusterHocon(builder, options, sbrOptions);
 
             if (builder.ActorRefProvider.HasValue)
             {
@@ -132,10 +157,8 @@ namespace Akka.Cluster.Hosting
                         .WithRole(shardOptions.Role)
                         .WithRememberEntities(shardOptions.RememberEntities)
                         .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
-
-                // TODO: should throw here if duplicate key used
-
-                registry.TryRegister<TKey>(shardRegion);
+                
+                registry.Register<TKey>(shardRegion);
             });
         }
 
@@ -173,9 +196,44 @@ namespace Akka.Cluster.Hosting
                         .WithRememberEntities(shardOptions.RememberEntities)
                         .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
 
-                // TODO: should throw here if duplicate key used
+                registry.Register<TKey>(shardRegion);
+            });
+        }
+        
+        public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
+            string typeName,
+            Func<ActorSystem, IActorRegistry, Func<string, Props>> compositePropsFactory, IMessageExtractor messageExtractor, ShardOptions shardOptions)
+        {
+            return builder.WithActors(async (system, registry) =>
+            {
+                var entityPropsFactory = compositePropsFactory(system, registry);
+                
+                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
+                    ClusterShardingSettings.Create(system)
+                        .WithRole(shardOptions.Role)
+                        .WithRememberEntities(shardOptions.RememberEntities)
+                        .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
 
-                registry.TryRegister<TKey>(shardRegion);
+                registry.Register<TKey>(shardRegion);
+            });
+        }
+
+        public static AkkaConfigurationBuilder WithShardRegion<TKey>(this AkkaConfigurationBuilder builder,
+            string typeName,
+            Func<ActorSystem, IActorRegistry, Func<string, Props>> compositePropsFactory, ExtractEntityId extractEntityId,
+            ExtractShardId extractShardId, ShardOptions shardOptions)
+        {
+            return builder.WithActors(async (system, registry) =>
+            {
+                var entityPropsFactory = compositePropsFactory(system, registry);
+                
+                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
+                    ClusterShardingSettings.Create(system)
+                        .WithRole(shardOptions.Role)
+                        .WithRememberEntities(shardOptions.RememberEntities)
+                        .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
+
+                registry.Register<TKey>(shardRegion);
             });
         }
 
@@ -204,10 +262,8 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, extractEntityId, extractShardId);
-
-                // TODO: should throw here if duplicate key used
-
-                registry.TryRegister<TKey>(shardRegionProxy);
+                
+                registry.Register<TKey>(shardRegionProxy);
             });
         }
 
@@ -231,10 +287,8 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, messageExtractor);
-
-                // TODO: should throw here if duplicate key used
-
-                registry.TryRegister<TKey>(shardRegionProxy);
+                
+                registry.Register<TKey>(shardRegionProxy);
             });
         }
 
@@ -261,7 +315,7 @@ namespace Akka.Cluster.Hosting
             {
                 // force the initialization
                 var mediator = DistributedPubSub.Get(system).Mediator;
-                registry.TryRegister<DistributedPubSub>(mediator);
+                registry.Register<DistributedPubSub>(mediator);
             });
         }
 
@@ -367,5 +421,129 @@ namespace Akka.Cluster.Hosting
                 CreateAndRegisterSingletonProxy<TKey>(singletonName, singletonManagerPath, singletonProxySettings, system, registry);
             });
         }
+
+        /// <summary>
+        /// Configures a <see cref="ClusterClientReceptionist"/> for the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="name">Actor name of the ClusterReceptionist actor under the system path, by default it is /system/receptionist</param>
+        /// <param name="role">Checks that the receptionist only start on members tagged with this role. All members are used if empty.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClientReceptionist(
+            this AkkaConfigurationBuilder builder,
+            string name = "receptionist",
+            string role = null)
+        {
+            builder.AddHocon(CreateReceptionistConfig(name, role), HoconAddMode.Prepend);
+            return builder;
+        }
+
+        internal static Config CreateReceptionistConfig(string name, string role)
+        {
+            const string root = "akka.cluster.client.receptionist.";
+            
+            var sb = new StringBuilder()
+                .Append(root).Append("name:").AppendLine(QuoteIfNeeded(name));
+            
+            if(!string.IsNullOrEmpty(role))
+                sb.Append(root).Append("role:").AppendLine(QuoteIfNeeded(role));
+
+            return ConfigurationFactory.ParseString(sb.ToString());
+        }
+        
+        /// <summary>
+        /// Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        /// <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="initialContacts"> <para>
+        /// List of <see cref="ClusterClientReceptionist"/> <see cref="ActorPath"/> that will be used as a seed
+        /// to discover all of the receptionists in the cluster.
+        /// </para>
+        /// <para>
+        /// This should look something like "akka.tcp://systemName@networkAddress:2552/system/receptionist"
+        /// </para></param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClient<TKey>(
+            this AkkaConfigurationBuilder builder,
+            IList<ActorPath> initialContacts)
+        {
+            if (initialContacts == null)
+                throw new ArgumentNullException(nameof(initialContacts));
+
+            if (initialContacts.Count < 1)
+                throw new ArgumentException("Must specify at least one initial contact", nameof(initialContacts));
+            
+            return builder.WithActors((system, registry) =>
+            {
+                var clusterClient = system.ActorOf(ClusterClient.Props(
+                    CreateClusterClientSettings(system.Settings.Config, initialContacts)));
+                registry.TryRegister<TKey>(clusterClient);
+            });
+        }
+
+        /// <summary>
+        /// Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        /// <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="initialContactAddresses"> <para>
+        /// List of node addresses where the <see cref="ClusterClientReceptionist"/> are located that will be used as seed
+        /// to discover all of the receptionists in the cluster.
+        /// </para>
+        /// <para>
+        /// This should look something like "akka.tcp://systemName@networkAddress:2552"
+        /// </para></param>
+        /// <param name="receptionistActorName">The name of the <see cref="ClusterClientReceptionist"/> actor.
+        /// Defaults to "receptionist"
+        /// </param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClient<TKey>(
+            this AkkaConfigurationBuilder builder,
+            IEnumerable<Address> initialContactAddresses,
+            string receptionistActorName = "receptionist")
+            => builder.WithClusterClient<TKey>(initialContactAddresses
+                .Select(address => new RootActorPath(address) / "system" / receptionistActorName)
+                .ToList());
+
+        /// <summary>
+        /// Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        /// <see cref="TKey"/>.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="initialContacts"> <para>
+        /// List of actor paths that will be used as a seed to discover all of the receptionists in the cluster.
+        /// </para>
+        /// <para>
+        /// This should look something like "akka.tcp://systemName@networkAddress:2552/system/receptionist"
+        /// </para></param>
+        /// <typeparam name="TKey">The key type to use for the <see cref="ActorRegistry"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterClient<TKey>(
+            this AkkaConfigurationBuilder builder,
+            IEnumerable<string> initialContacts)
+            => builder.WithClusterClient<TKey>(initialContacts.Select(ActorPath.Parse).ToList());
+
+        internal static ClusterClientSettings CreateClusterClientSettings(Config config, IEnumerable<ActorPath> initialContacts)
+        {
+            var clientConfig = config.GetConfig("akka.cluster.client");
+            return ClusterClientSettings.Create(clientConfig)
+                .WithInitialContacts(initialContacts.ToImmutableHashSet());
+        }
+        
+        #region Helper functions
+
+        private static readonly Regex EscapeRegex = new Regex("[ \t:]{1}", RegexOptions.Compiled);
+        
+        private static string QuoteIfNeeded(string text)
+        {
+            return text == null 
+                ? "" : EscapeRegex.IsMatch(text) 
+                    ? $"\"{text}\"" : text;
+        }
+
+        #endregion
     }
 }

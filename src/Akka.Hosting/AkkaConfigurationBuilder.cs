@@ -2,15 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
 using Akka.Actor.Setup;
+using Akka.Annotations;
 using Akka.Configuration;
 using Akka.DependencyInjection;
+using Akka.Hosting.Logging;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
 {
@@ -50,6 +54,8 @@ namespace Akka.Hosting
     /// </summary>
     public delegate Task ActorStarter(ActorSystem system, IActorRegistry registry);
 
+    public delegate Task StartupTask(ActorSystem system, IActorRegistry registry);
+    
     /// <summary>
     /// Used to help populate a <see cref="SerializationSetup"/> upon starting the <see cref="ActorSystem"/>,
     /// if any are added to the builder;
@@ -76,8 +82,19 @@ namespace Akka.Hosting
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new HashSet<SerializerRegistration>();
-        internal readonly HashSet<Setup> Setups = new HashSet<Setup>();
+        internal readonly HashSet<Type> Extensions = new HashSet<Type>();
 
+        /// <summary>
+        /// INTERNAL API.
+        /// 
+        /// <para>
+        /// Do NOT modify this field directly. This field is exposed only for testing purposes and is subject to change in the future.
+        /// </para>
+        /// Use the provided <see cref="AddSetup"/> method instead.
+        /// </summary>
+        [InternalApi]
+        public readonly HashSet<Setup> Setups = new HashSet<Setup>();
+        
         /// <summary>
         /// The currently configured <see cref="ProviderSelection"/>.
         /// </summary>
@@ -96,6 +113,7 @@ namespace Akka.Hosting
         internal Option<ActorSystem> Sys { get; set; } = Option<ActorSystem>.None;
 
         private readonly HashSet<ActorStarter> _actorStarters = new HashSet<ActorStarter>();
+        private readonly HashSet<StartupTask> _startupTasks = new HashSet<StartupTask>();
         private bool _complete = false;
 
         public AkkaConfigurationBuilder(IServiceCollection serviceCollection, string actorSystemName)
@@ -176,6 +194,17 @@ namespace Akka.Hosting
 
             return Starter;
         }
+        
+        private static StartupTask ToAsyncStartup(Action<ActorSystem, IActorRegistry> nonAsyncStartup)
+        {
+            Task Startup(ActorSystem f, IActorRegistry registry)
+            {
+                nonAsyncStartup(f, registry);
+                return Task.CompletedTask;
+            }
+
+            return Startup;
+        }
 
         public AkkaConfigurationBuilder StartActors(Action<ActorSystem, IActorRegistry> starter)
         {
@@ -191,6 +220,34 @@ namespace Akka.Hosting
             return this;
         }
 
+        /// <summary>
+        /// Adds a <see cref="StartupTask"/> delegate that will be executed exactly once for application initialization
+        /// once the <see cref="ActorSystem"/> and all actors is started in this process.
+        /// </summary>
+        /// <param name="startupTask">A <see cref="StartupTask"/> delegate that will be run after all actors
+        /// have been instantiated.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public AkkaConfigurationBuilder AddStartup(Action<ActorSystem, IActorRegistry> startupTask)
+        {
+            if (_complete) return this;
+            _startupTasks.Add(ToAsyncStartup(startupTask));
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a <see cref="StartupTask"/> delegate that will be executed exactly once for application initialization
+        /// once the <see cref="ActorSystem"/> and all actors is started in this process.
+        /// </summary>
+        /// <param name="startupTask">A <see cref="StartupTask"/> delegate that will be run after all actors
+        /// have been instantiated.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public AkkaConfigurationBuilder AddStartup(StartupTask startupTask)
+        {
+            if (_complete) return this;
+            _startupTasks.Add(startupTask);
+            return this;
+        }
+        
         public AkkaConfigurationBuilder WithCustomSerializer(
             string serializerIdentifier, IEnumerable<Type> boundTypes,
             Func<ExtendedActorSystem, Serializer> serializerFactory)
@@ -201,6 +258,55 @@ namespace Akka.Hosting
             return this;
         }
 
+        /// <summary>
+        /// Adds a list of Akka.NET extensions that will be started automatically when the <see cref="ActorSystem"/>
+        /// starts up.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// // Starts distributed pub-sub, cluster metrics, and cluster bootstrap extensions at start-up
+        /// builder.WithExtensions(
+        ///     typeof(DistributedPubSubExtensionProvider),
+        ///     typeof(ClusterMetricsExtensionProvider),
+        ///     typeof(ClusterBootstrapProvider));
+        /// </code>
+        /// </example>
+        /// <param name="extensions">An array of extension providers that will be automatically started
+        /// when the <see cref="ActorSystem"/> starts</param>
+        /// <returns>This <see cref="AkkaConfigurationBuilder"/> instance, for fluent building pattern</returns>
+        public AkkaConfigurationBuilder WithExtensions(params Type[] extensions)
+        {
+            foreach (var extension in extensions)
+            {
+                if (!typeof(IExtensionId).IsAssignableFrom(extension))
+                    throw new ConfigurationException($"Type must extends {nameof(IExtensionId)}: [{extension.FullName}]");
+                
+                var typeInfo = extension.GetTypeInfo();
+                if (typeInfo.IsAbstract || !typeInfo.IsClass)
+                    throw new ConfigurationException("Type class must not be abstract or static");
+                
+                if (Extensions.Contains(extension))
+                    continue;
+                Extensions.Add(extension);
+            }
+            return this;
+        }
+
+        public AkkaConfigurationBuilder WithExtension<T>() where T : IExtensionId
+        {
+            var type = typeof(T);
+            if (Extensions.Contains(type)) 
+                return this;
+            
+            var typeInfo = type.GetTypeInfo();
+            if (typeInfo.IsAbstract || !typeInfo.IsClass)
+                throw new ConfigurationException("Type class must not be abstract or static");
+
+            Extensions.Add(type);
+
+            return this;
+        }
+        
         internal void Bind()
         {
             // register as singleton - not interested in supporting multi-Sys use cases
@@ -222,6 +328,37 @@ namespace Akka.Hosting
             });
         }
 
+        /// <summary>
+        /// Configure extensions
+        /// </summary>
+        private void AddExtensions()
+        {
+            if (Extensions.Count == 0)
+                return;
+            
+            // check to see if there are any existing extensions set up inside the current HOCON configuration
+            if (Configuration.HasValue)
+            {
+                var listedExtensions = Configuration.Value.GetStringList("akka.extensions");
+                foreach (var listedExtension in listedExtensions)
+                {
+                    var trimmed = listedExtension.Trim();
+                    
+                    // sanity check, we should not get any empty entries
+                    if (string.IsNullOrWhiteSpace(trimmed))
+                        continue;
+                    
+                    var type = Type.GetType(trimmed);
+                    if (type != null)
+                        Extensions.Add(type);
+                }
+            }
+            
+            AddHoconConfiguration(
+                $"akka.extensions = [{string.Join(", ", Extensions.Select(s => $"\"{s.AssemblyQualifiedName}\""))}]", 
+                HoconAddMode.Prepend);
+        }
+        
         private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
         {
             return sp =>
@@ -231,6 +368,25 @@ namespace Akka.Hosting
                 /*
                  * Build setups
                  */
+                
+                // Add auto-started akka extensions, if any.
+                config.AddExtensions();
+                
+                // check to see if we need a LoggerSetup
+                var hasLoggerSetup = config.Setups.Any(c => c is LoggerFactorySetup);
+                if (!hasLoggerSetup)
+                {
+                    var logger = sp.GetService<ILoggerFactory>();
+                    
+                    // on the off-chance that we're not running with ILogger support enabled
+                    // (should be a rare case that only comes up during testing)
+                    if (logger != null) 
+                    {
+                        var loggerSetup = new LoggerFactorySetup(logger);
+                        config.AddSetup(loggerSetup);
+                    }
+                }
+                
                 var diSetup = DependencyResolverSetup.Create(sp);
                 var bootstrapSetup = BootstrapSetup.Create().WithConfig(config.Configuration.GetOrElse(Config.Empty));
                 if (config.ActorRefProvider.HasValue) // only set the provider when explicitly required
@@ -284,6 +440,11 @@ namespace Akka.Hosting
             foreach (var starter in _actorStarters)
             {
                 await starter(sys, registry).ConfigureAwait(false);
+            }
+
+            foreach (var startupTask in _startupTasks)
+            {
+                await startupTask(sys, registry).ConfigureAwait(false);
             }
 
             return sys;

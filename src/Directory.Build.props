@@ -2,10 +2,8 @@
   <PropertyGroup>
    <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>0.3.1</VersionPrefix>
-    <PackageReleaseNotes>• [Fixed: WithDistributedPubSub throws NullReferenceException](https://github.com/akkadotnet/Akka.Hosting/issues/55)
-• [Introduced AddHoconFile method](https://github.com/akkadotnet/Akka.Hosting/pull/58)
-• [Upgraded to Akka.NET 1.4.39](https://github.com/akkadotnet/akka.net/releases/tag/1.4.39)</PackageReleaseNotes>
+    <VersionPrefix>0.4.0</VersionPrefix>
+    <PackageReleaseNotes>• [Add Microsoft.Extensions.Logging.ILoggerFactory logging support](https://github.com/akkadotnet/Akka.Hosting/pull/72)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
@@ -220,9 +218,10 @@
   <PropertyGroup>
     <LibraryFramework>netstandard2.0</LibraryFramework>
     <TestsNetCoreFramework>net6.0</TestsNetCoreFramework>
-    <XunitVersion>2.4.1</XunitVersion>
-    <TestSdkVersion>17.2.0</TestSdkVersion>
-    <AkkaVersion>1.4.39</AkkaVersion>
+    <XunitVersion>2.4.2</XunitVersion>
+    <TestSdkVersion>17.3.2</TestSdkVersion>
+	<XunitRunneVisualstudio>2.4.5</XunitRunneVisualstudio>
+    <AkkaVersion>1.4.43</AkkaVersion>
     <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
   </PropertyGroup>
 

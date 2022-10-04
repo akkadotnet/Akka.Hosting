@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>TestKit for writing tests for Akka.NET using Akka.Hosting and xUnit.</Description>
+        <TargetFramework>$(LibraryFramework)</TargetFramework>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <LangVersion>8.0</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+        <PackageReference Include="xunit" Version="$(XunitVersion)" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
+    </ItemGroup>
+
+</Project>
