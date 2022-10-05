@@ -85,7 +85,7 @@ partial class Build : NukeBuild
     {
         return "beta" + (BuildNumber() > 0 ? BuildNumber() : DateTime.UtcNow.Ticks.ToString());
     } 
-    public ChangeLog Changelog => ReadChangelog(ChangelogFile);
+    public ChangeLog Changelog => MdHelper.ReadChangelog(ChangelogFile);
 
     public ReleaseNotes ReleaseNotes => Changelog.ReleaseNotes.OrderByDescending(s => s.Version).FirstOrDefault() ?? throw new ArgumentException("Bad Changelog File. Version Should Exist");
 
@@ -381,7 +381,7 @@ partial class Build : NukeBuild
         .After(Restore)
         .Executes(() =>
         {
-            XmlTasks.XmlPoke(SourceDirectory / "Directory.Build.props", "//Project/PropertyGroup/PackageReleaseNotes", GetNuGetReleaseNotes(ChangelogFile));
+            XmlHelper.XmlPoke(SourceDirectory / "Directory.Build.props", "//Project/PropertyGroup/PackageReleaseNotes", MdHelper.GetNuGetReleaseNotes(ChangelogFile));
             XmlTasks.XmlPoke(SourceDirectory / "Directory.Build.props", "//Project/PropertyGroup/VersionPrefix", ReleaseVersion);
 
         });
