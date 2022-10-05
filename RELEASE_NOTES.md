@@ -99,11 +99,11 @@ public static AkkaConfigurationBuilder WithDiscovery(
 ## [0.4.3] / 9 September 2022
 - [Update Akka.NET from 1.4.40 to 1.4.41](https://github.com/akkadotnet/akka.net/releases/tag/1.4.41)
 - [Cluster.Hosting: Add split-brain resolver support](https://github.com/akkadotnet/Akka.Hosting/pull/95)
-- [Hosting: Add `WithExtension<T>()` extension method](https://github.com/akkadotnet/Akka.Hosting/pull/97)
+- [Hosting: Add `WithExtension&lt;T&gt;()` extension method](https://github.com/akkadotnet/Akka.Hosting/pull/97)
  
-__WithExtension<T>()__
+__WithExtension&lt;T&gt;()__
 
-`AkkaConfigurationBuilder.WithExtension<T>()` works similarly to `AkkaConfigurationBuilder.WithExtensions()` and is used to configure the `akka.extensions` HOCON settings. The difference is that it is statically typed to only accept classes that extends the `IExtensionId` interface.
+`AkkaConfigurationBuilder.WithExtension&lt;T&gt;()` works similarly to `AkkaConfigurationBuilder.WithExtensions()` and is used to configure the `akka.extensions` HOCON settings. The difference is that it is statically typed to only accept classes that extends the `IExtensionId` interface.
 
 This pull request also adds a validation code to the `AkkaConfigurationBuilder.WithExtensions()` method to make sure that all the types passed in actually extends the `IExtensionId` interface. The method will throw a `ConfigurationException` exception if one of the types did not extend `IExtensionId` or if they are abstract or static class types.
 
