@@ -51,7 +51,7 @@ public class ExtensionsSpecs
     {
         using var host = await StartHost((builder, _) =>
         {
-            builder.AddHocon("akka.extensions = [\"Akka.Hosting.Tests.ExtensionsSpecs+FakeExtensionOneProvider, Akka.Hosting.Tests\"]");
+            builder.AddHocon("akka.extensions = [\"Akka.Hosting.Tests.ExtensionsSpecs+FakeExtensionOneProvider, Akka.Hosting.Tests\"]", HoconAddMode.Append);
             builder.WithExtensions(typeof(FakeExtensionTwoProvider));
         });
 
@@ -89,7 +89,7 @@ public class ExtensionsSpecs
     {
         using var host = await StartHost((builder, _) =>
         {
-            builder.AddHocon("akka.extensions = [\"Akka.Hosting.Tests.ExtensionsSpecs+FakeExtensionOneProvider, Akka.Hosting.Tests\"]");
+            builder.AddHocon("akka.extensions = [\"Akka.Hosting.Tests.ExtensionsSpecs+FakeExtensionOneProvider, Akka.Hosting.Tests\"]", HoconAddMode.Append);
             builder.WithExtension<FakeExtensionTwoProvider>();
         });
 

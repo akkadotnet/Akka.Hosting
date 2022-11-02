@@ -15,7 +15,7 @@ public class HoconSpecs
         // arrange
         using var host = await StartHost(collection => collection.AddAkka("Test", builder =>
         {
-            builder.AddHoconFile("test.hocon");
+            builder.AddHoconFile("test.hocon", HoconAddMode.Append);
         }));
         
         // act
