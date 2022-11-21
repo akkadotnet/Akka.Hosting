@@ -168,20 +168,15 @@ namespace Akka.Hosting
             return this;
         }
 
-        internal AkkaConfigurationBuilder AddHoconConfiguration(Config newHocon,
-            HoconAddMode addMode = HoconAddMode.Append)
+        internal AkkaConfigurationBuilder AddHoconConfiguration(Config newHocon, HoconAddMode addMode)
         {
-            switch (addMode)
+            return addMode switch
             {
-                case HoconAddMode.Append:
-                    return AddHoconConfiguration((config, add) => config.WithFallback(add), newHocon);
-                case HoconAddMode.Prepend:
-                    return AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon);
-                case HoconAddMode.Replace:
-                    return AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon);
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(addMode), addMode, null);
-            }
+                HoconAddMode.Append => AddHoconConfiguration((config, add) => config.WithFallback(add), newHocon),
+                HoconAddMode.Prepend => AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon),
+                HoconAddMode.Replace => AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon),
+                _ => throw new ArgumentOutOfRangeException(nameof(addMode), addMode, null)
+            };
         }
 
         private static ActorStarter ToAsyncStarter(Action<ActorSystem, IActorRegistry> nonAsyncStarter)

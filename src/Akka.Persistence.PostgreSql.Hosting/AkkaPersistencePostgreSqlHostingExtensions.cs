@@ -123,7 +123,7 @@ namespace Akka.Persistence.PostgreSql.Hosting
                 builder.WithJournal("postgresql", configurator);
             }
 
-            return builder.AddHocon(finalConfig.WithFallback(PostgreSqlPersistence.DefaultConfiguration()));
+            return builder.AddHocon(finalConfig.WithFallback(PostgreSqlPersistence.DefaultConfiguration()), HoconAddMode.Append);
         }
     }
 }

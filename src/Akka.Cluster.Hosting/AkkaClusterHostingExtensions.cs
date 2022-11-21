@@ -90,7 +90,7 @@ namespace Akka.Cluster.Hosting
             return builder.AddHocon(ClusterSharding.DefaultConfig()
                 .WithFallback(ClusterSingletonManager.DefaultConfig())
                 .WithFallback(DistributedPubSub.DefaultConfig())
-                .WithFallback(ClusterClientReceptionist.DefaultConfig()));
+                .WithFallback(ClusterClientReceptionist.DefaultConfig()), HoconAddMode.Append);
         }
 
         /// <summary>
@@ -305,7 +305,7 @@ namespace Akka.Cluster.Hosting
         public static AkkaConfigurationBuilder WithDistributedPubSub(this AkkaConfigurationBuilder builder,
             string role)
         {
-            var middle = builder.AddHocon(DistributedPubSub.DefaultConfig());
+            var middle = builder.AddHocon(DistributedPubSub.DefaultConfig(), HoconAddMode.Append);
             if (!string.IsNullOrEmpty(role)) // add role config
             {
                 middle = middle.AddHocon($"akka.cluster.pub-sub.role = \"{role}\"", HoconAddMode.Prepend);
