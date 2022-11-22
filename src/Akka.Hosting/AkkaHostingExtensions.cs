@@ -86,8 +86,7 @@ namespace Akka.Hosting
         /// <param name="hocon">The HOCON to add.</param>
         /// <param name="addMode">The <see cref="HoconAddMode"/> - defaults to appending this HOCON as a fallback.</param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder AddHocon(this AkkaConfigurationBuilder builder, Config hocon,
-            HoconAddMode addMode = HoconAddMode.Append)
+        public static AkkaConfigurationBuilder AddHocon(this AkkaConfigurationBuilder builder, Config hocon, HoconAddMode addMode)
         {
             return builder.AddHoconConfiguration(hocon, addMode);
         }
@@ -100,8 +99,7 @@ namespace Akka.Hosting
         /// <param name="hoconFilePath">The path to the HOCON file. Can be relative or absolute.</param>
         /// <param name="addMode">The <see cref="HoconAddMode"/> - defaults to appending this HOCON as a fallback.</param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
-        public static AkkaConfigurationBuilder AddHoconFile(this AkkaConfigurationBuilder builder, string hoconFilePath,
-            HoconAddMode addMode = HoconAddMode.Append)
+        public static AkkaConfigurationBuilder AddHoconFile(this AkkaConfigurationBuilder builder, string hoconFilePath, HoconAddMode addMode)
         {
             var hoconText = ConfigurationFactory.ParseString(File.ReadAllText(hoconFilePath));
             return AddHocon(builder, hoconText, addMode);

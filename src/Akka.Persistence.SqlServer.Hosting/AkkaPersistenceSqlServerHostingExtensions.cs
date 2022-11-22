@@ -162,12 +162,12 @@ namespace Akka.Persistence.SqlServer.Hosting
                 case PersistenceMode.Both:
                     builder.AddHocon(journalConfiguration, HoconAddMode.Prepend);
                     builder.AddHocon(snapshotStoreConfig, HoconAddMode.Prepend);
-                    builder.AddHocon(SqlReadJournal.DefaultConfiguration());
+                    builder.AddHocon(SqlReadJournal.DefaultConfiguration(), HoconAddMode.Append);
                     break;
                 
                 case PersistenceMode.Journal:
                     builder.AddHocon(journalConfiguration, HoconAddMode.Prepend);
-                    builder.AddHocon(SqlReadJournal.DefaultConfiguration());
+                    builder.AddHocon(SqlReadJournal.DefaultConfiguration(), HoconAddMode.Append);
                     break;
                 
                 case PersistenceMode.SnapshotStore:
@@ -183,7 +183,7 @@ namespace Akka.Persistence.SqlServer.Hosting
                 builder.WithJournal("sql-server", configurator);
             }
 
-            return builder.AddHocon(SqlServerPersistence.DefaultConfiguration());
+            return builder.AddHocon(SqlServerPersistence.DefaultConfiguration(), HoconAddMode.Append);
         }
     }
 }

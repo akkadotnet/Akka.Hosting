@@ -86,7 +86,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
                     .AddAkka("TestSys", (configurationBuilder, _) =>
                     {
                         configurationBuilder
-                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig)
+                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig, HoconAddMode.Append)
                             .WithRemoting("localhost", 0)
                             .WithClustering(_clusterOptions)
                             .WithActors((system, _) =>
