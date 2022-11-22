@@ -123,7 +123,7 @@ partial class Build : NukeBuild
           var releaseNotes = GetNuGetReleaseNotes(ChangelogFile, GitRepository);
 
           var projects = SourceDirectory.GlobFiles("**/*.csproj")
-          .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj"));
+          .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj", "**/*Demo.csproj"));
           foreach (var project in projects)
           {
               DotNetPack(s => s
@@ -144,8 +144,8 @@ partial class Build : NukeBuild
     .Unlisted()
     .Description("Publishes .nuget packages to Nuget")
     .After(CreateNuget, SignClient)
-    .OnlyWhenDynamic(() => !NugetPublishUrl.IsNullOrEmpty())
-    .OnlyWhenDynamic(() => !NugetKey.IsNullOrEmpty())
+    .OnlyWhenDynamic(() => !NugetPublishUrl.IsNullOrWhiteSpace())
+    .OnlyWhenDynamic(() => !NugetKey.IsNullOrWhiteSpace())
     .Triggers(GitHubRelease)
     .Executes(() =>
     {
@@ -259,8 +259,8 @@ partial class Build : NukeBuild
         .Unlisted()
         .After(CreateNuget)
         .Before(PublishNuget)
-        .OnlyWhenDynamic(() => !SignClientSecret.IsNullOrEmpty())
-        .OnlyWhenDynamic(() => !SignClientUser.IsNullOrEmpty())
+        .OnlyWhenDynamic(() => !SignClientSecret.IsNullOrWhiteSpace())
+        .OnlyWhenDynamic(() => !SignClientUser.IsNullOrWhiteSpace())
         .Executes(() =>
         {
             var assemblies = OutputNuget.GlobFiles("*.nupkg");

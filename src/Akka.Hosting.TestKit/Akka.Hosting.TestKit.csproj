@@ -5,6 +5,7 @@
         <TargetFramework>$(LibraryFramework)</TargetFramework>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <LangVersion>8.0</LangVersion>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
