@@ -1,3 +1,10 @@
+## [0.5.2-beta1] / 29 November 2022
+* [Update Akka.NET from 1.4.45 to 1.4.46](https://github.com/akkadotnet/akka.net/releases/tag/1.4.46)
+* [Remove default `HoconAddMode` value from `AddHocon` and `AddHoconFile`](https://github.com/akkadotnet/Akka.Hosting/pull/135)
+* [First release of Akka.Hosting.TestKit NuGet package](https://github.com/akkadotnet/Akka.Hosting/pull/143)
+
+In 0.5.2-beta1, the `HoconAddMode` argument in `AddHocon()` and `AddHoconFile()` extension methods are not optional anymore; you will need to declare that your HOCON will to append, prepend, or replace existing HOCON configuration. In almost all cases, unless you're adding a default configuration, you only need to use `HoconAddMode.Prepend`.
+
 ## [0.5.1] / 20 October 2022
 * [Update Akka.NET from 1.4.41 to 1.4.45](https://github.com/akkadotnet/akka.net/releases/tag/1.4.45)
 
