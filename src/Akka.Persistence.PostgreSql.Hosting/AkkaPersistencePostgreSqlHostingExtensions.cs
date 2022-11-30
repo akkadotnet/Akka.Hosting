@@ -1,10 +1,9 @@
 ﻿using System;
 using Akka.Actor;
-using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Hosting;
-using Akka.Persistence.Query.Sql;
 
+#nullable enable
 namespace Akka.Persistence.PostgreSql.Hosting
 {
     /// <summary>
@@ -41,8 +40,17 @@ namespace Akka.Persistence.PostgreSql.Hosting
         ///     When set to true, persistence will use `BIGINT` and `GENERATED ALWAYS AS IDENTITY` for journal table
         ///     schema creation.
         /// </param>
-        /// <param name="configurator">
-        ///     An Action delegate used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
+        /// <param name="journalBuilder">
+        ///     <para>
+        ///         An <see cref="Action{T}"/> used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
+        ///     </para>
+        ///     <b>Default</b>: <c>null</c>
+        /// </param>
+        /// <param name="isDefaultPlugin">
+        ///     <para>
+        ///         A <c>bool</c> flag to set the plugin as the default persistence plugin for the <see cref="ActorSystem"/>
+        ///     </para>
+        ///     <b>Default</b>: <c>true</c>
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -55,75 +63,139 @@ namespace Akka.Persistence.PostgreSql.Hosting
             bool autoInitialize = false,
             StoredAsType storedAsType = StoredAsType.ByteA,
             bool sequentialAccess = false,
-            bool useBigintIdentityForOrderingColumn = false, Action<AkkaPersistenceJournalBuilder> configurator = null)
+            bool useBigintIdentityForOrderingColumn = false, 
+            Action<AkkaPersistenceJournalBuilder>? journalBuilder = null,
+            bool isDefaultPlugin = true)
         {
-            var storedAs = storedAsType switch
+            if (mode == PersistenceMode.SnapshotStore && journalBuilder is { })
+                throw new Exception($"{nameof(journalBuilder)} can only be set when {nameof(mode)} is set to either {PersistenceMode.Both} or {PersistenceMode.Journal}");
+            
+            var journalOpt = new PostgreSqlJournalOptions(isDefaultPlugin)
             {
-                StoredAsType.ByteA => "bytea",
-                StoredAsType.Json => "json",
-                StoredAsType.JsonB => "jsonb",
-                _ => throw new ArgumentOutOfRangeException(nameof(storedAsType), storedAsType, "Invalid StoredAsType defined.")
+                ConnectionString = connectionString,
+                SchemaName = schemaName,
+                AutoInitialize = autoInitialize,
+                StoredAs = storedAsType,
+                SequentialAccess = sequentialAccess,
+                UseBigIntIdentityForOrderingColumn = useBigintIdentityForOrderingColumn
             };
 
-            Config journalConfiguration = @$"
-            akka.persistence {{
-                journal {{
-                    plugin = ""akka.persistence.journal.postgresql""
-                    postgresql {{
-                        class = ""Akka.Persistence.PostgreSql.Journal.PostgreSqlJournal, Akka.Persistence.PostgreSql""
-                        plugin-dispatcher = ""akka.actor.default-dispatcher""
-                        connection-string = ""{connectionString}""
-                        connection-timeout = 30s
-                        schema-name = {schemaName}
-                        table-name = event_journal
-                        auto-initialize = {(autoInitialize ? "on" : "off")}
-                        timestamp-provider = ""Akka.Persistence.Sql.Common.Journal.DefaultTimestampProvider, Akka.Persistence.Sql.Common""
-                        metadata-table-name = metadata
-                        stored-as = {storedAs}
-                        sequential-access = {(sequentialAccess ? "on" : "off")}
-                        use-bigint-identity-for-ordering-column = {(useBigintIdentityForOrderingColumn ? "on" : "off")}
-                    }}
-                }}
-            }}";
+            var adapters = new AkkaPersistenceJournalBuilder(journalOpt.Identifier, builder);
+            journalBuilder?.Invoke(adapters);
+            journalOpt.Adapters = adapters;
 
-            Config snapshotStoreConfig = @$"
-            akka.persistence {{
-                snapshot-store {{
-                    plugin = ""akka.persistence.snapshot-store.postgresql""
-                    postgresql {{
-                        class = ""Akka.Persistence.PostgreSql.Snapshot.PostgreSqlSnapshotStore, Akka.Persistence.PostgreSql""
-                        plugin-dispatcher = ""akka.actor.default-dispatcher""
-                        connection-string = ""{connectionString}""
-                        connection-timeout = 30s
-                        schema-name = {schemaName}
-                        table-name = snapshot_store
-                        auto-initialize = {(autoInitialize ? "on" : "off")}
-                        stored-as = {storedAs}
-                        sequential-access = {(sequentialAccess ? "on" : "off")}
-                    }}
-                }}
-            }}";
-
-            var finalConfig = mode switch
+            var snapshotOpt = new PostgreSqlSnapshotOptions(isDefaultPlugin)
             {
-                PersistenceMode.Both => journalConfiguration
-                    .WithFallback(snapshotStoreConfig)
-                    .WithFallback(SqlReadJournal.DefaultConfiguration()),
+                ConnectionString = connectionString,
+                SchemaName = schemaName,
+                AutoInitialize = autoInitialize,
+                StoredAs = storedAsType,
+                SequentialAccess = sequentialAccess
+            };
 
-                PersistenceMode.Journal => journalConfiguration
-                    .WithFallback(SqlReadJournal.DefaultConfiguration()),
-
-                PersistenceMode.SnapshotStore => snapshotStoreConfig,
-
+            return mode switch
+            {
+                PersistenceMode.Journal => builder.WithPostgreSqlPersistence(journalOpt, null),
+                PersistenceMode.SnapshotStore => builder.WithPostgreSqlPersistence(null, snapshotOpt),
+                PersistenceMode.Both => builder.WithPostgreSqlPersistence(journalOpt, snapshotOpt),
                 _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Invalid PersistenceMode defined.")
             };
+        }
+
+        /// <summary>
+        ///     Add Akka.Persistence.PostgreSql support to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="snapshotOptionConfigurator">
+        ///     An <see cref="Action{T}"/> that modifies an instance of <see cref="PostgreSqlSnapshotOptions"/>,
+        ///     used to configure the snapshot store plugin
+        /// </param>
+        /// <param name="journalOptionConfigurator">
+        ///     An <see cref="Action{T}"/> that modifies an instance of <see cref="PostgreSqlJournalOptions"/>,
+        ///     used to configure the journal plugin
+        /// </param>
+        /// <param name="isDefaultPlugin">
+        ///     <para>
+        ///         A <c>bool</c> flag to set the plugin as the default persistence plugin for the <see cref="ActorSystem"/>
+        ///     </para>
+        ///     <b>Default</b>: <c>true</c>
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithPostgreSqlPersistence(
+            this AkkaConfigurationBuilder builder,
+            Action<PostgreSqlJournalOptions>? journalOptionConfigurator = null,
+            Action<PostgreSqlSnapshotOptions>? snapshotOptionConfigurator = null,
+            bool isDefaultPlugin = true)
+        {
+            if (journalOptionConfigurator is null && snapshotOptionConfigurator is null)
+                throw new ArgumentException($"{nameof(journalOptionConfigurator)} and {nameof(snapshotOptionConfigurator)} could not both be null");
             
-            if (configurator != null) // configure event adapters
+            PostgreSqlJournalOptions? journalOptions = null;
+            if(journalOptionConfigurator is { })
             {
-                builder.WithJournal("postgresql", configurator);
+                journalOptions = new PostgreSqlJournalOptions(isDefaultPlugin);
+                journalOptionConfigurator(journalOptions);
             }
 
-            return builder.AddHocon(finalConfig.WithFallback(PostgreSqlPersistence.DefaultConfiguration()), HoconAddMode.Append);
+            PostgreSqlSnapshotOptions? snapshotOptions = null;
+            if (snapshotOptionConfigurator is { })
+            {
+                snapshotOptions = new PostgreSqlSnapshotOptions(isDefaultPlugin);
+                snapshotOptionConfigurator(snapshotOptions);
+            }
+
+            return builder.WithPostgreSqlPersistence(journalOptions, snapshotOptions);
         }
+
+        /// <summary>
+        ///     Add Akka.Persistence.PostgreSql support to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="snapshotOptions">
+        ///     An instance of <see cref="PostgreSqlSnapshotOptions"/>, used to configure the snapshot store plugin
+        /// </param>
+        /// <param name="journalOptions">
+        ///     An instance of <see cref="PostgreSqlJournalOptions"/>, used to configure the journal plugin
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithPostgreSqlPersistence(
+            this AkkaConfigurationBuilder builder,
+            PostgreSqlJournalOptions? journalOptions = null,
+            PostgreSqlSnapshotOptions? snapshotOptions = null)
+        {
+            if (journalOptions is null && snapshotOptions is null)
+                throw new ArgumentException($"{nameof(journalOptions)} and {nameof(snapshotOptions)} could not both be null");
+            
+            return (journalOptions, snapshotOptions) switch
+            {
+                (null, null) => 
+                    throw new ArgumentException($"{nameof(journalOptions)} and {nameof(snapshotOptions)} could not both be null"),
+                
+                (_, null) => 
+                    builder
+                        .AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend)
+                        .AddHocon(PostgreSqlPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                
+                (null, _) => 
+                    builder
+                        .AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend)
+                        .AddHocon(PostgreSqlPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                
+                (_, _) => 
+                    builder
+                        .AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend)
+                        .AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend)
+                        .AddHocon(PostgreSqlPersistence.DefaultConfiguration(), HoconAddMode.Append),
+            };
+        }
+        
     }
 }
