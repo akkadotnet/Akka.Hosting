@@ -17,14 +17,9 @@ public class HoconKeyValidatorSpec
     [Theory(DisplayName = "HOCON key validator should detect illegal characters")]
     public void ValidatorTest(string input, string[] illegals)
     {
-        var (illegal, illegalChars) = input.IsIllegalHoconKey();
-        if (illegals.Length == 0)
-            illegal.Should().BeFalse();
-        else
-        {
-            illegal.Should().BeTrue();
-            illegalChars.Should().BeEquivalentTo(illegals);
-        }
+        var illegalChars = input.IsIllegalHoconKey();
+        illegalChars.Length.Should().Be(illegals.Length);
+        illegalChars.Should().BeEquivalentTo(illegals);
     }
 
     public static IEnumerable<object[]> StringFactory()

@@ -58,8 +58,8 @@ namespace Akka.Persistence.Hosting
             if(string.IsNullOrWhiteSpace(Identifier))
                 throw new Exception($"Invalid {GetType()}, {nameof(Identifier)} is null or whitespace");
 
-            var (illegal, illegalChars) = Identifier.IsIllegalHoconKey();
-            if (illegal)
+            var illegalChars = Identifier.IsIllegalHoconKey();
+            if (illegalChars.Length > 0)
             {
                 throw new Exception($"Invalid {GetType()}, {nameof(Identifier)} contains illegal character(s) {string.Join(", ", illegalChars)}");
             }
