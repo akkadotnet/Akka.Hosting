@@ -64,7 +64,9 @@ namespace Akka.Persistence.Hosting
         /// The default HOCON configuration for this specific journal configuration identifier, normalized to the
         /// plugin identifier name
         /// </summary>
-        public Config DefaultConfig => InternalDefaultConfig.MoveTo($"akka.persistence.snapshot-store.{Identifier}");
+        public Config DefaultConfig => InternalDefaultConfig.MoveTo(PluginId);
+
+        public string PluginId => $"akka.persistence.snapshot-store.{Identifier}";
         
         /// <summary>
         /// The chain config builder.
@@ -86,13 +88,13 @@ namespace Akka.Persistence.Hosting
                 throw new Exception($"Invalid {GetType()}, {nameof(Identifier)} contains illegal character(s) {string.Join(", ", illegalChars)}");
             }
             
-            sb.Insert(0, $"akka.persistence.snapshot-store.{Identifier} {{{Environment.NewLine}");
+            sb.Insert(0, $"{PluginId} {{{Environment.NewLine}");
             sb.AppendLine($"serializer = {Serializer.ToHocon()}");
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
             sb.AppendLine("}");
             
             if (_isDefault)
-                sb.AppendLine($"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{Identifier}");
+                sb.AppendLine($"akka.persistence.snapshot-store.plugin = {PluginId}");
             
             return sb;
         }

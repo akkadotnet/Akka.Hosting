@@ -4,6 +4,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);USE_OPTIONS</DefineConstants>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj" />

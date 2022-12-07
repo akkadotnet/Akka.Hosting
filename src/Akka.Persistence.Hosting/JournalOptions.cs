@@ -66,13 +66,15 @@ namespace Akka.Persistence.Hosting
         /// The default HOCON configuration for this specific snapshot store configuration identifier, normalized to the
         /// plugin identifier name
         /// </summary>
-        public Config DefaultConfig => InternalDefaultConfig.MoveTo($"akka.persistence.journal.{Identifier}");
+        public Config DefaultConfig => InternalDefaultConfig.MoveTo(PluginId);
         
         /// <summary>
         /// The journal adapter builder, use this builder to add custom journal
         /// <see cref="IEventAdapter"/>, <see cref="IWriteEventAdapter"/>, or <see cref="IReadEventAdapter"/>
         /// </summary>
         public AkkaPersistenceJournalBuilder Adapters { get; set; } = new ("", null!);
+
+        public string PluginId => $"akka.persistence.journal.{Identifier}";
         
         /// <summary>
         /// The chain config builder.
@@ -94,14 +96,14 @@ namespace Akka.Persistence.Hosting
                 throw new Exception($"Invalid {GetType()}, {nameof(Identifier)} contains illegal character(s) {string.Join(", ", illegalChars)}");
             }
             
-            sb.Insert(0, $"akka.persistence.journal.{Identifier.ToHocon()} {{{Environment.NewLine}");
+            sb.Insert(0, $"{PluginId} {{{Environment.NewLine}");
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
             sb.AppendLine($"serializer = {Serializer.ToHocon()}");
             Adapters.AppendAdapters(sb);
             sb.AppendLine("}");
             
             if (_isDefault)
-                sb.AppendLine($"akka.persistence.journal.plugin = akka.persistence.journal.{Identifier}");
+                sb.AppendLine($"akka.persistence.journal.plugin = {PluginId}");
 
             return sb;
         }
