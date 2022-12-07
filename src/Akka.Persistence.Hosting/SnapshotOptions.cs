@@ -24,11 +24,18 @@ namespace Akka.Persistence.Hosting
             _isDefault = isDefault;
         }
         
+        /// <summary>
+        /// <b>NOTE</b> If you're implementing an option class for new Akka.Hosting persistence, you need to override
+        /// this property and provide a default value. The default value have to be the default journal configuration
+        /// identifier name (i.e. "sql-server" or "postgresql"
+        /// </summary>
         public abstract string Identifier { get; set; }
         
         /// <summary>
-        ///     Should corresponding snapshot store table be initialized automatically.
-        ///     <b>Default</b>: false
+        ///     <para>
+        ///         Should corresponding snapshot store be initialized automatically, if applicable.
+        ///     </para>
+        ///     <b>Default</b>: <c>false</c>
         /// </summary>
         public bool AutoInitialize { get; set; } = false;
         
@@ -37,18 +44,26 @@ namespace Akka.Persistence.Hosting
         ///         Default serializer used as manifest serializer when applicable and payload serializer when no
         ///         specific binding overrides are specified
         ///     </para>
-        ///     <b>Default</b>: json
+        ///     <b>Default</b>: <c>"json"</c>
         /// </summary>
         public string Serializer { get; set; } = "json";
         
         /// <summary>
-        /// The default configuration for this journal. This must be the actual configuration block for this journal.
-        /// Example:
-        /// protected override Config InternalDefaultConfig = PostgreSqlPersistence.DefaultConfiguration()
-        ///     .GetConfig("akka.persistence.snapshot-store.postgresql");
+        ///     <para>
+        ///         The default configuration for this snapshot store. This must be the actual configuration block for this journal.
+        ///     </para>
+        ///     Example:
+        ///     <code>
+        ///         protected override Config InternalDefaultConfig = PostgreSqlPersistence.DefaultConfiguration()
+        ///             .GetConfig("akka.persistence.snapshot-store.postgresql");
+        ///     </code>
         /// </summary>
         protected abstract Config InternalDefaultConfig { get; }
         
+        /// <summary>
+        /// The default HOCON configuration for this specific journal configuration identifier, normalized to the
+        /// plugin identifier name
+        /// </summary>
         public Config DefaultConfig => InternalDefaultConfig.MoveTo($"akka.persistence.snapshot-store.{Identifier}");
         
         /// <summary>
@@ -82,9 +97,17 @@ namespace Akka.Persistence.Hosting
             return sb;
         }
         
+        /// <summary>
+        /// Transforms the snapshot store options class into a HOCON <see cref="Config"/> instance 
+        /// </summary>
+        /// <returns>The <see cref="Config"/> equivalence of this options instance</returns>
         public Config ToConfig()
             => ToString();
         
+        /// <summary>
+        /// Transforms the snapshot store options class into a HOCON string
+        /// </summary>
+        /// <returns>The HOCON string representation of this options instance</returns>
         public sealed override string ToString()
             => Build(new StringBuilder()).ToString();
     }

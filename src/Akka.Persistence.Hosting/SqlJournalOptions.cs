@@ -34,10 +34,31 @@ namespace Akka.Persistence.Hosting
         /// </summary>
         public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
+        /// <summary>
+        ///     <para>
+        ///         The database schema name to table corresponding with persistent journal
+        ///     </para>
+        ///     <b>NOTE</b> When implementing this options, override this property with a valid default schema name for
+        ///     the SQL database
+        /// </summary>
         public abstract string SchemaName { get; set; }
 
+        /// <summary>
+        ///     <para>
+        ///         The database journal table name corresponding with persistent journal
+        ///     </para>
+        ///     <b>NOTE</b> When implementing this options, override this property with a valid default table name for
+        ///     the SQL database
+        /// </summary>
         public abstract string TableName { get; set; }
 
+        /// <summary>
+        ///     <para>
+        ///         The database metadata table name corresponding with persistent journal
+        ///     </para>
+        ///     <b>NOTE</b> When implementing this options, override this property with a valid default metadata table
+        ///     name for the SQL database
+        /// </summary>
         public abstract string MetadataTableName { get; set; }
 
         /// <summary>

@@ -21,37 +21,60 @@ namespace Akka.Persistence.PostgreSql.Hosting
         ///     Connection string used for database access.
         /// </param>
         /// <param name="mode">
-        ///     Determines which settings should be added by this method call.
+        ///     <para>
+        ///         Determines which settings should be added by this method call.
+        ///     </para>
+        ///     <i>Default</i>: <see cref="PersistenceMode.Both"/>
         /// </param>
         /// <param name="schemaName">
-        ///     The schema name for the journal and snapshot store table.
+        ///     <para>
+        ///         The schema name for the journal and snapshot store table.
+        ///     </para>
+        ///     <i>Default</i>: <c>"public"</c>
         /// </param>
         /// <param name="autoInitialize">
-        ///     Should the SQL store table be initialized automatically.
+        ///     <para>
+        ///         Should the SQL store table be initialized automatically.
+        ///     </para>
+        ///     <i>Default</i>: <c>false</c>
         /// </param>
         /// <param name="storedAsType">
-        ///     Determines how data are being de/serialized into the table.
+        ///     <para>
+        ///         Determines how data are being de/serialized into the table.
+        ///     </para>
+        ///     <i>Default</i>: <see cref="StoredAsType.ByteA"/>
         /// </param>
         /// <param name="sequentialAccess">
-        ///     Uses the `CommandBehavior.SequentialAccess` when creating SQL commands, providing a performance
-        ///     improvement for reading large BLOBS.
+        ///     <para>
+        ///         Uses the `CommandBehavior.SequentialAccess` when creating SQL commands, providing a performance
+        ///         improvement for reading large BLOBS.
+        ///     </para>
+        ///     <i>Default</i>: <c>false</c>
         /// </param>
         /// <param name="useBigintIdentityForOrderingColumn">
-        ///     When set to true, persistence will use `BIGINT` and `GENERATED ALWAYS AS IDENTITY` for journal table
-        ///     schema creation.
+        ///     <para>
+        ///         When set to true, persistence will use `BIGINT` and `GENERATED ALWAYS AS IDENTITY` for journal table
+        ///         schema creation.
+        ///     </para>
+        ///     <i>Default</i>: <c>false</c>
         /// </param>
         /// <param name="journalBuilder">
         ///     <para>
         ///         An <see cref="Action{T}"/> used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
         ///     </para>
-        ///     <b>Default</b>: <c>null</c>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
-        /// <param name="pluginIdentifier">The configuration identifier for the plugins</param>
+        /// <param name="pluginIdentifier">
+        ///     <para>
+        ///         The configuration identifier for the plugins
+        ///     </para>
+        ///     <i>Default</i>: <c>"postgresql"</c>
+        /// </param>
         /// <param name="isDefaultPlugin">
         ///     <para>
         ///         A <c>bool</c> flag to set the plugin as the default persistence plugin for the <see cref="ActorSystem"/>
         ///     </para>
-        ///     <b>Default</b>: <c>true</c>
+        ///     <i>Default</i>: <c>true</c>
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -111,22 +134,32 @@ namespace Akka.Persistence.PostgreSql.Hosting
         ///     The builder instance being configured.
         /// </param>
         /// <param name="snapshotOptionConfigurator">
-        ///     An <see cref="Action{T}"/> that modifies an instance of <see cref="PostgreSqlSnapshotOptions"/>,
-        ///     used to configure the snapshot store plugin
+        ///     <para>
+        ///         An <see cref="Action{T}"/> that modifies an instance of <see cref="PostgreSqlSnapshotOptions"/>,
+        ///         used to configure the snapshot store plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <param name="journalOptionConfigurator">
-        ///     An <see cref="Action{T}"/> that modifies an instance of <see cref="PostgreSqlJournalOptions"/>,
-        ///     used to configure the journal plugin
+        ///     <para>
+        ///         An <see cref="Action{T}"/> that modifies an instance of <see cref="PostgreSqlJournalOptions"/>,
+        ///         used to configure the journal plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <param name="isDefaultPlugin">
         ///     <para>
         ///         A <c>bool</c> flag to set the plugin as the default persistence plugin for the <see cref="ActorSystem"/>
         ///     </para>
-        ///     <b>Default</b>: <c>true</c>
+        ///     <i>Default</i>: <c>true</c>
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <exception cref="ArgumentException">
+        ///     Thrown when both <param name="journalOptionConfigurator"/> and
+        ///     <param name="snapshotOptionConfigurator"/> are null.
+        /// </exception>
         public static AkkaConfigurationBuilder WithPostgreSqlPersistence(
             this AkkaConfigurationBuilder builder,
             Action<PostgreSqlJournalOptions>? journalOptionConfigurator = null,
@@ -160,14 +193,23 @@ namespace Akka.Persistence.PostgreSql.Hosting
         ///     The builder instance being configured.
         /// </param>
         /// <param name="snapshotOptions">
-        ///     An instance of <see cref="PostgreSqlSnapshotOptions"/>, used to configure the snapshot store plugin
+        ///     <para>
+        ///         An instance of <see cref="PostgreSqlSnapshotOptions"/>, used to configure the snapshot store plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <param name="journalOptions">
-        ///     An instance of <see cref="PostgreSqlJournalOptions"/>, used to configure the journal plugin
+        ///     <para>
+        ///         An instance of <see cref="PostgreSqlJournalOptions"/>, used to configure the journal plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <exception cref="ArgumentException">
+        ///     Thrown when both <param name="journalOptions"/> and <param name="snapshotOptions"/> are null.
+        /// </exception>
         public static AkkaConfigurationBuilder WithPostgreSqlPersistence(
             this AkkaConfigurationBuilder builder,
             PostgreSqlJournalOptions? journalOptions = null,

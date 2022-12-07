@@ -8,6 +8,7 @@ using System;
 using System.Text;
 using Akka.Configuration;
 using Akka.Hosting;
+using Akka.Persistence.Journal;
 
 #nullable enable
 namespace Akka.Persistence.Hosting
@@ -25,6 +26,11 @@ namespace Akka.Persistence.Hosting
             _isDefault = isDefault;
         }
         
+        /// <summary>
+        /// <b>NOTE</b> If you're implementing an option class for new Akka.Hosting persistence, you need to override
+        /// this property and provide a default value. The default value have to be the default journal configuration
+        /// identifier name (i.e. "sql-server" or "postgresql"
+        /// </summary>
         public abstract string Identifier { get; set; }
         
         /// <summary>
@@ -45,18 +51,27 @@ namespace Akka.Persistence.Hosting
         public string Serializer { get; set; } = "json";
         
         /// <summary>
-        /// The default configuration for this journal. This must be the actual configuration block for this journal.
-        /// Example:
-        /// protected override Config InternalDefaultConfig = PostgreSqlPersistence.DefaultConfiguration()
-        ///     .GetConfig("akka.persistence.journal.postgresql");
+        ///     <para>
+        ///         The default configuration for this journal. This must be the actual configuration block for this journal.
+        ///     </para>
+        ///     Example:
+        ///     <code>
+        ///         protected override Config InternalDefaultConfig = PostgreSqlPersistence.DefaultConfiguration()
+        ///             .GetConfig("akka.persistence.journal.postgresql");
+        ///     </code>
         /// </summary>
         protected abstract Config InternalDefaultConfig { get; }
 
         /// <summary>
-        /// The default configuration for this specific journal configuration identifier
+        /// The default HOCON configuration for this specific snapshot store configuration identifier, normalized to the
+        /// plugin identifier name
         /// </summary>
         public Config DefaultConfig => InternalDefaultConfig.MoveTo($"akka.persistence.journal.{Identifier}");
         
+        /// <summary>
+        /// The journal adapter builder, use this builder to add custom journal
+        /// <see cref="IEventAdapter"/>, <see cref="IWriteEventAdapter"/>, or <see cref="IReadEventAdapter"/>
+        /// </summary>
         public AkkaPersistenceJournalBuilder Adapters { get; set; } = new ("", null!);
         
         /// <summary>
@@ -91,9 +106,17 @@ namespace Akka.Persistence.Hosting
             return sb;
         }
         
+        /// <summary>
+        /// Transforms the journal options class into a HOCON <see cref="Config"/> instance 
+        /// </summary>
+        /// <returns>The <see cref="Config"/> equivalence of this options instance</returns>
         public Config ToConfig()
             => ToString();
         
+        /// <summary>
+        /// Transforms the journal options class into a HOCON string
+        /// </summary>
+        /// <returns>The HOCON string representation of this options instance</returns>
         public sealed override string ToString()
             => Build(new StringBuilder()).ToString();
     }

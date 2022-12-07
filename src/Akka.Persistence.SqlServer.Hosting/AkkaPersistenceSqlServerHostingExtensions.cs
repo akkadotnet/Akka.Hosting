@@ -21,13 +21,29 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     Connection string used for database access.
         /// </param>
         /// <param name="autoInitialize">
-        ///     Should the SQL store table be initialized automatically.
+        ///     <para>
+        ///         Should the SQL store table be initialized automatically.
+        ///     </para>
+        ///     <i>Default</i>: <c>false</c>
         /// </param>
-        /// <param name="mode"></param>
+        /// <param name="mode">
+        ///     <para>
+        ///         Determines which settings should be added by this method call.
+        ///     </para>
+        ///     <i>Default</i>: <see cref="PersistenceMode.Both"/>
+        /// </param>
         /// <param name="journalBuilder">
-        ///     An Action delegate used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
+        ///     <para>
+        ///         An <see cref="Action{T}"/> used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
-        /// <param name="pluginIdentifier">The configuration identifier for the plugins</param>
+        /// <param name="pluginIdentifier">
+        ///     <para>
+        ///         The configuration identifier for the plugins
+        ///     </para>
+        ///     <i>Default</i>: <c>"sql-server"</c>
+        /// </param>
         /// <param name="isDefaultPlugin">
         ///     <para>
         ///         A <c>bool</c> flag to set the plugin as the default persistence plugin for the <see cref="ActorSystem"/>
@@ -37,7 +53,10 @@ namespace Akka.Persistence.SqlServer.Hosting
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     Thrown when <see cref="journalBuilder"/> is set and <see cref="mode"/> is set to
+        ///     <see cref="PersistenceMode.SnapshotStore"/>
+        /// </exception>
         public static AkkaConfigurationBuilder WithSqlServerPersistence(
             this AkkaConfigurationBuilder builder,
             string connectionString,
@@ -77,16 +96,25 @@ namespace Akka.Persistence.SqlServer.Hosting
         }
 
         /// <summary>
-        ///     Adds Akka.Persistence.SqlServer support to this <see cref="ActorSystem"/>.
+        ///     Adds Akka.Persistence.SqlServer support to this <see cref="ActorSystem"/>. At least one of the
+        ///     configurator delegate needs to be populated else this method will throw an exception.
         /// </summary>
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
         /// <param name="journalOptionConfigurator">
-        ///     An Action delegate to configure a <see cref="SqlServerJournalOptions"/> instance.
+        ///     <para>
+        ///         An <see cref="Action{T}"/> that modifies an instance of <see cref="SqlServerJournalOptions"/>,
+        ///         used to configure the journal plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <param name="snapshotOptionConfigurator">
-        ///     An Action delegate to configure a <see cref="SqlServerSnapshotOptions"/> instance.
+        ///     <para>
+        ///         An <see cref="Action{T}"/> that modifies an instance of <see cref="SqlServerSnapshotOptions"/>,
+        ///         used to configure the snapshot store plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <param name="isDefaultPlugin">
         ///     <para>
@@ -127,16 +155,23 @@ namespace Akka.Persistence.SqlServer.Hosting
         }
 
         /// <summary>
-        ///     Adds Akka.Persistence.SqlServer support to this <see cref="ActorSystem"/>.
+        ///     Adds Akka.Persistence.SqlServer support to this <see cref="ActorSystem"/>. At least one of the options
+        ///     have to be populated else this method will throw an exception.
         /// </summary>
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
         /// <param name="journalOptions">
-        ///     An <see cref="SqlServerJournalOptions"/> instance to configure the SqlServer journal.
+        ///     <para>
+        ///         An instance of <see cref="SqlServerJournalOptions"/>, used to configure the journal plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <param name="snapshotOptions">
-        ///     An <see cref="SqlServerSnapshotOptions"/> instance to configure the SqlServer snapshot store.
+        ///     <para>
+        ///         An instance of <see cref="SqlServerSnapshotOptions"/>, used to configure the snapshot store plugin
+        ///     </para>
+        ///     <i>Default</i>: <c>null</c>
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.

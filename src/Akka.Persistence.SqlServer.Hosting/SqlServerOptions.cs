@@ -14,7 +14,7 @@ using Akka.Persistence.Hosting;
 namespace Akka.Persistence.SqlServer.Hosting
 {
     /// <summary>
-    /// Akka.Hosting options class to set up Microsoft SqlServer persistence journal.
+    ///     Akka.Hosting options class to set up Microsoft SqlServer persistence journal.
     /// </summary>
     public sealed class SqlServerJournalOptions: SqlJournalOptions
     {
@@ -22,10 +22,14 @@ namespace Akka.Persistence.SqlServer.Hosting
             .GetConfig(SqlServerJournalSettings.ConfigPath);
         
         /// <summary>
-        /// Create a new instance of <see cref="SqlServerJournalOptions"/>
+        ///     Create a new instance of <see cref="SqlServerJournalOptions"/>
         /// </summary>
-        /// <param name="isDefaultPlugin">Indicates if this journal configuration should be the default configuration for all persistence</param>
-        /// <param name="identifier">The journal configuration identifier, <b>default</b>: "sql-server"</param>
+        /// <param name="isDefaultPlugin">
+        ///     Indicates if this journal configuration should be the default configuration for all persistence
+        /// </param>
+        /// <param name="identifier">
+        ///     The journal configuration identifier. <i>Default</i>: "sql-server"
+        /// </param>
         public SqlServerJournalOptions(bool isDefaultPlugin, string identifier = "sql-server") : base(isDefaultPlugin)
         {
             Identifier = identifier;
@@ -35,7 +39,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <para>
         ///         The plugin identifier for this persistence plugin
         ///     </para>
-        ///     <b>Default</b>: "sql-server"
+        ///     <b>Default</b>: <c>"sql-server"</c>
         /// </summary>
         public override string Identifier { get; set; }
         
@@ -43,7 +47,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <para>
         ///         SQL schema name to table corresponding with persistent journal.
         ///     </para>
-        ///     <b>Default</b>: "dbo"
+        ///     <b>Default</b>: <c>"dbo"</c>
         /// </summary>
         public override string SchemaName { get; set; } = "dbo";
         
@@ -51,7 +55,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <para>
         ///         SQL server table corresponding with persistent journal.
         ///     </para>
-        ///     <b>Default</b>: "EventJournal"
+        ///     <b>Default</b>: <c>"EventJournal"</c>
         /// </summary>
         public override string TableName { get; set; } = "EventJournal";
         
@@ -59,7 +63,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <para>
         ///         SQL server table corresponding with persistent journal metadata.
         ///     </para>
-        ///     <b>Default</b>: "Metadata"
+        ///     <b>Default</b>: <c>"Metadata"</c>
         /// </summary>
         public override string MetadataTableName { get; set; } = "Metadata";
 
@@ -68,7 +72,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///         Uses the CommandBehavior.SequentialAccess when creating DB commands, providing a performance
         ///         improvement for reading large BLOBS.
         ///     </para>
-        ///     <b>Default</b>: true
+        ///     <b>Default</b>: <c>true</c>
         /// </summary>
         public override bool SequentialAccess { get; set; } = true;
         
@@ -79,16 +83,16 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///         If this parameter set to true, column sizes are loaded on journal startup from database schema, and 
         ///         string parameters have constant size which equals to corresponding column size.
         ///     </para>
-        ///     <b>Default</b>: false
+        ///     <b>Default</b>: <c>false</c>
         /// </summary>
         public bool UseConstantParameterSize { get; set; } = false;
         
         /// <summary>
-        /// <para>
-        ///     The SQL write journal is notifying the query side as soon as things
-        ///     are persisted, but for efficiency reasons the query side retrieves the events 
-        ///     in batches that sometimes can be delayed up to the configured <see cref="QueryRefreshInterval"/>.
-        /// </para>
+        ///     <para>
+        ///         The SQL write journal is notifying the query side as soon as things
+        ///         are persisted, but for efficiency reasons the query side retrieves the events 
+        ///         in batches that sometimes can be delayed up to the configured <see cref="QueryRefreshInterval"/>.
+        ///     </para>
         ///     <b>Default</b>: 3 seconds
         /// </summary>
         public TimeSpan QueryRefreshInterval { get; set; } = TimeSpan.FromSeconds(3);
@@ -115,10 +119,14 @@ namespace Akka.Persistence.SqlServer.Hosting
             .GetConfig(SqlServerSnapshotSettings.ConfigPath);
         
         /// <summary>
-        /// Create a new instance of <see cref="SqlServerSnapshotOptions"/>
+        ///     Create a new instance of <see cref="SqlServerSnapshotOptions"/>
         /// </summary>
-        /// <param name="isDefaultPlugin">Indicates if this snapshot store configuration should be the default configuration for all persistence</param>
-        /// <param name="identifier">The snapshot store configuration identifier, <b>default</b>: "sql-server"</param>
+        /// <param name="isDefaultPlugin">
+        ///     Indicates if this snapshot store configuration should be the default configuration for all persistence
+        /// </param>
+        /// <param name="identifier">
+        ///     The snapshot store configuration identifier. <i>Default</i>: "sql-server"
+        /// </param>
         public SqlServerSnapshotOptions(bool isDefaultPlugin, string identifier = "sql-server") : base(isDefaultPlugin)
         {
             Identifier = identifier;
@@ -128,7 +136,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <para>
         ///         The plugin identifier for this persistence plugin
         ///     </para>
-        ///     <b>Default</b>: "sql-server"
+        ///     <b>Default</b>: <c>"sql-server"</c>
         /// </summary>
         public override string Identifier { get; set; }
         
@@ -136,7 +144,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <para>
         ///         SQL server schema name to table corresponding with persistent snapshot store.
         ///     </para>
-        ///     <b>Default</b>: "dbo"
+        ///     <b>Default</b>: <c>"dbo"</c>
         /// </summary>
         public override string SchemaName { get; set; } = "dbo";
         
@@ -144,24 +152,24 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <para>
         ///         SQL server table corresponding with persistent snapshot store.
         ///     </para>
-        ///     <b>Default</b>: "SnapshotStore"
+        ///     <b>Default</b>: <c>"SnapshotStore"</c>
         /// </summary>
         public override string TableName { get; set; } = "SnapshotStore";
         
         /// <summary>
         ///     Uses the CommandBehavior.SequentialAccess when creating the command, providing a performance
         ///     improvement for reading large BLOBS.
-        ///     <b>Default</b>: true
+        ///     <b>Default</b>: <c>true</c>
         /// </summary>
         public override bool SequentialAccess { get; set; } = true;
 
         /// <summary>
         ///     <para>
         ///         By default, string parameter size in ADO.NET queries are set dynamically based on current parameter
-        ///         value size. If this parameter set to true, column sizes are loaded on journal startup from database schema, and 
-        ///         string parameters have constant size which equals to corresponding column size.
+        ///         value size. If this parameter set to true, column sizes are loaded on journal startup from database
+        ///         schema, and string parameters have constant size which equals to corresponding column size.
         ///     </para>
-        ///     <b>Default</b>: false
+        ///     <b>Default</b>: <c>false</c>
         /// </summary>
         public bool UseConstantParameterSize { get; set; } = false;
 

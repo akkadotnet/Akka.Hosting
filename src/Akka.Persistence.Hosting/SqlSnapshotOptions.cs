@@ -32,14 +32,30 @@ namespace Akka.Persistence.Hosting
         /// </summary>
         public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
+        /// <summary>
+        ///     <para>
+        ///         The database schema name to table corresponding with persistent snapshot store
+        ///     </para>
+        ///     <b>NOTE</b> When implementing this options, override this property with a valid default schema name for
+        ///     the SQL database
+        /// </summary>
         public abstract string SchemaName { get; set; }
 
+        /// <summary>
+        ///     <para>
+        ///         The database snapshot store table name corresponding with persistent journal
+        ///     </para>
+        ///     <b>NOTE</b> When implementing this options, override this property with a valid default table name for
+        ///     the SQL database
+        /// </summary>
         public abstract string TableName { get; set; }
 
         /// <summary>
-        ///     Uses the CommandBehavior.SequentialAccess when creating the command, providing a performance
-        ///     improvement for reading large BLOBS.
-        ///     <b>Default</b>: false
+        ///     <para>
+        ///         Uses the CommandBehavior.SequentialAccess when creating DB commands, providing a performance
+        ///         improvement for reading large BLOBS.
+        ///     </para>
+        ///     <b>Default</b>: <c>false</c>
         /// </summary>
         public abstract bool SequentialAccess { get; set; }
 
