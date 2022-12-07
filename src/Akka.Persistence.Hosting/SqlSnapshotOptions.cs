@@ -11,6 +11,10 @@ using Akka.Hosting;
 #nullable enable
 namespace Akka.Persistence.Hosting
 {
+    /// <summary>
+    /// Base class for all SQL-based snapshot-store options class. If you're writing an options class for no-SQL or
+    /// other kind of plugins, use <see cref="SnapshotOptions"/> instead.
+    /// </summary>
     public abstract class SqlSnapshotOptions: SnapshotOptions
     {
         protected SqlSnapshotOptions(bool isDefault): base(isDefault)

@@ -34,7 +34,7 @@ public class SqlServerOptionsSpec
     public void DefaultJournalOptionsTest()
     {
         var options = new SqlServerJournalOptions(false);
-        var emptyRootConfig = options.ToConfig();
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
             .WithFallback(SqlServerPersistence.DefaultConfiguration())
             .WithFallback(SqlReadJournal.DefaultConfiguration());
@@ -54,7 +54,7 @@ public class SqlServerOptionsSpec
     public void CustomIdJournalOptionsTest()
     {
         var options = new SqlServerJournalOptions(false, "custom");
-        var emptyRootConfig = options.ToConfig();
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
             .WithFallback(SqlServerPersistence.DefaultConfiguration())
             .WithFallback(SqlReadJournal.DefaultConfiguration());

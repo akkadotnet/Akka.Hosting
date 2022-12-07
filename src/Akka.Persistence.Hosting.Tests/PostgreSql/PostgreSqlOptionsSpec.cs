@@ -33,7 +33,7 @@ public class PostgreSqlOptionsSpec
     public void DefaultJournalOptionsTest()
     {
         var options = new PostgreSqlJournalOptions(false);
-        var emptyRootConfig = options.ToConfig();
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
             .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         
@@ -51,7 +51,7 @@ public class PostgreSqlOptionsSpec
     public void CustomIdJournalOptionsTest()
     {
         var options = new PostgreSqlJournalOptions(false, "custom");
-        var emptyRootConfig = options.ToConfig();
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
             .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         
@@ -132,7 +132,7 @@ public class PostgreSqlOptionsSpec
     public void DefaultSnapshotOptionsTest()
     {
         var options = new PostgreSqlSnapshotOptions(false);
-        var emptyRootConfig = options.ToConfig();
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
             .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         
@@ -150,7 +150,7 @@ public class PostgreSqlOptionsSpec
     public void CustomIdSnapshotOptionsTest()
     {
         var options = new PostgreSqlSnapshotOptions(false, "custom");
-        var emptyRootConfig = options.ToConfig();
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
             .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         

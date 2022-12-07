@@ -12,8 +12,19 @@ using Akka.Persistence.Hosting;
 #nullable enable
 namespace Akka.Persistence.PostgreSql.Hosting
 {
+    /// <summary>
+    /// Akka.Hosting options class to set up PostgreSql persistence snapshot store.
+    /// </summary>
     public sealed class PostgreSqlSnapshotOptions: SqlSnapshotOptions
     {
+        private static readonly Config Default = PostgreSqlPersistence.DefaultConfiguration()
+            .GetConfig(PostgreSqlSnapshotStoreSettings.SnapshotStoreConfigPath);
+        
+        /// <summary>
+        /// Create a new instance of <see cref="PostgreSqlSnapshotOptions"/>
+        /// </summary>
+        /// <param name="isDefaultPlugin">Indicates if this snapshot store configuration should be the default configuration for all persistence</param>
+        /// <param name="identifier">The snapshot store configuration identifier, <b>default</b>: "postgresql"</param>
         public PostgreSqlSnapshotOptions(bool isDefaultPlugin, string identifier = "postgresql") : base(isDefaultPlugin)
         {
             Identifier = identifier;
@@ -58,12 +69,10 @@ namespace Akka.Persistence.PostgreSql.Hosting
         /// </summary>
         public StoredAsType StoredAs { get; set; } = StoredAsType.ByteA;
 
-        public override Config DefaultConfig => PostgreSqlJournalOptions.Default;
+        protected override Config InternalDefaultConfig => Default;
 
         protected override StringBuilder Build(StringBuilder sb)
         {
-            sb.AppendLine("class = \"Akka.Persistence.PostgreSql.Snapshot.PostgreSqlSnapshotStore, Akka.Persistence.PostgreSql\"");
-            sb.AppendLine("plugin-dispatcher = \"akka.actor.default-dispatcher\"");
             sb.AppendLine($"stored-as = {StoredAs.ToHocon()}");
 
             return base.Build(sb);

@@ -12,6 +12,10 @@ using Akka.Hosting;
 #nullable enable
 namespace Akka.Persistence.Hosting
 {
+    /// <summary>
+    /// Base class for all journal options class. If you're writing an options class for SQL plugins, use
+    /// <see cref="SqlJournalOptions"/> instead.
+    /// </summary>
     public abstract class JournalOptions
     {
         private readonly bool _isDefault;
@@ -25,7 +29,7 @@ namespace Akka.Persistence.Hosting
         
         /// <summary>
         ///     <para>
-        ///         Should corresponding journal table be initialized automatically.
+        ///         Should corresponding journal be initialized automatically, if applicable.
         ///     </para>
         ///     <b>Default</b>: false
         /// </summary>
@@ -40,7 +44,18 @@ namespace Akka.Persistence.Hosting
         /// </summary>
         public string Serializer { get; set; } = "json";
         
-        public abstract Config DefaultConfig { get; }
+        /// <summary>
+        /// The default configuration for this journal. This must be the actual configuration block for this journal.
+        /// Example:
+        /// protected override Config InternalDefaultConfig = PostgreSqlPersistence.DefaultConfiguration()
+        ///     .GetConfig("akka.persistence.journal.postgresql");
+        /// </summary>
+        protected abstract Config InternalDefaultConfig { get; }
+
+        /// <summary>
+        /// The default configuration for this specific journal configuration identifier
+        /// </summary>
+        public Config DefaultConfig => InternalDefaultConfig.MoveTo($"akka.persistence.journal.{Identifier}");
         
         public AkkaPersistenceJournalBuilder Adapters { get; set; } = new ("", null!);
         
@@ -71,7 +86,7 @@ namespace Akka.Persistence.Hosting
             sb.AppendLine("}");
             
             if (_isDefault)
-                sb.AppendLine($"akka.persistence.journal.plugin = akka.persistence.journal.{Identifier.ToHocon()}");
+                sb.AppendLine($"akka.persistence.journal.plugin = akka.persistence.journal.{Identifier}");
 
             return sb;
         }

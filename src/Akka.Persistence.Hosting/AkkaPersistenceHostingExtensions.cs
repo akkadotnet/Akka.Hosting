@@ -5,6 +5,7 @@ using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Journal;
 using Akka.Util;
+using Akka.Actor;
 
 #nullable enable
 namespace Akka.Persistence.Hosting
@@ -125,6 +126,14 @@ namespace Akka.Persistence.Hosting
     /// </summary>
     public static class AkkaPersistenceHostingExtensions
     {
+        /// <summary>
+        /// A generic way to add both journal and snapshot store configuration to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalOptions">The specific journal options instance used to configure the journal. For example, an instance of <c>SqlServerJournalOptions</c></param>
+        /// <param name="snapshotOptions">The specific snapshot store options instance used to configure the snapshot store. For example, an instance of <c>SqlServerSnapshotOptions</c></param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static AkkaConfigurationBuilder WithJournalAndSnapshot(
             this AkkaConfigurationBuilder builder,
             JournalOptions journalOptions, 
@@ -146,6 +155,13 @@ namespace Akka.Persistence.Hosting
             return builder.AddHocon(defaultConfig, HoconAddMode.Append);
         }
         
+        /// <summary>
+        /// A generic way to add journal configuration to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalOptions">The specific journal options instance used to configure the journal. For example, an instance of <c>SqlServerJournalOptions</c></param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static AkkaConfigurationBuilder WithJournal(
             this AkkaConfigurationBuilder builder,
             JournalOptions journalOptions)
@@ -157,6 +173,13 @@ namespace Akka.Persistence.Hosting
             return builder.AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append);
         }
         
+        /// <summary>
+        /// A generic way to add snapshot store configuration to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="snapshotOptions">The specific snapshot store options instance used to configure the snapshot store. For example, an instance of <c>SqlServerSnapshotOptions</c></param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static AkkaConfigurationBuilder WithSnapshot(
             this AkkaConfigurationBuilder builder,
             SnapshotOptions snapshotOptions)

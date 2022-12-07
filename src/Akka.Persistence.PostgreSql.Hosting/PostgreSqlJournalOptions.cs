@@ -12,10 +12,19 @@ using Akka.Persistence.Hosting;
 #nullable enable
 namespace Akka.Persistence.PostgreSql.Hosting
 {
+    /// <summary>
+    /// Akka.Hosting options class to set up PostgreSql persistence journal.
+    /// </summary>
     public sealed class PostgreSqlJournalOptions: SqlJournalOptions
     {
-        internal static readonly Config Default = PostgreSqlPersistence.DefaultConfiguration();
+        private static readonly Config Default = PostgreSqlPersistence.DefaultConfiguration()
+            .GetConfig(PostgreSqlJournalSettings.JournalConfigPath);
         
+        /// <summary>
+        /// Create a new instance of <see cref="PostgreSqlJournalOptions"/>
+        /// </summary>
+        /// <param name="isDefaultPlugin">Indicates if this journal configuration should be the default configuration for all persistence</param>
+        /// <param name="identifier">The journal configuration identifier, <b>default</b>: "postgresql"</param>
         public PostgreSqlJournalOptions(bool isDefaultPlugin, string identifier = "postgresql") : base(isDefaultPlugin)
         {
             Identifier = identifier;
@@ -73,13 +82,10 @@ namespace Akka.Persistence.PostgreSql.Hosting
         /// </summary>
         public bool UseBigIntIdentityForOrderingColumn { get; set; } = false;
 
-        public override Config DefaultConfig => Default;
+        protected override Config InternalDefaultConfig => Default;
 
         protected override StringBuilder Build(StringBuilder sb)
         {
-            sb.AppendLine("class = \"Akka.Persistence.PostgreSql.Journal.PostgreSqlJournal, Akka.Persistence.PostgreSql\"");
-            sb.AppendLine("plugin-dispatcher = \"akka.actor.default-dispatcher\"");
-            sb.AppendLine("timestamp-provider = \"Akka.Persistence.Sql.Common.Journal.DefaultTimestampProvider, Akka.Persistence.Sql.Common\"");
             sb.AppendLine($"use-bigint-identity-for-ordering-column = {(UseBigIntIdentityForOrderingColumn ? "on" : "off")}");
             sb.AppendLine($"stored-as = {StoredAs.ToHocon()}");
             

@@ -11,6 +11,10 @@ using Akka.Hosting;
 #nullable enable
 namespace Akka.Persistence.Hosting
 {
+    /// <summary>
+    /// Base class for all SQL-based journal options class. If you're writing an options class for no-SQL or other kind
+    /// of plugins, use <see cref="JournalOptions"/> instead.
+    /// </summary>
     public abstract class SqlJournalOptions: JournalOptions
     {
         protected SqlJournalOptions(bool isDefault): base(isDefault)

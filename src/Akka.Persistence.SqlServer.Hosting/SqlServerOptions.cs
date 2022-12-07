@@ -13,10 +13,19 @@ using Akka.Persistence.Hosting;
 #nullable enable
 namespace Akka.Persistence.SqlServer.Hosting
 {
+    /// <summary>
+    /// Akka.Hosting options class to set up Microsoft SqlServer persistence journal.
+    /// </summary>
     public sealed class SqlServerJournalOptions: SqlJournalOptions
     {
-        internal static readonly Config Default = SqlServerPersistence.DefaultConfiguration();
+        private static readonly Config Default = SqlServerPersistence.DefaultConfiguration()
+            .GetConfig(SqlServerJournalSettings.ConfigPath);
         
+        /// <summary>
+        /// Create a new instance of <see cref="SqlServerJournalOptions"/>
+        /// </summary>
+        /// <param name="isDefaultPlugin">Indicates if this journal configuration should be the default configuration for all persistence</param>
+        /// <param name="identifier">The journal configuration identifier, <b>default</b>: "sql-server"</param>
         public SqlServerJournalOptions(bool isDefaultPlugin, string identifier = "sql-server") : base(isDefaultPlugin)
         {
             Identifier = identifier;
@@ -84,13 +93,10 @@ namespace Akka.Persistence.SqlServer.Hosting
         /// </summary>
         public TimeSpan QueryRefreshInterval { get; set; } = TimeSpan.FromSeconds(3);
 
-        public override Config DefaultConfig => Default;
+        protected override Config InternalDefaultConfig => Default;
 
         protected override StringBuilder Build(StringBuilder sb)
         {
-            sb.AppendLine("class = \"Akka.Persistence.SqlServer.Journal.SqlServerJournal, Akka.Persistence.SqlServer\"");
-            sb.AppendLine("plugin-dispatcher = \"akka.actor.default-dispatcher\"");
-            sb.AppendLine("timestamp-provider = \"Akka.Persistence.Sql.Common.Journal.DefaultTimestampProvider, Akka.Persistence.Sql.Common\"");
             sb.AppendLine($"use-constant-parameter-size = {UseConstantParameterSize.ToHocon()}");
             
             sb = base.Build(sb);
@@ -100,9 +106,20 @@ namespace Akka.Persistence.SqlServer.Hosting
         }
     }
 
+    /// <summary>
+    /// Akka.Hosting options class to set up Microsoft SqlServer persistence snapshot store.
+    /// </summary>
     public sealed class SqlServerSnapshotOptions: SqlSnapshotOptions
     {
-        public SqlServerSnapshotOptions(bool isDefault, string identifier = "sql-server") : base(isDefault)
+        private static readonly Config Default = SqlServerPersistence.DefaultConfiguration()
+            .GetConfig(SqlServerSnapshotSettings.ConfigPath);
+        
+        /// <summary>
+        /// Create a new instance of <see cref="SqlServerSnapshotOptions"/>
+        /// </summary>
+        /// <param name="isDefaultPlugin">Indicates if this snapshot store configuration should be the default configuration for all persistence</param>
+        /// <param name="identifier">The snapshot store configuration identifier, <b>default</b>: "sql-server"</param>
+        public SqlServerSnapshotOptions(bool isDefaultPlugin, string identifier = "sql-server") : base(isDefaultPlugin)
         {
             Identifier = identifier;
         }
@@ -148,7 +165,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         /// </summary>
         public bool UseConstantParameterSize { get; set; } = false;
 
-        public override Config DefaultConfig => SqlServerJournalOptions.Default;
+        protected override Config InternalDefaultConfig => Default;
 
         protected override StringBuilder Build(StringBuilder sb)
         {

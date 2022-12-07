@@ -46,6 +46,7 @@ namespace Akka.Persistence.PostgreSql.Hosting
         ///     </para>
         ///     <b>Default</b>: <c>null</c>
         /// </param>
+        /// <param name="pluginIdentifier">The configuration identifier for the plugins</param>
         /// <param name="isDefaultPlugin">
         ///     <para>
         ///         A <c>bool</c> flag to set the plugin as the default persistence plugin for the <see cref="ActorSystem"/>
@@ -65,12 +66,13 @@ namespace Akka.Persistence.PostgreSql.Hosting
             bool sequentialAccess = false,
             bool useBigintIdentityForOrderingColumn = false, 
             Action<AkkaPersistenceJournalBuilder>? journalBuilder = null,
+            string pluginIdentifier = "postgresql",
             bool isDefaultPlugin = true)
         {
             if (mode == PersistenceMode.SnapshotStore && journalBuilder is { })
                 throw new Exception($"{nameof(journalBuilder)} can only be set when {nameof(mode)} is set to either {PersistenceMode.Both} or {PersistenceMode.Journal}");
             
-            var journalOpt = new PostgreSqlJournalOptions(isDefaultPlugin)
+            var journalOpt = new PostgreSqlJournalOptions(isDefaultPlugin, pluginIdentifier)
             {
                 ConnectionString = connectionString,
                 SchemaName = schemaName,
@@ -84,7 +86,7 @@ namespace Akka.Persistence.PostgreSql.Hosting
             journalBuilder?.Invoke(adapters);
             journalOpt.Adapters = adapters;
 
-            var snapshotOpt = new PostgreSqlSnapshotOptions(isDefaultPlugin)
+            var snapshotOpt = new PostgreSqlSnapshotOptions(isDefaultPlugin, pluginIdentifier)
             {
                 ConnectionString = connectionString,
                 SchemaName = schemaName,
@@ -182,18 +184,19 @@ namespace Akka.Persistence.PostgreSql.Hosting
                 (_, null) => 
                     builder
                         .AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend)
-                        .AddHocon(PostgreSqlPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                        .AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append),
                 
                 (null, _) => 
                     builder
                         .AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend)
-                        .AddHocon(PostgreSqlPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                        .AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append),
                 
                 (_, _) => 
                     builder
                         .AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend)
                         .AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend)
-                        .AddHocon(PostgreSqlPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                        .AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append)
+                        .AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append),
             };
         }
         

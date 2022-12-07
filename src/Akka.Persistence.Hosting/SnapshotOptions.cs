@@ -11,6 +11,10 @@ using Akka.Hosting;
 
 namespace Akka.Persistence.Hosting
 {
+    /// <summary>
+    /// Base class for all snapshot store options class. If you're writing an options class for SQL plugins, use
+    /// <see cref="SqlSnapshotOptions"/> instead.
+    /// </summary>
     public abstract class SnapshotOptions
     {
         private readonly bool _isDefault;
@@ -37,7 +41,15 @@ namespace Akka.Persistence.Hosting
         /// </summary>
         public string Serializer { get; set; } = "json";
         
-        public abstract Config DefaultConfig { get; }
+        /// <summary>
+        /// The default configuration for this journal. This must be the actual configuration block for this journal.
+        /// Example:
+        /// protected override Config InternalDefaultConfig = PostgreSqlPersistence.DefaultConfiguration()
+        ///     .GetConfig("akka.persistence.snapshot-store.postgresql");
+        /// </summary>
+        protected abstract Config InternalDefaultConfig { get; }
+        
+        public Config DefaultConfig => InternalDefaultConfig.MoveTo($"akka.persistence.snapshot-store.{Identifier}");
         
         /// <summary>
         /// The chain config builder.
@@ -47,7 +59,7 @@ namespace Akka.Persistence.Hosting
         /// </summary>
         /// <param name="sb"><see cref="StringBuilder"/> instance from lower chain</param>
         /// <returns>The fully built <see cref="StringBuilder"/> containing the `akka.persistence.snapshot-store.{id}` HOCON block.</returns>
-        /// <exception cref="Exception">Thrown when <see cref="Identifier"/> is null or whitespace</exception>
+        /// <exception cref="Exception">Thrown when <see cref="Identifier"/> is null, contains only whitespaces, or contains illegal characters</exception>
         protected virtual StringBuilder Build(StringBuilder sb)
         {
             if(string.IsNullOrWhiteSpace(Identifier))
@@ -59,13 +71,13 @@ namespace Akka.Persistence.Hosting
                 throw new Exception($"Invalid {GetType()}, {nameof(Identifier)} contains illegal character(s) {string.Join(", ", illegalChars)}");
             }
             
-            sb.Insert(0, $"akka.persistence.snapshot-store.{Identifier.ToHocon()} {{{Environment.NewLine}");
+            sb.Insert(0, $"akka.persistence.snapshot-store.{Identifier} {{{Environment.NewLine}");
             sb.AppendLine($"serializer = {Serializer.ToHocon()}");
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
             sb.AppendLine("}");
             
             if (_isDefault)
-                sb.AppendLine($"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{Identifier.ToHocon()}");
+                sb.AppendLine($"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{Identifier}");
             
             return sb;
         }

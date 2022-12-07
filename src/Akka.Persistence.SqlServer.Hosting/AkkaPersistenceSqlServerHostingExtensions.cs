@@ -27,6 +27,7 @@ namespace Akka.Persistence.SqlServer.Hosting
         /// <param name="journalBuilder">
         ///     An Action delegate used to configure an <see cref="AkkaPersistenceJournalBuilder"/> instance.
         /// </param>
+        /// <param name="pluginIdentifier">The configuration identifier for the plugins</param>
         /// <param name="isDefaultPlugin">
         ///     <para>
         ///         A <c>bool</c> flag to set the plugin as the default persistence plugin for the <see cref="ActorSystem"/>
@@ -43,12 +44,13 @@ namespace Akka.Persistence.SqlServer.Hosting
             PersistenceMode mode = PersistenceMode.Both, 
             Action<AkkaPersistenceJournalBuilder>? journalBuilder = null,
             bool autoInitialize = true,
+            string pluginIdentifier = "sql-server",
             bool isDefaultPlugin = true)
         {
             if (mode == PersistenceMode.SnapshotStore && journalBuilder is { })
                 throw new Exception($"{nameof(journalBuilder)} can only be set when {nameof(mode)} is set to either {PersistenceMode.Both} or {PersistenceMode.Journal}");
             
-            var journalOpt = new SqlServerJournalOptions(isDefaultPlugin)
+            var journalOpt = new SqlServerJournalOptions(isDefaultPlugin, pluginIdentifier)
             {
                 ConnectionString = connectionString,
                 AutoInitialize = autoInitialize,
@@ -59,7 +61,7 @@ namespace Akka.Persistence.SqlServer.Hosting
             journalBuilder?.Invoke(adapters);
             journalOpt.Adapters = adapters;
 
-            var snapshotOpt = new SqlServerSnapshotOptions(isDefaultPlugin)
+            var snapshotOpt = new SqlServerSnapshotOptions(isDefaultPlugin, pluginIdentifier)
             {
                 ConnectionString = connectionString,
                 AutoInitialize = autoInitialize,
@@ -158,18 +160,19 @@ namespace Akka.Persistence.SqlServer.Hosting
                 (_, null) => 
                     builder
                         .AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend)
-                        .AddHocon(SqlServerPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                        .AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append),
                 
                 (null, _) => 
                     builder
                         .AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend)
-                        .AddHocon(SqlServerPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                        .AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append),
                 
                 (_, _) => 
                     builder
                         .AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend)
                         .AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend)
-                        .AddHocon(SqlServerPersistence.DefaultConfiguration(), HoconAddMode.Append),
+                        .AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append)
+                        .AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append),
             };
         }
     }
