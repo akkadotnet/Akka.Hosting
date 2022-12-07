@@ -45,6 +45,24 @@ namespace Akka.Cluster.Hosting
         public bool RememberEntities { get; set; } = false;
 
         public string Role { get; set; }
+
+        /// <summary>
+        ///     <para>
+        ///         The journal plugin configuration identifier used by persistence mode, eg. "sql-server" or "postgresql"
+        ///     </para>
+        ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
+        ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
+        /// </summary>
+        public string JournalPluginId { get; set; } = null;
+
+        /// <summary>
+        ///     <para>
+        ///         The snapshot store plugin configuration identifier used by persistence mode, eg. "sql-server" or "postgresql"
+        ///     </para>
+        ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
+        ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
+        /// </summary>
+        public string SnapshotPluginId { get; set; } = null;
     }
 
     public static class AkkaClusterHostingExtensions
@@ -152,11 +170,18 @@ namespace Akka.Cluster.Hosting
         {
             return builder.WithActors(async (system, registry) =>
             {
-                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
-                    ClusterShardingSettings.Create(system)
-                        .WithRole(shardOptions.Role)
-                        .WithRememberEntities(shardOptions.RememberEntities)
-                        .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
+                var settings = ClusterShardingSettings.Create(system)
+                    .WithRole(shardOptions.Role)
+                    .WithRememberEntities(shardOptions.RememberEntities)
+                    .WithStateStoreMode(shardOptions.StateStoreMode);
+
+                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
+                    settings = settings
+                        .WithJournalPluginId(shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                
+                var shardRegion = await ClusterSharding.Get(system)
+                    .StartAsync(typeName, entityPropsFactory, settings, messageExtractor);
                 
                 registry.Register<TKey>(shardRegion);
             });
@@ -190,11 +215,18 @@ namespace Akka.Cluster.Hosting
         {
             return builder.WithActors(async (system, registry) =>
             {
-                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
-                    ClusterShardingSettings.Create(system)
-                        .WithRole(shardOptions.Role)
-                        .WithRememberEntities(shardOptions.RememberEntities)
-                        .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
+                var settings = ClusterShardingSettings.Create(system)
+                    .WithRole(shardOptions.Role)
+                    .WithRememberEntities(shardOptions.RememberEntities)
+                    .WithStateStoreMode(shardOptions.StateStoreMode);
+
+                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
+                    settings = settings
+                        .WithJournalPluginId(shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                
+                var shardRegion = await ClusterSharding.Get(system)
+                    .StartAsync(typeName, entityPropsFactory, settings, extractEntityId, extractShardId);
 
                 registry.Register<TKey>(shardRegion);
             });
@@ -206,13 +238,20 @@ namespace Akka.Cluster.Hosting
         {
             return builder.WithActors(async (system, registry) =>
             {
+                var settings = ClusterShardingSettings.Create(system)
+                    .WithRole(shardOptions.Role)
+                    .WithRememberEntities(shardOptions.RememberEntities)
+                    .WithStateStoreMode(shardOptions.StateStoreMode);
+
+                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
+                    settings = settings
+                        .WithJournalPluginId(shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                
                 var entityPropsFactory = compositePropsFactory(system, registry);
                 
-                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
-                    ClusterShardingSettings.Create(system)
-                        .WithRole(shardOptions.Role)
-                        .WithRememberEntities(shardOptions.RememberEntities)
-                        .WithStateStoreMode(shardOptions.StateStoreMode), messageExtractor);
+                var shardRegion = await ClusterSharding.Get(system)
+                    .StartAsync(typeName, entityPropsFactory, settings, messageExtractor);
 
                 registry.Register<TKey>(shardRegion);
             });
@@ -225,13 +264,20 @@ namespace Akka.Cluster.Hosting
         {
             return builder.WithActors(async (system, registry) =>
             {
+                var settings = ClusterShardingSettings.Create(system)
+                    .WithRole(shardOptions.Role)
+                    .WithRememberEntities(shardOptions.RememberEntities)
+                    .WithStateStoreMode(shardOptions.StateStoreMode);
+
+                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
+                    settings = settings
+                        .WithJournalPluginId(shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                
                 var entityPropsFactory = compositePropsFactory(system, registry);
                 
-                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, entityPropsFactory,
-                    ClusterShardingSettings.Create(system)
-                        .WithRole(shardOptions.Role)
-                        .WithRememberEntities(shardOptions.RememberEntities)
-                        .WithStateStoreMode(shardOptions.StateStoreMode), extractEntityId, extractShardId);
+                var shardRegion = await ClusterSharding.Get(system)
+                    .StartAsync(typeName, entityPropsFactory, settings, extractEntityId, extractShardId);
 
                 registry.Register<TKey>(shardRegion);
             });
