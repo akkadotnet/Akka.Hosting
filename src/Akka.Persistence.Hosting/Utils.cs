@@ -4,14 +4,12 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Akka.Persistence.Hosting
 {
-    public static class Utils
+    internal static class Utils
     {
         // This illegal character list is conservative. Normally '.' and '/' is allowed in a HOCON literal, but we'll
         // ban it just because it'll make our life harder in the future.

@@ -10,7 +10,7 @@ namespace Akka.Persistence.PostgreSql.Hosting
 {
     public static class StoredAsExtensions
     {
-        public static string ToHocon(this StoredAsType storedAsType)
+        internal static string ToHocon(this StoredAsType storedAsType)
             => storedAsType switch
             {
                 StoredAsType.ByteA => "bytea",
