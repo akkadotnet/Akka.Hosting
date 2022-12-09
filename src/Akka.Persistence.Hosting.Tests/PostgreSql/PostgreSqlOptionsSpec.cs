@@ -1,90 +1,85 @@
 ﻿// -----------------------------------------------------------------------
-//  <copyright file="SqlServerOptionsSpec.cs" company="Akka.NET Project">
+//  <copyright file="PostgreSqlOptionsSpec.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using System;
 using Akka.Configuration;
+using Akka.Persistence.PostgreSql;
+using Akka.Persistence.PostgreSql.Hosting;
 using Akka.Persistence.Query.Sql;
-using Akka.Persistence.SqlServer;
-using Akka.Persistence.SqlServer.Hosting;
 using Akka.Util;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
 
-namespace Akka.Persistence.Hosting.Tests.SqlServer;
+namespace Akka.Persistence.Hosting.Tests.PostgreSql;
 
-public class SqlServerOptionsSpec
+public class PostgreSqlOptionsSpec
 {
     #region Journal unit tests
 
-    [Fact(DisplayName = "SqlServerJournalOptions as default plugin should generate plugin setting")]
+    [Fact(DisplayName = "PostgreSqlJournalOptions as default plugin should generate plugin setting")]
     public void DefaultPluginJournalOptionsTest()
     {
-        var options = new SqlServerJournalOptions(true);
+        var options = new PostgreSqlJournalOptions(true);
         var config = options.ToConfig();
 
-        config.GetString("akka.persistence.journal.plugin").Should().Be("akka.persistence.journal.sql-server");
-        config.HasPath("akka.persistence.journal.sql-server").Should().BeTrue();
+        config.GetString("akka.persistence.journal.plugin").Should().Be("akka.persistence.journal.postgresql");
+        config.HasPath("akka.persistence.journal.postgresql").Should().BeTrue();
     }
 
-    [Fact(DisplayName = "Empty SqlServerJournalOptions should equal empty config with default fallback")]
+    [Fact(DisplayName = "Empty PostgreSqlJournalOptions should equal empty config with default fallback")]
     public void DefaultJournalOptionsTest()
     {
-        var options = new SqlServerJournalOptions(false);
+        var options = new PostgreSqlJournalOptions(false);
         var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
-            .WithFallback(SqlServerPersistence.DefaultConfiguration())
-            .WithFallback(SqlReadJournal.DefaultConfiguration());
+            .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         
         AssertString(emptyRootConfig, baseRootConfig, "akka.persistence.journal.plugin");
-        AssertTimespan(emptyRootConfig, baseRootConfig, "akka.persistence.query.journal.sql.refresh-interval");
         
-        var config = emptyRootConfig.GetConfig("akka.persistence.journal.sql-server");
-        var baseConfig = baseRootConfig.GetConfig("akka.persistence.journal.sql-server");
+        var config = emptyRootConfig.GetConfig("akka.persistence.journal.postgresql");
+        var baseConfig = baseRootConfig.GetConfig("akka.persistence.journal.postgresql");
         config.Should().NotBeNull();
         baseConfig.Should().NotBeNull();
 
         AssertJournalConfig(config, baseConfig);
     }
     
-    [Fact(DisplayName = "Empty SqlServerJournalOptions with custom identifier should equal empty config with default fallback")]
+    [Fact(DisplayName = "Empty PostgreSqlJournalOptions with custom identifier should equal empty config with default fallback")]
     public void CustomIdJournalOptionsTest()
     {
-        var options = new SqlServerJournalOptions(false, "custom");
+        var options = new PostgreSqlJournalOptions(false, "custom");
         var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
-            .WithFallback(SqlServerPersistence.DefaultConfiguration())
-            .WithFallback(SqlReadJournal.DefaultConfiguration());
+            .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         
         AssertString(emptyRootConfig, baseRootConfig, "akka.persistence.journal.plugin");
-        AssertTimespan(emptyRootConfig, baseRootConfig, "akka.persistence.query.journal.sql.refresh-interval");
         
         var config = emptyRootConfig.GetConfig("akka.persistence.journal.custom");
-        var baseConfig = baseRootConfig.GetConfig("akka.persistence.journal.sql-server");
+        var baseConfig = baseRootConfig.GetConfig("akka.persistence.journal.postgresql");
         config.Should().NotBeNull();
         baseConfig.Should().NotBeNull();
 
         AssertJournalConfig(config, baseConfig);
     }
     
-    [Fact(DisplayName = "SqlServerJournalOptions should generate proper config")]
+    [Fact(DisplayName = "PostgreSqlJournalOptions should generate proper config")]
     public void JournalOptionsTest()
     {
-        var options = new SqlServerJournalOptions(true)
+        var options = new PostgreSqlJournalOptions(true)
         {
             Identifier = "custom",
             AutoInitialize = true,
             ConnectionString = "testConnection",
             ConnectionTimeout = 1.Seconds(),
             MetadataTableName = "testMetadata",
-            QueryRefreshInterval = 2.Seconds(),
             SchemaName = "testSchema",
             SequentialAccess = false,
             TableName = "testTable",
-            UseConstantParameterSize = true
+            StoredAs = StoredAsType.Json,
+            UseBigIntIdentityForOrderingColumn = true
         };
         options.Adapters.AddWriteEventAdapter<EventAdapterSpecs.EventMapper1>("mapper1", new [] { typeof(EventAdapterSpecs.Event1) });
         options.Adapters.AddReadEventAdapter<EventAdapterSpecs.ReadAdapter>("reader1", new [] { typeof(EventAdapterSpecs.Event1) });
@@ -95,9 +90,6 @@ public class SqlServerOptionsSpec
         
         baseConfig.GetString("akka.persistence.journal.plugin").Should().Be("akka.persistence.journal.custom");
 
-        baseConfig.GetTimeSpan("akka.persistence.query.journal.sql.refresh-interval").Should()
-            .Be(options.QueryRefreshInterval);
-        
         var config = baseConfig.GetConfig("akka.persistence.journal.custom");
         config.Should().NotBeNull();
         config.GetString("connection-string").Should().Be(options.ConnectionString);
@@ -107,7 +99,8 @@ public class SqlServerOptionsSpec
         config.GetBoolean("auto-initialize").Should().Be(options.AutoInitialize);
         config.GetString("metadata-table-name").Should().Be(options.MetadataTableName);
         config.GetBoolean("sequential-access").Should().Be(options.SequentialAccess);
-        config.GetBoolean("use-constant-parameter-size").Should().Be(options.UseConstantParameterSize);
+        config.GetString("stored-as").Should().Be(options.StoredAs.ToHocon());
+        config.GetBoolean("use-bigint-identity-for-ordering-column").Should().Be(options.UseBigIntIdentityForOrderingColumn);
         
         config.GetStringList($"event-adapter-bindings.\"{typeof(EventAdapterSpecs.Event1).TypeQualifiedName()}\"").Should()
             .BeEquivalentTo("mapper1", "reader1", "tagger");
@@ -118,63 +111,63 @@ public class SqlServerOptionsSpec
         config.GetString("event-adapters.reader1").Should().Be(typeof(EventAdapterSpecs.ReadAdapter).TypeQualifiedName());
         config.GetString("event-adapters.combo").Should().Be(typeof(EventAdapterSpecs.ComboAdapter).TypeQualifiedName());
         config.GetString("event-adapters.tagger").Should().Be(typeof(EventAdapterSpecs.Tagger).TypeQualifiedName());
+
     }
 
     #endregion
 
     #region Snapshot unit tests
 
-    [Fact(DisplayName = "SqlServerSnapshotOptions as default plugin should generate plugin setting")]
+    [Fact(DisplayName = "PostgreSqlSnapshotOptions as default plugin should generate plugin setting")]
     public void DefaultPluginSnapshotOptionsTest()
     {
-        var options = new SqlServerSnapshotOptions(true);
+        var options = new PostgreSqlSnapshotOptions(true);
         var config = options.ToConfig();
 
-        config.GetString("akka.persistence.snapshot-store.plugin").Should().Be("akka.persistence.snapshot-store.sql-server");
-        config.HasPath("akka.persistence.snapshot-store.sql-server").Should().BeTrue();
+        config.GetString("akka.persistence.snapshot-store.plugin").Should().Be("akka.persistence.snapshot-store.postgresql");
+        config.HasPath("akka.persistence.snapshot-store.postgresql").Should().BeTrue();
     }
 
-    [Fact(DisplayName = "Empty SqlServerSnapshotOptions should equal empty config with default fallback")]
+    [Fact(DisplayName = "Empty PostgreSqlSnapshotOptions with default fallback should return default config")]
     public void DefaultSnapshotOptionsTest()
     {
-        var options = new SqlServerSnapshotOptions(false);
-        var emptyRootConfig = options.ToConfig();
+        var options = new PostgreSqlSnapshotOptions(false);
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
         var baseRootConfig = Config.Empty
-            .WithFallback(SqlServerPersistence.DefaultConfiguration());
+            .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         
         AssertString(emptyRootConfig, baseRootConfig, "akka.persistence.snapshot-store.plugin");
         
-        var config = emptyRootConfig.GetConfig("akka.persistence.snapshot-store.sql-server");
-        var baseConfig = baseRootConfig.GetConfig("akka.persistence.snapshot-store.sql-server");
-        config.Should().NotBeNull();
-        baseConfig.Should().NotBeNull();
-        
-        AssertSnapshotConfig(config, baseConfig);
-    }
-    
-    [Fact(DisplayName = "Empty SqlServerSnapshotOptions with custom identifier should equal empty config with default fallback")]
-    public void CustomIdSnapshotOptionsTest()
-    {
-        var options = new SqlServerSnapshotOptions(false, "custom");
-        var emptyRootConfig = options.ToConfig();
-        var baseRootConfig = Config.Empty
-            .WithFallback(SqlServerPersistence.DefaultConfiguration());
-        
-        AssertString(emptyRootConfig, baseRootConfig, "akka.persistence.snapshot-store.plugin");
-        AssertTimespan(emptyRootConfig, baseRootConfig, "akka.persistence.query.snapshot-store.sql.refresh-interval");
-        
-        var config = emptyRootConfig.GetConfig("akka.persistence.snapshot-store.custom");
-        var baseConfig = baseRootConfig.GetConfig("akka.persistence.snapshot-store.sql-server");
+        var config = emptyRootConfig.GetConfig("akka.persistence.snapshot-store.postgresql");
+        var baseConfig = baseRootConfig.GetConfig("akka.persistence.snapshot-store.postgresql");
         config.Should().NotBeNull();
         baseConfig.Should().NotBeNull();
 
         AssertSnapshotConfig(config, baseConfig);
     }
     
-    [Fact(DisplayName = "SqlServerSnapshotOptions should generate proper config")]
+    [Fact(DisplayName = "Empty PostgreSqlSnapshotOptions with custom identifier should equal empty config with default fallback")]
+    public void CustomIdSnapshotOptionsTest()
+    {
+        var options = new PostgreSqlSnapshotOptions(false, "custom");
+        var emptyRootConfig = options.ToConfig().WithFallback(options.DefaultConfig);
+        var baseRootConfig = Config.Empty
+            .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
+        
+        AssertString(emptyRootConfig, baseRootConfig, "akka.persistence.snapshot-store.plugin");
+        
+        var config = emptyRootConfig.GetConfig("akka.persistence.snapshot-store.custom");
+        var baseConfig = baseRootConfig.GetConfig("akka.persistence.snapshot-store.postgresql");
+        config.Should().NotBeNull();
+        baseConfig.Should().NotBeNull();
+
+        AssertSnapshotConfig(config, baseConfig);
+    }
+    
+    [Fact(DisplayName = "PostgreSqlSnapshotOptions should generate proper config")]
     public void SnapshotOptionsTest()
     {
-        var options = new SqlServerSnapshotOptions(true)
+        var options = new PostgreSqlSnapshotOptions(true)
         {
             Identifier = "custom",
             AutoInitialize = true,
@@ -183,10 +176,10 @@ public class SqlServerOptionsSpec
             SchemaName = "testSchema",
             SequentialAccess = false,
             TableName = "testTable",
-            UseConstantParameterSize = true
+            StoredAs = StoredAsType.Json,
         };
         var baseConfig = options.ToConfig()
-            .WithFallback(SqlServerPersistence.DefaultConfiguration());
+            .WithFallback(PostgreSqlPersistence.DefaultConfiguration());
         
         baseConfig.GetString("akka.persistence.snapshot-store.plugin").Should().Be("akka.persistence.snapshot-store.custom");
 
@@ -198,7 +191,7 @@ public class SqlServerOptionsSpec
         config.GetString("table-name").Should().Be(options.TableName);
         config.GetBoolean("auto-initialize").Should().Be(options.AutoInitialize);
         config.GetBoolean("sequential-access").Should().Be(options.SequentialAccess);
-        config.GetBoolean("use-constant-parameter-size").Should().Be(options.UseConstantParameterSize);
+        config.GetString("stored-as").Should().Be(options.StoredAs.ToHocon());
     }
 
     #endregion
@@ -212,10 +205,10 @@ public class SqlServerOptionsSpec
         AssertString(underTest, reference, "schema-name");
         AssertString(underTest, reference, "table-name");
         AssertBoolean(underTest, reference, "auto-initialize");
-        AssertString(underTest, reference, "timestamp-provider");
         AssertString(underTest, reference, "metadata-table-name");
         AssertBoolean(underTest, reference, "sequential-access");
-        AssertBoolean(underTest, reference, "use-constant-parameter-size");
+        AssertString(underTest, reference, "stored-as");
+        AssertBoolean(underTest, reference, "use-bigint-identity-for-ordering-column");
     }
 
     private static void AssertSnapshotConfig(Config underTest, Config reference)
@@ -230,7 +223,7 @@ public class SqlServerOptionsSpec
         AssertBoolean(underTest, reference, "sequential-access");
         AssertBoolean(underTest, reference, "use-constant-parameter-size");
     }
-    
+
     private static void AssertString(Config underTest, Config reference, string hoconPath)
     {
         underTest.GetString(hoconPath).Should().Be(reference.GetString(hoconPath));

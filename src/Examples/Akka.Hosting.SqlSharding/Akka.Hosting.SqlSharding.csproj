@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\..\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj" />
     <ProjectReference Include="..\..\Akka.Persistence.SqlServer.Hosting\Akka.Persistence.SqlServer.Hosting.csproj" />

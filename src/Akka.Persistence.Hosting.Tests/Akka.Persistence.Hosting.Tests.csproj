@@ -18,6 +18,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj" />
       <ProjectReference Include="..\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj" />
+      <ProjectReference Include="..\Akka.Persistence.PostgreSql.Hosting\Akka.Persistence.PostgreSql.Hosting.csproj" />
       <ProjectReference Include="..\Akka.Persistence.SqlServer.Hosting\Akka.Persistence.SqlServer.Hosting.csproj" />
     </ItemGroup>
 

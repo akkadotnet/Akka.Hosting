@@ -68,15 +68,6 @@ namespace Akka.Persistence.Hosting.Tests
             public override string PersistenceId { get; }
         }
         
-        public static async Task<IHost> StartHost(Action<IServiceCollection> testSetup)
-        {
-            var host = new HostBuilder()
-                .ConfigureServices(testSetup).Build();
-        
-            await host.StartAsync();
-            return host;
-        }
-        
         protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             builder

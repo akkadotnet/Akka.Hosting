@@ -1,8 +1,6 @@
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Cluster.Hosting;
 using Akka.Cluster.Sharding;
-using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Hosting.SqlSharding;
 using Akka.Hosting.SqlSharding.Actors;
