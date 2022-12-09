@@ -34,7 +34,7 @@ public class ClusterSingletonSpecs
         // arrange
         using var host = await TestHelper.CreateHost(
             builder => { builder.WithSingleton<ClusterSingletonSpecs.MySingletonActor>("my-singleton", MySingletonActor.MyProps); },
-            new ClusterOptions(){ Roles = new[] { "my-host"}}, Output);
+            new ClusterOptions(){ Roles = new[] { new Role("my-host") }}, Output);
 
         var registry = host.Services.GetRequiredService<ActorRegistry>();
         var singletonProxy = registry.Get<ClusterSingletonSpecs.MySingletonActor>();
@@ -58,14 +58,14 @@ public class ClusterSingletonSpecs
         var singletonOptions = new ClusterSingletonOptions() { Role = "my-host" };
         using var singletonHost = await TestHelper.CreateHost(
             builder => { builder.WithSingleton<ClusterSingletonSpecs.MySingletonActor>("my-singleton", MySingletonActor.MyProps, singletonOptions, createProxyToo:false); },
-            new ClusterOptions(){ Roles = new[] { "my-host"}}, Output);
+            new ClusterOptions(){ Roles = new[] { new Role("my-host") }}, Output);
 
         var singletonSystem = singletonHost.Services.GetRequiredService<ActorSystem>();
         var address = Cluster.Get(singletonSystem).SelfAddress;
         
         using var singletonProxyHost =  await TestHelper.CreateHost(
             builder => { builder.WithSingletonProxy<ClusterSingletonSpecs.MySingletonActor>("my-singleton", singletonOptions); },
-            new ClusterOptions(){ Roles = new[] { "proxy" }, SeedNodes = new Address[]{ address } }, Output);
+            new ClusterOptions(){ Roles = new[] { new Role("proxy") }, SeedNodes = new Address[]{ address } }, Output);
         
         var registry = singletonProxyHost.Services.GetRequiredService<ActorRegistry>();
         var singletonProxy = registry.Get<ClusterSingletonSpecs.MySingletonActor>();

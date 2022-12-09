@@ -42,7 +42,7 @@ builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider
             setup.AddLogger<SerilogLogger>();
         })
         .WithRemoting("localhost", 8110)
-        .WithClustering(new ClusterOptions(){ Roles = new[]{ "myRole" }, 
+        .WithClustering(new ClusterOptions(){ Roles = new[]{ new Role("myRole") }, 
             SeedNodes = new[]{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110")}})
         .WithActors((system, registry) =>
         {

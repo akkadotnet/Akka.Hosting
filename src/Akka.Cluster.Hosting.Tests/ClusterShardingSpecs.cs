@@ -95,7 +95,7 @@ public class ClusterShardingSpecs
                     var tLevel = registry.Get<MyTopLevelActor>();
                     return s => Props.Create(() => new MyEntityActor(s, tLevel));
                 }, new Extractor(), new ShardOptions() { Role = "my-host", StateStoreMode = StateStoreMode.DData });
-        }, new ClusterOptions() { Roles = new[] { "my-host" } }, Output);
+        }, new ClusterOptions() { Roles = new[] { new Role("my-host") } }, Output);
 
         var actorSystem = host.Services.GetRequiredService<ActorSystem>();
         var actorRegistry = ActorRegistry.For(actorSystem);
