@@ -11,7 +11,9 @@ using Akka.Cluster.Tools.Client;
 using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
+using Akka.Coordination;
 using Akka.Hosting;
+using Akka.Hosting.Coordination;
 
 namespace Akka.Cluster.Hosting
 {
@@ -36,6 +38,17 @@ namespace Akka.Cluster.Hosting
         public int? BufferSize { get; set; } = null;
         public string Role { get; set; }
         public object TerminationMessage { get; set; }
+        
+        /// <summary>
+        /// An class instance that extends <see cref="LeaseOptionBase"/>, used to configure the lease provider used in this
+        /// cluster singleton.
+        /// </summary>
+        public LeaseOptionBase? LeaseImplementation { get; set; }
+        
+        /// <summary>
+        /// The interval between retries for acquiring the lease
+        /// </summary>
+        public TimeSpan? LeaseRetryInterval { get; set; }
     }
 
     public sealed class ShardOptions
@@ -63,6 +76,17 @@ namespace Akka.Cluster.Hosting
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
         /// </summary>
         public string SnapshotPluginId { get; set; } = null;
+        
+        /// <summary>
+        /// An class instance that extends <see cref="LeaseOptionBase"/>, used to configure the lease provider used in this
+        /// sharding region.
+        /// </summary>
+        public LeaseOptionBase? LeaseImplementation { get; set; }
+        
+        /// <summary>
+        /// The interval between retries for acquiring the lease
+        /// </summary>
+        public TimeSpan? LeaseRetryInterval { get; set; }
     }
 
     public static class AkkaClusterHostingExtensions
@@ -175,6 +199,13 @@ namespace Akka.Cluster.Hosting
                     .WithRememberEntities(shardOptions.RememberEntities)
                     .WithStateStoreMode(shardOptions.StateStoreMode);
 
+                if (shardOptions.LeaseImplementation is { })
+                {
+                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
+                    settings = settings
+                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
+                }
+
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
                         .WithJournalPluginId(shardOptions.JournalPluginId)
@@ -220,6 +251,13 @@ namespace Akka.Cluster.Hosting
                     .WithRememberEntities(shardOptions.RememberEntities)
                     .WithStateStoreMode(shardOptions.StateStoreMode);
 
+                if (shardOptions.LeaseImplementation is { })
+                {
+                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
+                    settings = settings
+                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
+                }
+                
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
                         .WithJournalPluginId(shardOptions.JournalPluginId)
@@ -243,6 +281,13 @@ namespace Akka.Cluster.Hosting
                     .WithRememberEntities(shardOptions.RememberEntities)
                     .WithStateStoreMode(shardOptions.StateStoreMode);
 
+                if (shardOptions.LeaseImplementation is { })
+                {
+                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
+                    settings = settings
+                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
+                }
+                
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
                         .WithJournalPluginId(shardOptions.JournalPluginId)
@@ -269,6 +314,13 @@ namespace Akka.Cluster.Hosting
                     .WithRememberEntities(shardOptions.RememberEntities)
                     .WithStateStoreMode(shardOptions.StateStoreMode);
 
+                if (shardOptions.LeaseImplementation is { })
+                {
+                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
+                    settings = settings
+                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
+                }
+                
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
                         .WithJournalPluginId(shardOptions.JournalPluginId)
@@ -390,6 +442,13 @@ namespace Akka.Cluster.Hosting
                 var clusterSingletonManagerSettings =
                     ClusterSingletonManagerSettings.Create(system).WithSingletonName(singletonName);
 
+                if (options.LeaseImplementation is { })
+                {
+                    var retry = options.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
+                    clusterSingletonManagerSettings = clusterSingletonManagerSettings
+                        .WithLeaseSettings(new LeaseUsageSettings(options.LeaseImplementation.ConfigPath, retry));
+                }
+                
                 var singletonProxySettings =
                     ClusterSingletonProxySettings.Create(system).WithSingletonName(singletonName);
 
