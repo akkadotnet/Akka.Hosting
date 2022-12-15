@@ -79,7 +79,7 @@ public class SplitBrainResolverSpecs
     {
         var host = await StartHost(builder =>
         {
-            builder.WithClustering(sbrOptions: SplitBrainResolverOption.Default);
+            builder.WithClustering( new ClusterOptions{ SplitBrainResolver = SplitBrainResolverOption.Default });
         });
 
         var system = host.Services.GetRequiredService<ActorSystem>();
@@ -95,10 +95,13 @@ public class SplitBrainResolverSpecs
     {
         var host = await StartHost(builder =>
         {
-            builder.WithClustering(sbrOptions: new StaticQuorumOption
+            builder.WithClustering( new ClusterOptions
             {
-                QuorumSize = 1,
-                Role = "myRole"
+                SplitBrainResolver = new StaticQuorumOption
+                {
+                    QuorumSize = 1,
+                    Role = "myRole"
+                }
             });
         });
 
@@ -116,9 +119,12 @@ public class SplitBrainResolverSpecs
     {
         var host = await StartHost(builder =>
         {
-            builder.WithClustering(sbrOptions: new KeepMajorityOption
+            builder.WithClustering(new ClusterOptions
             {
-                Role = "myRole"
+                SplitBrainResolver = new KeepMajorityOption
+                {
+                    Role = "myRole"
+                }
             });
         });
 
@@ -135,10 +141,13 @@ public class SplitBrainResolverSpecs
     {
         var host = await StartHost(builder =>
         {
-            builder.WithClustering(sbrOptions: new KeepOldestOption
+            builder.WithClustering(new ClusterOptions
             {
-                DownIfAlone = false,
-                Role = "myRole"
+                SplitBrainResolver = new KeepOldestOption
+                {
+                    DownIfAlone = false,
+                    Role = "myRole"
+                }
             });
         });
 
@@ -157,11 +166,14 @@ public class SplitBrainResolverSpecs
         var host = await StartHost(builder =>
         {
             builder.AddHocon(TestLease.Configuration, HoconAddMode.Prepend);
-            builder.WithClustering(sbrOptions: new LeaseMajorityOption
+            builder.WithClustering(new ClusterOptions
             {
-                LeaseImplementation = new TestLeaseOption(),
-                LeaseName = "myService-akka-sbr",
-                Role = "myRole"
+                SplitBrainResolver = new LeaseMajorityOption
+                {
+                    LeaseImplementation = new TestLeaseOption(),
+                    LeaseName = "myService-akka-sbr",
+                    Role = "myRole"
+                }
             });
         });
 
