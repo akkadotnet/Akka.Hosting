@@ -38,8 +38,8 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
             .WithRemoting("localhost", 8110)
             .WithClustering(new ClusterOptions()
             {
-                Roles = new[] { new Role("myRole") },
-                SeedNodes = new[] { Address.Parse("akka.tcp://MyActorSystem@localhost:8110") }
+                Roles = new[] { "myRole" },
+                SeedNodes = new[] { "akka.tcp://MyActorSystem@localhost:8110" }
             })
             .WithSqlServerPersistence(localConn) // Standard way to create a default persistence journal and snapshot
             .WithSqlServerPersistence(shardingJournalOptions, shardingSnapshotOptions) // This is a custom persistence setup using the options instances we've set up earlier

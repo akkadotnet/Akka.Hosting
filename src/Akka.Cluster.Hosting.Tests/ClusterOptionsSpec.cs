@@ -5,12 +5,17 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Akka.Actor;
 using Akka.Cluster.Hosting.SBR;
 using Akka.Cluster.SBR;
 using Akka.Configuration;
 using Akka.Hosting;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -46,10 +51,14 @@ public class ClusterOptionsSpec
             .AddHocon(ConfigurationFactory.FromResource("Akka.Cluster.Configuration.Cluster.conf", typeof(Cluster).Assembly), HoconAddMode.Append)
             .BuildClusterHocon(new ClusterOptions
             {
-                Roles = new []{ new Role("front-end"), new Role("back-end", 5)},
+                Roles = new []{ "front-end", "back-end"},
+                MinimumNumberOfMembersPerRole = new Dictionary<string, int>
+                {
+                    ["back-end"] = 5
+                },
                 AppVersion = "1.0.0",
                 MinimumNumberOfMembers = 99,
-                SeedNodes = new [] { Address.Parse("akka.tcp://system@somewhere.com:9999") },
+                SeedNodes = new [] { "akka.tcp://system@somewhere.com:9999" },
                 LogInfo = false,
                 LogInfoVerbose = true,
                 SplitBrainResolver = new KeepMajorityOption
@@ -78,5 +87,66 @@ public class ClusterOptionsSpec
         sbrConfig.GetString("active-strategy").Should().Be(SplitBrainResolverSettings.KeepMajorityName);
         sbrConfig.GetString($"{SplitBrainResolverSettings.KeepMajorityName}.role").Should().Be("back-end");
     }
-    
+
+    [Fact(DisplayName = "ClusterOptions should be bindable using Microsoft.Extensions.Configuration")]
+    public void ClusterOptionsConfigurationTest()
+    {
+        const string json = @"
+{
+  ""Logging"": {
+    ""LogLevel"": {
+      ""Default"": ""Information"",
+      ""Microsoft.AspNetCore"": ""Warning""
+    }
+  },
+  ""ConnectionStrings"": {
+    ""sqlServerLocal"": ""Server=localhost,1533;Database=Akka;User Id=sa;Password=l0lTh1sIsOpenSource;"",
+  },
+  ""Akka"": {
+    ""ClusterOptions"": {
+      ""Roles"": [ ""front-end"", ""back-end"" ],
+      ""MinimumNumberOfMembersPerRole"" : {
+        ""back-end"" : 5
+      },
+      ""AppVersion"": ""1.0.0"",
+      ""MinimumNumberOfMembers"": 99,
+      ""SeedNodes"": [ ""akka.tcp://system@somewhere.com:9999"" ],
+      ""LogInfo"": false,
+      ""LogInfoVerbose"": true
+    },
+    ""KeepMajorityOption"": {
+      ""Role"" : ""back-end""
+    }
+  }
+}";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        var jsonConfig = new ConfigurationBuilder().AddJsonStream(stream).Build();
+        
+        var clusterOptions = jsonConfig.GetSection("Akka:ClusterOptions").Get<ClusterOptions>();
+        clusterOptions.SplitBrainResolver = jsonConfig.GetSection("Akka:KeepMajorityOption").Get<KeepMajorityOption>();
+        
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "")
+            .AddHocon(ConfigurationFactory.FromResource("Akka.Cluster.Configuration.Cluster.conf", typeof(Cluster).Assembly), HoconAddMode.Append)
+            .BuildClusterHocon(clusterOptions);
+        
+        builder.Configuration.HasValue.Should().BeTrue();
+        var settings = new ClusterSettings(builder.Configuration.Value, "");
+
+        settings.Roles.Should().BeEquivalentTo("front-end", "back-end");
+        
+        settings.MinNrOfMembersOfRole.Count.Should().Be(1);
+        settings.MinNrOfMembersOfRole.ContainsKey("back-end").Should().BeTrue();
+        settings.MinNrOfMembersOfRole["back-end"].Should().Be(5);
+        
+        settings.AppVersion.CompareTo(Util.AppVersion.Create("1.0.0")).Should().Be(0);
+        settings.SeedNodes.Should().BeEquivalentTo(new [] { Address.Parse("akka.tcp://system@somewhere.com:9999" )});
+        settings.MinNrOfMembers.Should().Be(99);
+        settings.LogInfo.Should().BeTrue(); // This is not intuitive, but LogInfo is defined as LogInfoVerbose || LogInfo in ClusterSettings
+        settings.LogInfoVerbose.Should().BeTrue();
+        settings.DowningProviderType.Should().Be(typeof(SplitBrainResolverProvider));
+
+        var sbrConfig = builder.Configuration.Value.GetConfig("akka.cluster.split-brain-resolver");
+        sbrConfig.GetString("active-strategy").Should().Be(SplitBrainResolverSettings.KeepMajorityName);
+        sbrConfig.GetString($"{SplitBrainResolverSettings.KeepMajorityName}.role").Should().Be("back-end");
+    }
 }

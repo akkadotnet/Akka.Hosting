@@ -16,45 +16,26 @@ using Akka.Hosting;
 #nullable enable
 namespace Akka.Cluster.Hosting
 {
-    public sealed class Role
-    {
-        public Role(string name, int? minimumNumberOfMembers = null)
-        {
-            Name = name;
-            MinimumNumberOfMembers = minimumNumberOfMembers;
-        }
-
-        /// <summary>
-        ///     The role name
-        /// </summary>
-        public string Name { get; }
-        
-        /// <summary>
-        ///     <para>
-        ///         Minimum required number of members before the leader changes member status
-        ///         of 'Joining' members to 'Up'. Typically used together with
-        ///         <see cref="Cluster.RegisterOnMemberUp"/> to defer some action, such as starting actors,
-        ///         until the cluster has reached a certain size.
-        ///     </para>
-        ///     <b>Default:</b> 1
-        /// </summary>
-        public int? MinimumNumberOfMembers { get; set; }
-    }
-    
     /// <summary>
     ///     The set of options for enabling Akka.Cluster support.
     /// </summary>
     public sealed class ClusterOptions
     {
         /// <summary>
-        ///     The akka.cluster.roles and akka.cluster.role values.
+        ///     The akka.cluster.roles values.
         /// </summary>
-        public Role[]? Roles { get; set; }
+        public string[]? Roles { get; set; }
+
+        /// <summary>
+        ///     Optional cluster role check to consider if a specific cluster role have enough
+        ///     members to be considered to be up. The default value is 1 node per role. 
+        /// </summary>
+        public Dictionary<string, int>? MinimumNumberOfMembersPerRole { get; set; }
 
         /// <summary>
         ///     If populated, the akka.cluster.seed-nodes that will be used.
         /// </summary>
-        public Address[]? SeedNodes { get; set; }
+        public string[]? SeedNodes { get; set; }
         
         /// <summary>
         ///     <para>
@@ -211,20 +192,30 @@ namespace Akka.Cluster.Hosting
 
             if (options.Roles is { Length: > 0 })
             {
-                sb.AppendLine($"roles = [{string.Join(",", options.Roles.Select(r => r.Name))}]")
-                    .AppendLine("role {");
+                sb.AppendLine($"roles = [{string.Join(",", options.Roles)}]");
+            }
 
-                var roleWithNumbers = options.Roles.Where(r => r.MinimumNumberOfMembers.HasValue);
-                foreach (var role in roleWithNumbers)
+            if (options.MinimumNumberOfMembersPerRole is { Count: > 0 })
+            {
+                sb.AppendLine("role {");
+                foreach (var kvp in options.MinimumNumberOfMembersPerRole)
                 {
-                    sb.AppendLine($"{role.Name}.min-nr-of-members = {role.MinimumNumberOfMembers}");
+                    sb.AppendLine($"{kvp.Key}.min-nr-of-members = {kvp.Value}");
                 }
-
                 sb.AppendLine("}");
             }
 
             if (options.SeedNodes is { Length: > 0 })
-                sb.AppendLine($"seed-nodes = [{string.Join(",", options.SeedNodes.Select(c => $"\"{c}\""))}]");
+            {
+                // Validate that all addresses are valid.
+                sb.Append("seed-nodes = [");
+                foreach (var addrString in options.SeedNodes)
+                {
+                    Address.Parse(addrString);
+                    sb.Append($"{addrString.ToHocon()}, ");
+                }
+                sb.AppendLine("]");
+            }
 
             if (options.MinimumNumberOfMembers is { })
                 sb.AppendLine($"min-nr-of-members = {options.MinimumNumberOfMembers}");

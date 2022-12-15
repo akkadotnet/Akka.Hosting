@@ -16,8 +16,8 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
         .WithRemoting("localhost", 8110)
         .WithClustering(new ClusterOptions()
         {
-            Roles = new[] { new Role("myRole") },
-            SeedNodes = new[] { Address.Parse("akka.tcp://MyActorSystem@localhost:8110") }
+            Roles = new[] { "myRole" },
+            SeedNodes = new[] { "akka.tcp://MyActorSystem@localhost:8110" }
         })
         .WithSqlServerPersistence(builder.Configuration.GetConnectionString("sqlServerLocal"))
         .WithShardRegion<UserActionsEntity>("userActions", s => UserActionsEntity.Props(s),

@@ -33,7 +33,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
     {
         _helper = helper;
         _specBuilder = _ => { };
-        _clusterOptions = new ClusterOptions { Roles = new[] { new Role("my-host") } };
+        _clusterOptions = new ClusterOptions { Roles = new[] { "my-host" } };
     }
     
     // Issue #55 https://github.com/akkadotnet/Akka.Hosting/issues/55
