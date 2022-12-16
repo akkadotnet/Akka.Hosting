@@ -9,6 +9,7 @@ using System.Text;
 using Akka.Actor.Setup;
 using Akka.Cluster.SBR;
 using Akka.Hosting;
+using Akka.Hosting.Coordination;
 
 namespace Akka.Cluster.Hosting.SBR
 {
@@ -154,13 +155,6 @@ namespace Akka.Cluster.Hosting.SBR
         }
     }
 
-    public abstract class LeaseOptionBase : IHoconOption
-    {
-        public abstract string ConfigPath { get; }
-        public abstract Type Class { get; }
-        public abstract void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
-    }
-    
     /// <summary>
     /// Keep the part that can acquire the lease, and down the other part.
     /// Best effort is to keep the side that has most nodes, i.e. the majority side.

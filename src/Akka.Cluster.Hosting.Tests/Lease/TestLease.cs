@@ -15,6 +15,7 @@ using Akka.Configuration;
 using Akka.Coordination;
 using Akka.Event;
 using Akka.Hosting;
+using Akka.Hosting.Coordination;
 using Akka.Util;
 
 namespace Akka.Cluster.Hosting.Tests.Lease

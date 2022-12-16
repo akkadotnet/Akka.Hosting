@@ -1,8 +1,6 @@
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Cluster.Hosting;
 using Akka.Cluster.Sharding;
-using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Hosting.SqlSharding;
 using Akka.Hosting.SqlSharding.Actors;
@@ -19,7 +17,7 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
         .WithClustering(new ClusterOptions()
         {
             Roles = new[] { "myRole" },
-            SeedNodes = new[] { Address.Parse("akka.tcp://MyActorSystem@localhost:8110") }
+            SeedNodes = new[] { "akka.tcp://MyActorSystem@localhost:8110" }
         })
         .WithSqlServerPersistence(builder.Configuration.GetConnectionString("sqlServerLocal"))
         .WithShardRegion<UserActionsEntity>("userActions", s => UserActionsEntity.Props(s),

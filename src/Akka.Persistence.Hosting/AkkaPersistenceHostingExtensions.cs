@@ -5,7 +5,9 @@ using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Journal;
 using Akka.Util;
+using Akka.Actor;
 
+#nullable enable
 namespace Akka.Persistence.Hosting
 {
     public enum PersistenceMode
@@ -87,23 +89,35 @@ namespace Akka.Persistence.Hosting
                 return;
 
             var adapters = new StringBuilder()
-                .Append($"akka.persistence.journal.{JournalId}").Append("{")
-                .AppendLine("event-adapters {");
-            foreach (var kv in Adapters)
-            {
-                adapters.AppendLine($"{kv.Key} = \"{kv.Value.TypeQualifiedName()}\"");
-            }
+                .Append($"akka.persistence.journal.{JournalId}").Append("{");
 
-            adapters.AppendLine("}").AppendLine("event-adapter-bindings {");
-            foreach (var kv in Bindings)
-            {
-                adapters.AppendLine($"\"{kv.Key.TypeQualifiedName()}\" = [{string.Join(",", kv.Value)}]");
-            }
+            AppendAdapters(adapters);
 
-            adapters.AppendLine("}").AppendLine("}");
+            adapters.AppendLine("}");
 
             var finalHocon = ConfigurationFactory.ParseString(adapters.ToString());
             Builder.AddHocon(finalHocon, HoconAddMode.Prepend);
+        }
+
+        internal void AppendAdapters(StringBuilder sb)
+        {
+            // useless configuration - don't bother.
+            if (Adapters.Count == 0 || Bindings.Count == 0)
+                return;
+            
+            sb.AppendLine("event-adapters {");
+            foreach (var kv in Adapters)
+            {
+                sb.AppendLine($"{kv.Key} = \"{kv.Value.TypeQualifiedName()}\"");
+            }
+
+            sb.AppendLine("}").AppendLine("event-adapter-bindings {");
+            foreach (var kv in Bindings)
+            {
+                sb.AppendLine($"\"{kv.Key.TypeQualifiedName()}\" = [{string.Join(",", kv.Value)}]");
+            }
+
+            sb.AppendLine("}");
         }
     }
 
@@ -113,17 +127,84 @@ namespace Akka.Persistence.Hosting
     public static class AkkaPersistenceHostingExtensions
     {
         /// <summary>
+        /// A generic way to add both journal and snapshot store configuration to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalOptions">The specific journal options instance used to configure the journal. For example, an instance of <c>SqlServerJournalOptions</c></param>
+        /// <param name="snapshotOptions">The specific snapshot store options instance used to configure the snapshot store. For example, an instance of <c>SqlServerSnapshotOptions</c></param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static AkkaConfigurationBuilder WithJournalAndSnapshot(
+            this AkkaConfigurationBuilder builder,
+            JournalOptions journalOptions, 
+            SnapshotOptions snapshotOptions)
+        {
+            if (journalOptions is null)
+                throw new ArgumentNullException(nameof(journalOptions));
+            if (snapshotOptions is null)
+                throw new ArgumentNullException(nameof(snapshotOptions));
+            
+            builder.AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend);
+            var defaultConfig = journalOptions.DefaultConfig;
+
+            builder.AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend);
+            defaultConfig = defaultConfig.Equals(snapshotOptions.DefaultConfig)
+                    ? defaultConfig 
+                    : defaultConfig.WithFallback(snapshotOptions.DefaultConfig);
+
+            return builder.AddHocon(defaultConfig, HoconAddMode.Append);
+        }
+        
+        /// <summary>
+        /// A generic way to add journal configuration to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalOptions">The specific journal options instance used to configure the journal. For example, an instance of <c>SqlServerJournalOptions</c></param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static AkkaConfigurationBuilder WithJournal(
+            this AkkaConfigurationBuilder builder,
+            JournalOptions journalOptions)
+        {
+            if (journalOptions is null)
+                throw new ArgumentNullException(nameof(journalOptions));
+            
+            builder.AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend);
+            return builder.AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append);
+        }
+        
+        /// <summary>
+        /// A generic way to add snapshot store configuration to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="snapshotOptions">The specific snapshot store options instance used to configure the snapshot store. For example, an instance of <c>SqlServerSnapshotOptions</c></param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static AkkaConfigurationBuilder WithSnapshot(
+            this AkkaConfigurationBuilder builder,
+            SnapshotOptions snapshotOptions)
+        {
+            if (snapshotOptions is null)
+                throw new ArgumentNullException(nameof(snapshotOptions));
+            
+            builder.AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend);
+            return builder.AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append);
+        }
+        
+        /// <summary>
         /// Used to configure a specific Akka.Persistence.Journal instance, primarily to support <see cref="IEventAdapter"/>s.
         /// </summary>
         /// <param name="builder">The builder instance being configured.</param>
-        /// <param name="journalId">The id of the journal. i.e. if you want to apply this adapter to the `akka.persistence.journal.sql` journal, just type `sql`.</param>
+        /// <param name="journalId">The id of the journal. i.e. if you want to apply this adapter to the `akka.persistence.journal.sql-server` journal, just type `sql-server`.</param>
         /// <param name="journalBuilder">Configuration method for configuring the journal.</param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         /// <remarks>
         /// This method can be called multiple times for different <see cref="IEventAdapter"/>s.
         /// </remarks>
-        public static AkkaConfigurationBuilder WithJournal(this AkkaConfigurationBuilder builder,
-            string journalId, Action<AkkaPersistenceJournalBuilder> journalBuilder)
+        public static AkkaConfigurationBuilder WithJournal(
+            this AkkaConfigurationBuilder builder,
+            string journalId, 
+            Action<AkkaPersistenceJournalBuilder> journalBuilder)
         {
             var jBuilder = new AkkaPersistenceJournalBuilder(journalId, builder);
             journalBuilder(jBuilder);
@@ -135,41 +216,40 @@ namespace Akka.Persistence.Hosting
         
         public static AkkaConfigurationBuilder WithInMemoryJournal(this AkkaConfigurationBuilder builder)
         {
-            return WithInMemoryJournal(builder, journalBuilder => { });
+            return WithInMemoryJournal(builder, _ => { });
         }
 
-        public static AkkaConfigurationBuilder WithInMemoryJournal(this AkkaConfigurationBuilder builder,
-            Action<AkkaPersistenceJournalBuilder> journalBuilder)
+        public static AkkaConfigurationBuilder WithInMemoryJournal(
+            this AkkaConfigurationBuilder builder,
+            Action<AkkaPersistenceJournalBuilder> journalBuilder,
+            string journalId = "inmem",
+            bool isDefaultPlugin = true)
         {
-            builder.WithJournal("inmem", journalBuilder);
+            builder.WithJournal(journalId, journalBuilder);
 
-            const string liveConfig = @"akka.persistence.journal.plugin = akka.persistence.journal.inmem
-                akka.persistence.journal.inmem {
-                # Class name of the plugin.
-                class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
-                # Dispatcher for the plugin actor.
-                plugin-dispatcher = ""akka.actor.default-dispatcher""
-            }";
+            var liveConfig = 
+@$"{(isDefaultPlugin ? $"akka.persistence.journal.plugin = akka.persistence.journal.{journalId}" : "")} 
+akka.persistence.journal.{journalId} {{
+    class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
+    plugin-dispatcher = ""akka.actor.default-dispatcher""
+}}";
 
-            builder.AddHocon(liveConfig, HoconAddMode.Prepend);
-            
-            return builder;
+            return builder.AddHocon(liveConfig, HoconAddMode.Prepend);
         }
 
-        public static AkkaConfigurationBuilder WithInMemorySnapshotStore(this AkkaConfigurationBuilder builder)
+        public static AkkaConfigurationBuilder WithInMemorySnapshotStore(
+            this AkkaConfigurationBuilder builder,
+            string snapshotStoreId = "inmem",
+            bool isDefaultPlugin = true)
         {
-            const string liveConfig = @"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.inmem
-            # In-memory snapshot store plugin.
-            akka.persistence.snapshot-store.inmem {
-            # Class name of the plugin.
-            class = ""Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence""
-            # Dispatcher for the plugin actor.
-            plugin-dispatcher = ""akka.actor.default-dispatcher""
-        }";
+            var liveConfig = 
+$@"{(isDefaultPlugin ? $"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{snapshotStoreId}" : "")}
+akka.persistence.snapshot-store.{snapshotStoreId} {{
+    class = ""Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence""
+    plugin-dispatcher = ""akka.actor.default-dispatcher""
+}}";
 
-            builder.AddHocon(liveConfig, HoconAddMode.Prepend);
-            
-            return builder;
+            return builder.AddHocon(liveConfig, HoconAddMode.Prepend);
         }
     }
 }

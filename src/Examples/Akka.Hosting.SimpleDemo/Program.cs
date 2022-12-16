@@ -44,7 +44,7 @@ public class Program
         {
             configurationBuilder
                 .WithRemoting(hostname: "localhost", port: 8110)
-                .WithClustering(new ClusterOptions{SeedNodes = new []{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110"), }})
+                .WithClustering(new ClusterOptions{SeedNodes = new []{ "akka.tcp://MyActorSystem@localhost:8110", }})
                 .WithShardRegion<Echo>(
                     typeName: "myRegion",
                     entityPropsFactory: PropsFactory, 

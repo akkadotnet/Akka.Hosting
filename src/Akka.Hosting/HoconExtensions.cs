@@ -21,7 +21,7 @@ namespace Akka.Hosting
             if (text is null)
                 throw new ConfigurationException("Value can not be null");
             
-            return EscapeRegex.IsMatch(text) ? $"\"{text}\"" : text;
+            return EscapeRegex.IsMatch(text) || text == string.Empty ? $"\"{text}\"" : text;
         }
 
         public static string ToHocon(this bool? value)
