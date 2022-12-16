@@ -29,9 +29,8 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
             hs.Count.Should().Be(1);
         }
 
-        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
-            return Task.CompletedTask;
         }
 
         /// <summary>

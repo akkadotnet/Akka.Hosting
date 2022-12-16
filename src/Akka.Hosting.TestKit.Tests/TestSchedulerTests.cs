@@ -20,9 +20,9 @@ public class TestSchedulerTests : TestKit
 {
     private IActorRef _testReceiveActor;
 
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
+       
     }
 
     protected override async Task BeforeTestStart()

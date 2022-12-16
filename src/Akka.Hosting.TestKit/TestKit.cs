@@ -101,7 +101,7 @@ namespace Akka.Hosting.TestKit
                     });
                 }
 
-                await ConfigureAkka(builder, provider);
+                ConfigureAkka(builder, provider);
 
                 builder.AddStartup((system, registry) =>
                 {
@@ -116,7 +116,7 @@ namespace Akka.Hosting.TestKit
         protected virtual void ConfigureLogging(ILoggingBuilder builder)
         { }
 
-        protected abstract Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider);
+        protected abstract void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider);
         
         [InternalApi]
         public async Task InitializeAsync()

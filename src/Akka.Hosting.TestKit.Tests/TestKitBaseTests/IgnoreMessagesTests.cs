@@ -25,9 +25,8 @@ public class IgnoreMessagesTests : TestKit
         public string IgnoreMe { get; }
     }
 
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
     }
 
     [Fact]

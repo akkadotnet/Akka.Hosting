@@ -17,9 +17,9 @@ namespace Akka.Hosting.TestKit.Tests;
 
 public class NoImplicitSenderSpec : TestKit, INoImplicitSender
 {
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
+        
     }
 
     [Fact]
@@ -35,9 +35,9 @@ public class NoImplicitSenderSpec : TestKit, INoImplicitSender
 
 public class ImplicitSenderSpec : TestKit
 {
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
+        
     }
 
     [Fact]
