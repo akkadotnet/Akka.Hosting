@@ -18,9 +18,8 @@ namespace Akka.Hosting.TestKit.Tests.TestKitBaseTests;
 
 public class ReceiveTests : TestKit
 {
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
     }
 
     [Fact]

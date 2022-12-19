@@ -26,14 +26,13 @@ namespace Akka.Hosting.TestKit.Tests
         {
         }
 
-        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             builder.WithActors((system, registry) =>
             {
                 var echo = system.ActorOf(Props.Create(() => new SimpleEchoActor()));
                 registry.Register<Echo>(echo);
             });
-            return Task.CompletedTask;
         }
 
         [Fact]

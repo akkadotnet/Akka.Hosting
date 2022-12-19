@@ -79,7 +79,7 @@ public class EventAdapterSpecs: Akka.Hosting.TestKit.TestKit
         }
     }
     
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
         builder.WithJournal("sql-server", journalBuilder =>
         {
@@ -89,8 +89,6 @@ public class EventAdapterSpecs: Akka.Hosting.TestKit.TestKit
             journalBuilder.AddWriteEventAdapter<Tagger>("tagger",
                 boundTypes: new Type[] { typeof(Event1), typeof(Event2) });
         });
-        
-        return Task.CompletedTask;
     }
     
     [Fact]
