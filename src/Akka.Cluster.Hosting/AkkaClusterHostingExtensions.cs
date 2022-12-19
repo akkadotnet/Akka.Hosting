@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using Akka.Actor;
 using Akka.Cluster.Hosting.SBR;
 using Akka.Cluster.Sharding;
@@ -14,6 +13,7 @@ using Akka.Configuration;
 using Akka.Coordination;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
+using Akka.Persistence.Hosting;
 
 #nullable enable
 namespace Akka.Cluster.Hosting
@@ -174,21 +174,51 @@ namespace Akka.Cluster.Hosting
 
         /// <summary>
         ///     <para>
-        ///         The journal plugin configuration identifier used by persistence mode, eg. "sql-server" or "postgresql"
+        ///         The journal plugin configuration identifier used by persistence mode, eg. "sql-server" or
+        ///         "postgresql".<br/>
+        ///         You only need to declare <see cref="JournalPluginId"/> or <see cref="JournalOptions"/>,
+        ///         <see cref="JournalOptions"/> Identifier will be used if both are declared.
         ///     </para>
         ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
         /// </summary>
         public string? JournalPluginId { get; set; }
+        
+        /// <summary>
+        ///     <para>
+        ///         The journal plugin options used by persistence mode, eg. <c>SqlServerJournalOptions</c>
+        ///         or <c>PostgreSqlJournalOptions</c>.<br/>
+        ///         You only need to declare <see cref="JournalPluginId"/> or <see cref="JournalOptions"/>,
+        ///         <see cref="JournalOptions"/> Identifier will be used if both are declared.
+        ///     </para>
+        ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
+        ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
+        /// </summary>
+        public JournalOptions? JournalOptions { get; set; }
 
         /// <summary>
         ///     <para>
-        ///         The snapshot store plugin configuration identifier used by persistence mode, eg. "sql-server" or "postgresql"
+        ///         The snapshot store plugin configuration identifier used by persistence mode, eg. "sql-server" or
+        ///         "postgresql".<br/>
+        ///         You only need to declare <see cref="SnapshotPluginId"/> or <see cref="SnapshotOptions"/>,
+        ///         <see cref="SnapshotOptions"/> Identifier will be used if both are declared.
         ///     </para>
         ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
         /// </summary>
         public string? SnapshotPluginId { get; set; }
+        
+        /// <summary>
+        ///     <para>
+        ///         The snapshot store plugin options used by persistence mode, eg. <c>SqlServerSnapshotOptions</c>
+        ///         or <c>PostgreSqlSnapshotOptions</c>.<br/>
+        ///         You only need to declare <see cref="SnapshotPluginId"/> or <see cref="SnapshotOptions"/>,
+        ///         <see cref="SnapshotOptions"/> Identifier will be used if both are declared.
+        ///     </para>
+        ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
+        ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
+        /// </summary>
+        public SnapshotOptions? SnapshotOptions { get; set; }
         
         /// <summary>
         /// An class instance that extends <see cref="LeaseOptionBase"/>, used to configure the lease provider used in this
@@ -347,8 +377,8 @@ namespace Akka.Cluster.Hosting
 
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
-                        .WithJournalPluginId(shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
                 
                 var shardRegion = await ClusterSharding.Get(system)
                     .StartAsync(typeName, entityPropsFactory, settings, messageExtractor);
@@ -412,8 +442,8 @@ namespace Akka.Cluster.Hosting
                 
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
-                        .WithJournalPluginId(shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
                 
                 var shardRegion = await ClusterSharding.Get(system)
                     .StartAsync(typeName, entityPropsFactory, settings, extractEntityId, extractShardId);
@@ -445,8 +475,8 @@ namespace Akka.Cluster.Hosting
                 
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
-                        .WithJournalPluginId(shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
                 
                 var entityPropsFactory = compositePropsFactory(system, registry);
                 
@@ -481,8 +511,8 @@ namespace Akka.Cluster.Hosting
                 
                 if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                     settings = settings
-                        .WithJournalPluginId(shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotPluginId);
+                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
+                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
                 
                 var entityPropsFactory = compositePropsFactory(system, registry);
                 
@@ -791,10 +821,10 @@ namespace Akka.Cluster.Hosting
             const string root = "akka.cluster.client.receptionist.";
             
             var sb = new StringBuilder()
-                .Append(root).Append("name:").AppendLine(QuoteIfNeeded(name));
+                .Append(root).Append("name:").AppendLine(name.ToHocon());
             
             if(!string.IsNullOrEmpty(role))
-                sb.Append(root).Append("role:").AppendLine(QuoteIfNeeded(role));
+                sb.Append(root).Append("role:").AppendLine(role.ToHocon());
 
             return ConfigurationFactory.ParseString(sb.ToString());
         }
@@ -905,18 +935,5 @@ namespace Akka.Cluster.Hosting
             return ClusterClientSettings.Create(clientConfig)
                 .WithInitialContacts(initialContacts.ToImmutableHashSet());
         }
-        
-        #region Helper functions
-
-        private static readonly Regex EscapeRegex = new Regex("[ \t:]{1}", RegexOptions.Compiled);
-        
-        private static string QuoteIfNeeded(string? text)
-        {
-            return text == null 
-                ? "" : EscapeRegex.IsMatch(text) 
-                    ? $"\"{text}\"" : text;
-        }
-
-        #endregion
     }
 }
