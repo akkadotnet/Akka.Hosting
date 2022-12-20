@@ -5,7 +5,10 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Akka.Annotations;
 using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Journal;
@@ -19,12 +22,12 @@ namespace Akka.Persistence.Hosting
     /// </summary>
     public abstract class JournalOptions
     {
-        private readonly bool _isDefault;
-        
         protected JournalOptions(bool isDefault)
         {
-            _isDefault = isDefault;
+            IsDefaultPlugin = isDefault;
         }
+        
+        public bool IsDefaultPlugin { get; set; }
         
         /// <summary>
         /// <b>NOTE</b> If you're implementing an option class for new Akka.Hosting persistence, you need to override
@@ -72,7 +75,65 @@ namespace Akka.Persistence.Hosting
         /// The journal adapter builder, use this builder to add custom journal
         /// <see cref="IEventAdapter"/>, <see cref="IWriteEventAdapter"/>, or <see cref="IReadEventAdapter"/>
         /// </summary>
-        public AkkaPersistenceJournalBuilder Adapters { get; set; } = new ("", null!);
+        public AkkaPersistenceJournalBuilder AdapterBuilder { get; set; } = new ("", null!);
+
+        private List<AdapterOptions>? _adapters;
+        /// <summary>
+        /// Advanced optional property, used to configure adapters using <c>IConfiguration</c> binding.
+        /// </summary>
+        public AdapterOptions[]? Adapters
+        {
+            get => _adapters?.ToArray();
+            set
+            {
+                if (value is null) 
+                    throw new Exception("Adapters assignment is compositional, multiple set is additive, it can not be set to null.");
+                
+                var writeType = typeof(IWriteEventAdapter);
+                var readType = typeof(IReadEventAdapter);
+                foreach (var adapter in value)
+                {
+                    // Adapter type validation
+                    var type = Type.GetType(adapter.Type);
+                    if (type is null)
+                        throw new Exception($"Could not find adapter with Type {adapter.Type}");
+                    
+                    if (!(readType.IsAssignableFrom(type) || writeType.IsAssignableFrom(type)))
+                        throw new Exception($"Type {adapter.Type} should implement {nameof(IWriteEventAdapter)}, {nameof(IReadEventAdapter)}, or {nameof(IEventAdapter)}");
+                    
+                    // Adapter name validation
+                    if (string.IsNullOrEmpty(adapter.Name))
+                        throw new Exception("Adapter must have a name");
+                    
+                    var illegalChars = adapter.Name.IsIllegalHoconKey();
+                    if (illegalChars.Length > 0)
+                        throw new Exception($"Invalid adapter name {adapter.Name}, contains illegal character(s) {string.Join(", ", illegalChars)}");
+                    
+                    // Store valid adapter
+                    AdapterBuilder.Adapters[adapter.Name] = type;
+                    
+                    foreach (var typeName in adapter.TypeBindings)
+                    {
+                        // Type binding validation
+                        var bindType = Type.GetType(typeName);
+                        if (bindType is null)
+                            throw new Exception($"Could not find Type {typeName} to bind to adapter {adapter.Name}");
+
+                        // Assign bindings
+                        if (!AdapterBuilder.Bindings.ContainsKey(bindType))
+                            AdapterBuilder.Bindings[bindType] = new HashSet<string>();
+                        AdapterBuilder.Bindings[bindType].Add(adapter.Name);
+                    }
+                }
+
+                if (_adapters is null)
+                    _adapters = value.ToList();
+                else
+                {
+                    _adapters.AddRange(value);
+                }
+            } 
+        }
 
         public string PluginId => $"akka.persistence.journal.{Identifier}";
         
@@ -99,10 +160,10 @@ namespace Akka.Persistence.Hosting
             sb.Insert(0, $"{PluginId} {{{Environment.NewLine}");
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
             sb.AppendLine($"serializer = {Serializer.ToHocon()}");
-            Adapters.AppendAdapters(sb);
+            AdapterBuilder.AppendAdapters(sb);
             sb.AppendLine("}");
             
-            if (_isDefault)
+            if (IsDefaultPlugin)
                 sb.AppendLine($"akka.persistence.journal.plugin = {PluginId}");
 
             return sb;

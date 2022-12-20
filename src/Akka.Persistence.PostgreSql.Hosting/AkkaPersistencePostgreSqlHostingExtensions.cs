@@ -107,7 +107,7 @@ namespace Akka.Persistence.PostgreSql.Hosting
 
             var adapters = new AkkaPersistenceJournalBuilder(journalOpt.Identifier, builder);
             journalBuilder?.Invoke(adapters);
-            journalOpt.Adapters = adapters;
+            journalOpt.AdapterBuilder = adapters;
 
             var snapshotOpt = new PostgreSqlSnapshotOptions(isDefaultPlugin, pluginIdentifier)
             {

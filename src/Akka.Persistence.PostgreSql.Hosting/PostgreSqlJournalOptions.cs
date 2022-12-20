@@ -19,6 +19,13 @@ namespace Akka.Persistence.PostgreSql.Hosting
     {
         private static readonly Config Default = PostgreSqlPersistence.DefaultConfiguration()
             .GetConfig(PostgreSqlJournalSettings.JournalConfigPath);
+
+        /// <summary>
+        /// Create a new instance of <see cref="PostgreSqlJournalOptions"/>
+        /// </summary>
+        public PostgreSqlJournalOptions() : this(true)
+        {
+        }
         
         /// <summary>
         /// Create a new instance of <see cref="PostgreSqlJournalOptions"/>

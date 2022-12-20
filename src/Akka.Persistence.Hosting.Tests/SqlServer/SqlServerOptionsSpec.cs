@@ -5,6 +5,8 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.IO;
+using System.Text;
 using Akka.Configuration;
 using Akka.Persistence.Query.Sql;
 using Akka.Persistence.SqlServer;
@@ -12,6 +14,7 @@ using Akka.Persistence.SqlServer.Hosting;
 using Akka.Util;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Akka.Persistence.Hosting.Tests.SqlServer;
@@ -86,10 +89,10 @@ public class SqlServerOptionsSpec
             TableName = "testTable",
             UseConstantParameterSize = true
         };
-        options.Adapters.AddWriteEventAdapter<EventAdapterSpecs.EventMapper1>("mapper1", new [] { typeof(EventAdapterSpecs.Event1) });
-        options.Adapters.AddReadEventAdapter<EventAdapterSpecs.ReadAdapter>("reader1", new [] { typeof(EventAdapterSpecs.Event1) });
-        options.Adapters.AddEventAdapter<EventAdapterSpecs.ComboAdapter>("combo", boundTypes: new [] { typeof(EventAdapterSpecs.Event2) });
-        options.Adapters.AddWriteEventAdapter<EventAdapterSpecs.Tagger>("tagger", boundTypes: new [] { typeof(EventAdapterSpecs.Event1), typeof(EventAdapterSpecs.Event2) });
+        options.AdapterBuilder.AddWriteEventAdapter<EventAdapterSpecs.EventMapper1>("mapper1", new [] { typeof(EventAdapterSpecs.Event1) });
+        options.AdapterBuilder.AddReadEventAdapter<EventAdapterSpecs.ReadAdapter>("reader1", new [] { typeof(EventAdapterSpecs.Event1) });
+        options.AdapterBuilder.AddEventAdapter<EventAdapterSpecs.ComboAdapter>("combo", boundTypes: new [] { typeof(EventAdapterSpecs.Event2) });
+        options.AdapterBuilder.AddWriteEventAdapter<EventAdapterSpecs.Tagger>("tagger", boundTypes: new [] { typeof(EventAdapterSpecs.Event1), typeof(EventAdapterSpecs.Event2) });
         
         var baseConfig = options.ToConfig();
         
@@ -120,6 +123,67 @@ public class SqlServerOptionsSpec
         config.GetString("event-adapters.tagger").Should().Be(typeof(EventAdapterSpecs.Tagger).TypeQualifiedName());
     }
 
+    [Fact(DisplayName = "SqlServerJournalOptions should be bindable to IConfiguration")]
+    // ReSharper disable once InconsistentNaming
+    public void JournalOptionsIConfigurationBindingTest()
+    {
+        const string json = @"
+{
+  ""Logging"": {
+    ""LogLevel"": {
+      ""Default"": ""Information"",
+      ""Microsoft.AspNetCore"": ""Warning""
+    }
+  },
+  ""Akka"": {
+    ""JournalOptions"": {
+      ""UseConstantParameterSize"": true,
+      ""QueryRefreshInterval"": ""00:00:05"",
+
+      ""ConnectionString"": ""Server=localhost,1533;Database=Akka;User Id=sa;"",
+      ""ConnectionTimeout"": ""00:00:55"",
+      ""SchemaName"": ""schema"",
+      ""TableName"" : ""journal"",
+      ""MetadataTableName"": ""meta"",
+      ""SequentialAccess"": false,
+
+      ""IsDefaultPlugin"": false,
+      ""Identifier"": ""custom"",
+      ""AutoInitialize"": true,
+      ""Serializer"": ""hyperion""
+    }
+  }
+}";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        var jsonConfig = new ConfigurationBuilder().AddJsonStream(stream).Build();
+        
+        var options = jsonConfig.GetSection("Akka:JournalOptions").Get<SqlServerJournalOptions>();
+        options.IsDefaultPlugin.Should().BeFalse();
+        options.Identifier.Should().Be("custom");
+        options.AutoInitialize.Should().BeTrue();
+        options.Serializer.Should().Be("hyperion");
+        options.ConnectionString.Should().Be("Server=localhost,1533;Database=Akka;User Id=sa;");
+        options.ConnectionTimeout.Should().Be(55.Seconds());
+        options.SchemaName.Should().Be("schema");
+        options.TableName.Should().Be("journal");
+        options.MetadataTableName.Should().Be("meta");
+        options.SequentialAccess.Should().BeFalse();
+
+        options.UseConstantParameterSize.Should().BeTrue();
+        options.QueryRefreshInterval.Should().Be(5.Seconds());
+        
+        // Adapter binding deserialization test
+        var config = options.ToConfig().GetConfig("akka.persistence.journal.custom");
+        config.GetStringList($"event-adapter-bindings.\"{typeof(EventAdapterSpecs.Event1).TypeQualifiedName()}\"").Should()
+            .BeEquivalentTo("mapper1", "reader1", "tagger");
+        config.GetStringList($"event-adapter-bindings.\"{typeof(EventAdapterSpecs.Event2).TypeQualifiedName()}\"").Should()
+            .BeEquivalentTo("combo", "tagger");
+        
+        config.GetString("event-adapters.mapper1").Should().Be(typeof(EventAdapterSpecs.EventMapper1).TypeQualifiedName());
+        config.GetString("event-adapters.reader1").Should().Be(typeof(EventAdapterSpecs.ReadAdapter).TypeQualifiedName());
+        config.GetString("event-adapters.combo").Should().Be(typeof(EventAdapterSpecs.ComboAdapter).TypeQualifiedName());
+        config.GetString("event-adapters.tagger").Should().Be(typeof(EventAdapterSpecs.Tagger).TypeQualifiedName());
+    }
     #endregion
 
     #region Snapshot unit tests
@@ -201,6 +265,51 @@ public class SqlServerOptionsSpec
         config.GetBoolean("use-constant-parameter-size").Should().Be(options.UseConstantParameterSize);
     }
 
+    [Fact(DisplayName = "SqlServerSnapshotOptions should be bindable to IConfiguration")]
+    public void SnapshotOptionsIConfigurationBindingTest()
+    {
+        const string json = @"
+{
+  ""Logging"": {
+    ""LogLevel"": {
+      ""Default"": ""Information"",
+      ""Microsoft.AspNetCore"": ""Warning""
+    }
+  },
+  ""Akka"": {
+    ""SnapshotOptions"": {
+      ""UseConstantParameterSize"": true,
+      ""QueryRefreshInterval"": ""00:00:05.000"",
+
+      ""ConnectionString"": ""Server=localhost,1533;Database=Akka;User Id=sa;"",
+      ""ConnectionTimeout"": ""00:00:55"",
+      ""SchemaName"": ""schema"",
+      ""TableName"" : ""snapshot"",
+      ""SequentialAccess"": false,
+
+      ""IsDefaultPlugin"": false,
+      ""Identifier"": ""custom"",
+      ""AutoInitialize"": true,
+      ""Serializer"": ""hyperion""
+    }
+  }
+}";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        var jsonConfig = new ConfigurationBuilder().AddJsonStream(stream).Build();
+        
+        var options = jsonConfig.GetSection("Akka:SnapshotOptions").Get<SqlServerSnapshotOptions>();
+        options.IsDefaultPlugin.Should().BeFalse();
+        options.Identifier.Should().Be("custom");
+        options.AutoInitialize.Should().BeTrue();
+        options.Serializer.Should().Be("hyperion");
+        options.ConnectionString.Should().Be("Server=localhost,1533;Database=Akka;User Id=sa;");
+        options.ConnectionTimeout.Should().Be(55.Seconds());
+        options.SchemaName.Should().Be("schema");
+        options.TableName.Should().Be("snapshot");
+        options.SequentialAccess.Should().BeFalse();
+
+        options.UseConstantParameterSize.Should().BeTrue();
+    }
     #endregion
 
     private static void AssertJournalConfig(Config underTest, Config reference)
