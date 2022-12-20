@@ -47,7 +47,16 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
             var initLoggerMessage = new ForwardAllEventsTestEventListener.ForwardAllEventsTo(TestActor);
             // ReSharper disable once DoNotCallOverridableMethodsInConstructor
             SendRawLogEventMessage(initLoggerMessage);
-            ExpectMsg("OK");
+            try
+            {
+                ExpectMsg("OK");
+            }
+            catch (Exception e)
+            {
+                throw new Exception(
+                    "Failed to receive an OK signal from ForwardAllEventsTestEventListener logger during test start " +
+                    $"inside EventFilterTestBase. Running loggers: [{string.Join(", ", Sys.Settings.Loggers)}]", e);
+            }
             //From now on we know that all messages will be forwarded to TestActor
         }
 
