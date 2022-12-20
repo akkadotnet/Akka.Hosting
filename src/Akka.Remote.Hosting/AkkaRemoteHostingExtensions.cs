@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Akka.Actor;
 using Akka.Hosting;
 
@@ -6,34 +7,6 @@ namespace Akka.Remote.Hosting
 {
     public static class AkkaRemoteHostingExtensions
     {
-        private static AkkaConfigurationBuilder BuildRemoteHocon(
-            this AkkaConfigurationBuilder builder,
-            string hostname = null,
-            int? port = null,
-            string publicHostname = null,
-            int? publicPort = null)
-        {
-            var sb = new StringBuilder();
-
-            if (!string.IsNullOrWhiteSpace(hostname))
-                sb.AppendFormat("hostname = {0}\n", hostname);
-            if (port != null)
-                sb.AppendFormat("port = {0}\n", port);
-            if(!string.IsNullOrWhiteSpace(publicHostname))
-                sb.AppendFormat("public-hostname = {0}\n", publicHostname);
-            if(publicPort != null)
-                sb.AppendFormat("public-port = {0}\n", publicPort);
-
-            if (sb.Length == 0) 
-                return builder;
-            
-            sb.Insert(0, "akka.remote.dot-netty.tcp {\n");
-            sb.Append("}");
-
-            // prepend the remoting configuration to the front
-            return builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-        }
-
         /// <summary>
         /// Adds Akka.Remote support to this <see cref="ActorSystem"/>.
         /// </summary>
@@ -45,13 +18,54 @@ namespace Akka.Remote.Hosting
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder WithRemoting(
             this AkkaConfigurationBuilder builder,
-            string hostname = null,
+            string? hostname = null,
             int? port = null,
-            string publicHostname = null,
+            string? publicHostname = null,
             int? publicPort = null)
+            => builder.WithRemoting(new RemoteOptions
+            {
+                HostName = hostname,
+                Port = port,
+                PublicHostName = publicHostname,
+                PublicPort = publicPort
+            });
+
+        /// <summary>
+        /// Adds Akka.Remote support to this <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">A configuration delegate.</param>
+        /// <param name="configure">
+        ///     An <see cref="Action{T}"/> delegate used to configure an <see cref="RemoteOptions"/>
+        ///     instance to configure Akka.Remote
+        /// </param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithRemoting(
+            this AkkaConfigurationBuilder builder,
+            Action<RemoteOptions> configure)
         {
-            var hoconBuilder = BuildRemoteHocon(builder, hostname, port, publicHostname, publicPort);
-        
+            var options = new RemoteOptions();
+            configure(options);
+            return builder.WithRemoting(options);
+        }
+
+        /// <summary>
+        /// Adds Akka.Remote support to this <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">A configuration delegate.</param>
+        /// <param name="options">
+        ///     A <see cref="RemoteOptions"/> instance to configure Akka.Remote
+        /// </param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithRemoting(
+            this AkkaConfigurationBuilder builder,
+            RemoteOptions options)
+        {
+            var config = options.ToString();
+            
+            // prepend the remoting configuration to the front
+            if(!string.IsNullOrEmpty(config))
+                builder.AddHocon(config, HoconAddMode.Prepend);
+
             if (builder.ActorRefProvider.HasValue)
             {
                 switch (builder.ActorRefProvider.Value)
@@ -59,11 +73,11 @@ namespace Akka.Remote.Hosting
                     case ProviderSelection.Cluster _:
                     case ProviderSelection.Remote _:
                     case ProviderSelection.Custom _:
-                        return hoconBuilder; // no-op
+                        return builder; // no-op
                 }
             }
 
-            return hoconBuilder.WithActorRefProvider(ProviderSelection.Remote.Instance);
+            return builder.WithActorRefProvider(ProviderSelection.Remote.Instance);
         }
     }
 }
