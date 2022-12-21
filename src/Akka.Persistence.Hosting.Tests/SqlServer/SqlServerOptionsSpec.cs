@@ -171,18 +171,6 @@ public class SqlServerOptionsSpec
 
         options.UseConstantParameterSize.Should().BeTrue();
         options.QueryRefreshInterval.Should().Be(5.Seconds());
-        
-        // Adapter binding deserialization test
-        var config = options.ToConfig().GetConfig("akka.persistence.journal.custom");
-        config.GetStringList($"event-adapter-bindings.\"{typeof(EventAdapterSpecs.Event1).TypeQualifiedName()}\"").Should()
-            .BeEquivalentTo("mapper1", "reader1", "tagger");
-        config.GetStringList($"event-adapter-bindings.\"{typeof(EventAdapterSpecs.Event2).TypeQualifiedName()}\"").Should()
-            .BeEquivalentTo("combo", "tagger");
-        
-        config.GetString("event-adapters.mapper1").Should().Be(typeof(EventAdapterSpecs.EventMapper1).TypeQualifiedName());
-        config.GetString("event-adapters.reader1").Should().Be(typeof(EventAdapterSpecs.ReadAdapter).TypeQualifiedName());
-        config.GetString("event-adapters.combo").Should().Be(typeof(EventAdapterSpecs.ComboAdapter).TypeQualifiedName());
-        config.GetString("event-adapters.tagger").Should().Be(typeof(EventAdapterSpecs.Tagger).TypeQualifiedName());
     }
     #endregion
 
