@@ -5,7 +5,10 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Akka.Annotations;
 using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Journal;
@@ -19,12 +22,12 @@ namespace Akka.Persistence.Hosting
     /// </summary>
     public abstract class JournalOptions
     {
-        private readonly bool _isDefault;
-        
         protected JournalOptions(bool isDefault)
         {
-            _isDefault = isDefault;
+            IsDefaultPlugin = isDefault;
         }
+        
+        public bool IsDefaultPlugin { get; set; }
         
         /// <summary>
         /// <b>NOTE</b> If you're implementing an option class for new Akka.Hosting persistence, you need to override
@@ -102,7 +105,7 @@ namespace Akka.Persistence.Hosting
             Adapters.AppendAdapters(sb);
             sb.AppendLine("}");
             
-            if (_isDefault)
+            if (IsDefaultPlugin)
                 sb.AppendLine($"akka.persistence.journal.plugin = {PluginId}");
 
             return sb;

@@ -17,12 +17,12 @@ namespace Akka.Persistence.Hosting
     /// </summary>
     public abstract class SnapshotOptions
     {
-        private readonly bool _isDefault;
-        
         protected SnapshotOptions(bool isDefault)
         {
-            _isDefault = isDefault;
+            IsDefaultPlugin = isDefault;
         }
+        
+        public bool IsDefaultPlugin { get; set; }
         
         /// <summary>
         /// <b>NOTE</b> If you're implementing an option class for new Akka.Hosting persistence, you need to override
@@ -93,7 +93,7 @@ namespace Akka.Persistence.Hosting
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
             sb.AppendLine("}");
             
-            if (_isDefault)
+            if (IsDefaultPlugin)
                 sb.AppendLine($"akka.persistence.snapshot-store.plugin = {PluginId}");
             
             return sb;

@@ -4,6 +4,8 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
+using System.IO;
+using System.Text;
 using Akka.Configuration;
 using Akka.Persistence.PostgreSql;
 using Akka.Persistence.PostgreSql.Hosting;
@@ -11,6 +13,7 @@ using Akka.Persistence.Query.Sql;
 using Akka.Util;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Akka.Persistence.Hosting.Tests.PostgreSql;
@@ -114,6 +117,56 @@ public class PostgreSqlOptionsSpec
 
     }
 
+        const string Json = @"
+{
+  ""Logging"": {
+    ""LogLevel"": {
+      ""Default"": ""Information"",
+      ""Microsoft.AspNetCore"": ""Warning""
+    }
+  },
+  ""Akka"": {
+    ""JournalOptions"": {
+      ""StoredAs"": ""JsonB"",
+      ""UseBigIntIdentityForOrderingColumn"": true,
+
+      ""ConnectionString"": ""Server=localhost,1533;Database=Akka;User Id=sa;"",
+      ""ConnectionTimeout"": ""00:00:55"",
+      ""SchemaName"": ""schema"",
+      ""TableName"" : ""journal"",
+      ""MetadataTableName"": ""meta"",
+      ""SequentialAccess"": false,
+
+      ""IsDefaultPlugin"": false,
+      ""Identifier"": ""custom"",
+      ""AutoInitialize"": true,
+      ""Serializer"": ""hyperion""
+    }
+  }
+}";
+    
+    [Fact(DisplayName = "PostgreSqlJournalOptions should be bindable to IConfiguration")]
+    public void JournalOptionsIConfigurationBindingTest()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(Json));
+        var jsonConfig = new ConfigurationBuilder().AddJsonStream(stream).Build();
+        
+        var options = jsonConfig.GetSection("Akka:JournalOptions").Get<PostgreSqlJournalOptions>();
+        options.IsDefaultPlugin.Should().BeFalse();
+        options.Identifier.Should().Be("custom");
+        options.AutoInitialize.Should().BeTrue();
+        options.Serializer.Should().Be("hyperion");
+        options.ConnectionString.Should().Be("Server=localhost,1533;Database=Akka;User Id=sa;");
+        options.ConnectionTimeout.Should().Be(55.Seconds());
+        options.SchemaName.Should().Be("schema");
+        options.TableName.Should().Be("journal");
+        options.MetadataTableName.Should().Be("meta");
+        options.SequentialAccess.Should().BeFalse();
+
+        options.StoredAs.Should().Be(StoredAsType.JsonB);
+        options.UseBigIntIdentityForOrderingColumn.Should().BeTrue();
+    }
+    
     #endregion
 
     #region Snapshot unit tests
@@ -194,6 +247,51 @@ public class PostgreSqlOptionsSpec
         config.GetString("stored-as").Should().Be(options.StoredAs.ToHocon());
     }
 
+    [Fact(DisplayName = "PostgreSqlSnapshotOptions should be bindable to IConfiguration")]
+    public void SnapshotOptionsIConfigurationBindingTest()
+    {
+        const string json = @"
+{
+  ""Logging"": {
+    ""LogLevel"": {
+      ""Default"": ""Information"",
+      ""Microsoft.AspNetCore"": ""Warning""
+    }
+  },
+  ""Akka"": {
+    ""SnapshotOptions"": {
+      ""StoredAs"": ""JsonB"",
+
+      ""ConnectionString"": ""Server=localhost,1533;Database=Akka;User Id=sa;"",
+      ""ConnectionTimeout"": ""00:00:55"",
+      ""SchemaName"": ""schema"",
+      ""TableName"" : ""snapshot"",
+      ""SequentialAccess"": false,
+
+      ""IsDefaultPlugin"": false,
+      ""Identifier"": ""CustomSnapshot"",
+      ""AutoInitialize"": true,
+      ""Serializer"": ""hyperion""
+    }
+  }
+}";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        var jsonConfig = new ConfigurationBuilder().AddJsonStream(stream).Build();
+        
+        var options = jsonConfig.GetSection("Akka:SnapshotOptions").Get<PostgreSqlSnapshotOptions>();
+        options.IsDefaultPlugin.Should().BeFalse();
+        options.Identifier.Should().Be("CustomSnapshot");
+        options.AutoInitialize.Should().BeTrue();
+        options.Serializer.Should().Be("hyperion");
+        options.ConnectionString.Should().Be("Server=localhost,1533;Database=Akka;User Id=sa;");
+        options.ConnectionTimeout.Should().Be(55.Seconds());
+        options.SchemaName.Should().Be("schema");
+        options.TableName.Should().Be("snapshot");
+        options.SequentialAccess.Should().BeFalse();
+
+        options.StoredAs.Should().Be(StoredAsType.JsonB);
+    }
+    
     #endregion
 
     private static void AssertJournalConfig(Config underTest, Config reference)

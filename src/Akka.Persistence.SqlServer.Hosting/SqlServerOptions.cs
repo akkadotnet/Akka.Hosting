@@ -20,6 +20,13 @@ namespace Akka.Persistence.SqlServer.Hosting
     {
         private static readonly Config Default = SqlServerPersistence.DefaultConfiguration()
             .GetConfig(SqlServerJournalSettings.ConfigPath);
+
+        /// <summary>
+        ///     Create a new instance of <see cref="SqlServerJournalOptions"/>
+        /// </summary>
+        public SqlServerJournalOptions() : this(true)
+        {
+        }
         
         /// <summary>
         ///     Create a new instance of <see cref="SqlServerJournalOptions"/>
@@ -117,6 +124,13 @@ namespace Akka.Persistence.SqlServer.Hosting
     {
         private static readonly Config Default = SqlServerPersistence.DefaultConfiguration()
             .GetConfig(SqlServerSnapshotSettings.ConfigPath);
+
+        /// <summary>
+        ///     Create a new instance of <see cref="SqlServerSnapshotOptions"/>
+        /// </summary>
+        public SqlServerSnapshotOptions() : this(true)
+        {
+        }
         
         /// <summary>
         ///     Create a new instance of <see cref="SqlServerSnapshotOptions"/>

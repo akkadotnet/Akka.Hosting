@@ -19,6 +19,13 @@ namespace Akka.Persistence.PostgreSql.Hosting
     {
         private static readonly Config Default = PostgreSqlPersistence.DefaultConfiguration()
             .GetConfig(PostgreSqlSnapshotStoreSettings.SnapshotStoreConfigPath);
+
+        /// <summary>
+        /// Create a new instance of <see cref="PostgreSqlSnapshotOptions"/>
+        /// </summary>
+        public PostgreSqlSnapshotOptions() : this(true)
+        {
+        }
         
         /// <summary>
         /// Create a new instance of <see cref="PostgreSqlSnapshotOptions"/>
