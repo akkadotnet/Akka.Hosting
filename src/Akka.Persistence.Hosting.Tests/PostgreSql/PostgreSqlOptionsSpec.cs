@@ -84,10 +84,10 @@ public class PostgreSqlOptionsSpec
             StoredAs = StoredAsType.Json,
             UseBigIntIdentityForOrderingColumn = true
         };
-        options.AdapterBuilder.AddWriteEventAdapter<EventAdapterSpecs.EventMapper1>("mapper1", new [] { typeof(EventAdapterSpecs.Event1) });
-        options.AdapterBuilder.AddReadEventAdapter<EventAdapterSpecs.ReadAdapter>("reader1", new [] { typeof(EventAdapterSpecs.Event1) });
-        options.AdapterBuilder.AddEventAdapter<EventAdapterSpecs.ComboAdapter>("combo", boundTypes: new [] { typeof(EventAdapterSpecs.Event2) });
-        options.AdapterBuilder.AddWriteEventAdapter<EventAdapterSpecs.Tagger>("tagger", boundTypes: new [] { typeof(EventAdapterSpecs.Event1), typeof(EventAdapterSpecs.Event2) });
+        options.Adapters.AddWriteEventAdapter<EventAdapterSpecs.EventMapper1>("mapper1", new [] { typeof(EventAdapterSpecs.Event1) });
+        options.Adapters.AddReadEventAdapter<EventAdapterSpecs.ReadAdapter>("reader1", new [] { typeof(EventAdapterSpecs.Event1) });
+        options.Adapters.AddEventAdapter<EventAdapterSpecs.ComboAdapter>("combo", boundTypes: new [] { typeof(EventAdapterSpecs.Event2) });
+        options.Adapters.AddWriteEventAdapter<EventAdapterSpecs.Tagger>("tagger", boundTypes: new [] { typeof(EventAdapterSpecs.Event1), typeof(EventAdapterSpecs.Event2) });
         
         var baseConfig = options.ToConfig();
         

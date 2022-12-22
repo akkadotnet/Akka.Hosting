@@ -78,7 +78,7 @@ namespace Akka.Persistence.SqlServer.Hosting
 
             var adapters = new AkkaPersistenceJournalBuilder(journalOpt.Identifier, builder);
             journalBuilder?.Invoke(adapters);
-            journalOpt.AdapterBuilder = adapters;
+            journalOpt.Adapters = adapters;
 
             var snapshotOpt = new SqlServerSnapshotOptions(isDefaultPlugin, pluginIdentifier)
             {
