@@ -11,9 +11,11 @@ using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Coordination;
+using Akka.DependencyInjection;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
+using Akka.Util;
 
 #nullable enable
 namespace Akka.Cluster.Hosting
@@ -38,7 +40,7 @@ namespace Akka.Cluster.Hosting
         ///     If populated, the akka.cluster.seed-nodes that will be used.
         /// </summary>
         public string[]? SeedNodes { get; set; }
-        
+
         /// <summary>
         ///     <para>
         ///         Minimum required number of members before the leader changes member status
@@ -49,7 +51,7 @@ namespace Akka.Cluster.Hosting
         ///     <b>Default:</b> 1
         /// </summary>
         public int? MinimumNumberOfMembers { get; set; }
-        
+
         /// <summary>
         ///     <para>
         ///         Application version of the deployment. Used by rolling update features
@@ -82,7 +84,7 @@ namespace Akka.Cluster.Hosting
         ///     i.e. the assembly of the executable running `Program.cs`
         /// </summary>
         public string? AppVersion { get; set; }
-        
+
         /// <summary>
         ///     <para>
         ///         Enable/disable info level logging of cluster events
@@ -90,7 +92,7 @@ namespace Akka.Cluster.Hosting
         ///     <b>Default:</b> <c>true</c>
         /// </summary>
         public bool? LogInfo { get; set; }
-        
+
         /// <summary>
         ///     <para>
         ///         Enable/disable verbose info-level logging of cluster events for temporary troubleshooting.
@@ -98,7 +100,7 @@ namespace Akka.Cluster.Hosting
         ///     <b>Default:</b> <c>false</c>
         /// </summary>
         public bool? LogInfoVerbose { get; set; }
-        
+
         /// <summary>
         ///     Split brain resolver configuration parameters. This can be an instance of one of these classes:
         ///     <list type="bullet">
@@ -125,12 +127,12 @@ namespace Akka.Cluster.Hosting
         ///     <b>Default:</b> 1000
         /// </summary>
         public int? BufferSize { get; set; } = null;
-        
+
         /// <summary>
         /// If set, the singleton will only be instantiated on nodes set with the role name.
         /// </summary>
         public string? Role { get; set; }
-        
+
         /// <summary>
         /// When handing over to a new oldest node this <see cref="TerminationMessage"/> is sent to the singleton actor
         /// to tell it to finish its work, close resources, and stop. The hand-over to the new oldest node
@@ -138,13 +140,13 @@ namespace Akka.Cluster.Hosting
         /// perfectly fine <see cref="TerminationMessage"/> if you only need to stop the actor.
         /// </summary>
         public object? TerminationMessage { get; set; }
-        
+
         /// <summary>
         /// An class instance that extends <see cref="LeaseOptionBase"/>, used to configure the lease provider used in this
         /// cluster singleton.
         /// </summary>
         public LeaseOptionBase? LeaseImplementation { get; set; }
-        
+
         /// <summary>
         /// The interval between retries for acquiring the lease
         /// </summary>
@@ -183,7 +185,7 @@ namespace Akka.Cluster.Hosting
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
         /// </summary>
         public string? JournalPluginId { get; set; }
-        
+
         /// <summary>
         ///     <para>
         ///         The journal plugin options used by persistence mode, eg. <c>SqlServerJournalOptions</c>
@@ -207,7 +209,7 @@ namespace Akka.Cluster.Hosting
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
         /// </summary>
         public string? SnapshotPluginId { get; set; }
-        
+
         /// <summary>
         ///     <para>
         ///         The snapshot store plugin options used by persistence mode, eg. <c>SqlServerSnapshotOptions</c>
@@ -219,13 +221,13 @@ namespace Akka.Cluster.Hosting
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/>
         /// </summary>
         public SnapshotOptions? SnapshotOptions { get; set; }
-        
+
         /// <summary>
         /// An class instance that extends <see cref="LeaseOptionBase"/>, used to configure the lease provider used in this
         /// sharding region.
         /// </summary>
         public LeaseOptionBase? LeaseImplementation { get; set; }
-        
+
         /// <summary>
         /// The interval between retries for acquiring the lease
         /// </summary>
@@ -256,6 +258,7 @@ namespace Akka.Cluster.Hosting
                 {
                     sb.AppendLine($"{kvp.Key}.min-nr-of-members = {kvp.Value}");
                 }
+
                 sb.AppendLine("}");
             }
 
@@ -268,26 +271,27 @@ namespace Akka.Cluster.Hosting
                     Address.Parse(addrString);
                     sb.Append($"{addrString.ToHocon()}, ");
                 }
+
                 sb.AppendLine("]");
             }
 
             if (options.MinimumNumberOfMembers is { })
                 sb.AppendLine($"min-nr-of-members = {options.MinimumNumberOfMembers}");
-            
-            if(options.AppVersion is { })
+
+            if (options.AppVersion is { })
                 sb.AppendLine($"app-version = {options.AppVersion.ToHocon()}");
 
             if (options.LogInfo is { })
                 sb.AppendLine($"log-info = {options.LogInfo.ToHocon()}");
-            
+
             if (options.LogInfoVerbose is { })
                 sb.AppendLine($"log-info-verbose = {options.LogInfoVerbose.ToHocon()}");
-            
+
             sb.AppendLine("}");
 
             // prepend the composed configuration
             builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-            
+
             options.SplitBrainResolver?.Apply(builder);
 
             // populate all of the possible Clustering default HOCON configurations here
@@ -319,13 +323,65 @@ namespace Akka.Cluster.Hosting
             {
                 switch (builder.ActorRefProvider.Value)
                 {
-                    case ProviderSelection.Cluster :
-                    case ProviderSelection.Custom :
+                    case ProviderSelection.Cluster:
+                    case ProviderSelection.Custom:
                         return hoconBuilder; // no-op
                 }
             }
 
             return hoconBuilder.WithActorRefProvider(ProviderSelection.Cluster.Instance);
+        }
+
+        private static ExtractEntityId ToExtractEntityId(this IMessageExtractor self)
+        {
+            Option<(string, object)> ExtractEntityId(object msg)
+            {
+                if (self.EntityId(msg) != null) return (self.EntityId(msg), self.EntityMessage(msg));
+
+                return Option<(string, object)>.None;
+            }
+
+            return ExtractEntityId;
+        }
+
+        private static ExtractShardId ToExtractShardId(this IMessageExtractor self)
+        {
+            string? ExtractShardId(object msg)
+            {
+                return self.EntityId(msg) != null ? self.ShardId(msg) : null;
+            }
+
+            return ExtractShardId;
+        }
+
+        /// <summary>
+        /// INTERNAL API
+        ///
+        /// Generates the <see cref="ClusterShardingSettings"/> for the specified <paramref name="shardOptions"/>.
+        /// </summary>
+        /// <param name="shardOptions">The options to use.</param>
+        /// <param name="system">The current <see cref="ActorSystem"/>.</param>
+        /// <returns>A fully populated <see cref="ClusterShardingSettings"/> instance for use with a specific <see cref="ShardRegion"/>.</returns>
+        private static ClusterShardingSettings PopulateClusterShardingSettings(ShardOptions shardOptions,
+            ActorSystem system)
+        {
+            var settings = ClusterShardingSettings.Create(system)
+                .WithRole(shardOptions.Role)
+                .WithRememberEntities(shardOptions.RememberEntities)
+                .WithStateStoreMode(shardOptions.StateStoreMode);
+
+            if (shardOptions.LeaseImplementation is { })
+            {
+                var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
+                settings = settings
+                    .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
+            }
+
+            if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
+                settings = settings
+                    .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
+                    .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
+            return settings;
         }
 
         /// <summary>
@@ -357,34 +413,12 @@ namespace Akka.Cluster.Hosting
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
-            Func<string, Props> entityPropsFactory, 
+            Func<string, Props> entityPropsFactory,
             IMessageExtractor messageExtractor,
             ShardOptions shardOptions)
         {
-            return builder.WithActors(async (system, registry) =>
-            {
-                var settings = ClusterShardingSettings.Create(system)
-                    .WithRole(shardOptions.Role)
-                    .WithRememberEntities(shardOptions.RememberEntities)
-                    .WithStateStoreMode(shardOptions.StateStoreMode);
-
-                if (shardOptions.LeaseImplementation is { })
-                {
-                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
-                    settings = settings
-                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
-                }
-
-                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
-                    settings = settings
-                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
-                
-                var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, entityPropsFactory, settings, messageExtractor);
-                
-                registry.Register<TKey>(shardRegion);
-            });
+            return builder.WithShardRegion<TKey>(typeName, (_, _, _) => entityPropsFactory,
+                messageExtractor.ToExtractEntityId(), messageExtractor.ToExtractShardId(), shardOptions);
         }
 
         /// <summary>
@@ -421,103 +455,189 @@ namespace Akka.Cluster.Hosting
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
-            Func<string, Props> entityPropsFactory, 
+            Func<string, Props> entityPropsFactory,
             ExtractEntityId extractEntityId,
             ExtractShardId extractShardId,
             ShardOptions shardOptions)
         {
-            return builder.WithActors(async (system, registry) =>
-            {
-                var settings = ClusterShardingSettings.Create(system)
-                    .WithRole(shardOptions.Role)
-                    .WithRememberEntities(shardOptions.RememberEntities)
-                    .WithStateStoreMode(shardOptions.StateStoreMode);
-
-                if (shardOptions.LeaseImplementation is { })
-                {
-                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
-                    settings = settings
-                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
-                }
-                
-                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
-                    settings = settings
-                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
-                
-                var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, entityPropsFactory, settings, extractEntityId, extractShardId);
-
-                registry.Register<TKey>(shardRegion);
-            });
+            return builder.WithShardRegion<TKey>(typeName, (_, _, _) => entityPropsFactory,
+                extractEntityId, extractShardId, shardOptions);
         }
-        
+
+        /// <summary>
+        ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
+        ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
+        ///     <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="typeName">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="entityPropsFactory">
+        ///     Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>.
+        ///
+        ///     This function also accepts the <see cref="ActorSystem"/> and the <see cref="IActorRegistry"/> as inputs.    
+        /// </param>
+        /// <param name="messageExtractor">
+        ///     Functions to extract the entity id, shard id, and the message to send to the entity from the incoming message.
+        /// </param>
+        /// <param name="shardOptions">
+        ///     The set of options for configuring <see cref="ClusterShardingSettings"/>
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
-            Func<ActorSystem, IActorRegistry, Func<string, Props>> compositePropsFactory, 
+            Func<ActorSystem, IActorRegistry, Func<string, Props>> entityPropsFactory,
             IMessageExtractor messageExtractor,
             ShardOptions shardOptions)
         {
-            return builder.WithActors(async (system, registry) =>
-            {
-                var settings = ClusterShardingSettings.Create(system)
-                    .WithRole(shardOptions.Role)
-                    .WithRememberEntities(shardOptions.RememberEntities)
-                    .WithStateStoreMode(shardOptions.StateStoreMode);
-
-                if (shardOptions.LeaseImplementation is { })
-                {
-                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
-                    settings = settings
-                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
-                }
-                
-                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
-                    settings = settings
-                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
-                
-                var entityPropsFactory = compositePropsFactory(system, registry);
-                
-                var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, entityPropsFactory, settings, messageExtractor);
-
-                registry.Register<TKey>(shardRegion);
-            });
+            return builder.WithShardRegion<TKey>(typeName,
+                (system, registry, _) => entityPropsFactory(system, registry),
+                messageExtractor.ToExtractEntityId(), messageExtractor.ToExtractShardId(), shardOptions);
         }
 
+        /// <summary>
+        ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
+        ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
+        ///     <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="typeName">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="entityPropsFactory">
+        ///     Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>.
+        ///
+        ///     This function also accepts the <see cref="ActorSystem"/> and the <see cref="IActorRegistry"/> as inputs.    
+        /// </param>
+        /// <param name="extractEntityId">
+        ///     Partial function to extract the entity id and the message to send to the entity from the incoming message,
+        ///     if the partial function does not match the message will be `unhandled`,
+        ///     i.e.posted as `Unhandled` messages on the event stream
+        /// </param>
+        /// <param name="extractShardId">
+        ///     Function to determine the shard id for an incoming message, only messages that passed the `extractEntityId` will be used
+        /// </param>
+        /// <param name="shardOptions">
+        ///     The set of options for configuring <see cref="ClusterShardingSettings"/>
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
-            Func<ActorSystem, IActorRegistry, Func<string, Props>> compositePropsFactory, 
+            Func<ActorSystem, IActorRegistry, Func<string, Props>> entityPropsFactory,
             ExtractEntityId extractEntityId,
             ExtractShardId extractShardId,
             ShardOptions shardOptions)
         {
-            return builder.WithActors(async (system, registry) =>
-            {
-                var settings = ClusterShardingSettings.Create(system)
-                    .WithRole(shardOptions.Role)
-                    .WithRememberEntities(shardOptions.RememberEntities)
-                    .WithStateStoreMode(shardOptions.StateStoreMode);
+            return builder.WithShardRegion<TKey>(typeName,
+                (system, registry, _) => entityPropsFactory(system, registry),
+                extractEntityId, extractShardId, shardOptions);
+        }
 
-                if (shardOptions.LeaseImplementation is { })
-                {
-                    var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
-                    settings = settings
-                        .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
-                }
-                
-                if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
-                    settings = settings
-                        .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
-                        .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
-                
-                var entityPropsFactory = compositePropsFactory(system, registry);
-                
+        /// <summary>
+        ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
+        ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
+        ///     <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="typeName">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="entityPropsFactory">
+        ///     Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>.
+        ///
+        ///     This function also accepts the <see cref="ActorSystem"/> and the <see cref="IActorRegistry"/> as inputs.    
+        /// </param>
+        /// <param name="messageExtractor">
+        ///     Functions to extract the entity id, shard id, and the message to send to the entity from the incoming message.
+        /// </param>
+        /// <param name="shardOptions">
+        ///     The set of options for configuring <see cref="ClusterShardingSettings"/>
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithShardRegion<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string typeName,
+            Func<ActorSystem, IActorRegistry, IDependencyResolver, Func<string, Props>> entityPropsFactory,
+            IMessageExtractor messageExtractor,
+            ShardOptions shardOptions)
+        {
+            return builder.WithShardRegion<TKey>(typeName, entityPropsFactory,
+                messageExtractor.ToExtractEntityId(), messageExtractor.ToExtractShardId(), shardOptions);
+        }
+
+        /// <summary>
+        ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
+        ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
+        ///     <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="typeName">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="entityPropsFactory">
+        ///     Function that, given an entity id, returns the <see cref="Actor.Props"/> of the entity actors that will be created by the <see cref="Sharding.ShardRegion"/>.
+        ///
+        ///     This function also accepts the <see cref="ActorSystem"/> and the <see cref="IActorRegistry"/> as inputs.    
+        /// </param>
+        /// <param name="extractEntityId">
+        ///     Partial function to extract the entity id and the message to send to the entity from the incoming message,
+        ///     if the partial function does not match the message will be `unhandled`,
+        ///     i.e.posted as `Unhandled` messages on the event stream
+        /// </param>
+        /// <param name="extractShardId">
+        ///     Function to determine the shard id for an incoming message, only messages that passed the `extractEntityId` will be used
+        /// </param>
+        /// <param name="shardOptions">
+        ///     The set of options for configuring <see cref="ClusterShardingSettings"/>
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="ShardRegion"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithShardRegion<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string typeName,
+            Func<ActorSystem, IActorRegistry, IDependencyResolver, Func<string, Props>> entityPropsFactory,
+            ExtractEntityId extractEntityId,
+            ExtractShardId extractShardId,
+            ShardOptions shardOptions)
+        {
+            return builder.WithActors(async (system, registry, resolver) =>
+            {
+                var settings = PopulateClusterShardingSettings(shardOptions, system);
+
+                var finalPropsFactory = entityPropsFactory(system, registry, resolver);
+
                 var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, entityPropsFactory, settings, extractEntityId, extractShardId);
+                    .StartAsync(typeName, finalPropsFactory, settings, extractEntityId, extractShardId);
 
                 registry.Register<TKey>(shardRegion);
             });
@@ -562,7 +682,7 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, extractEntityId, extractShardId);
-                
+
                 registry.Register<TKey>(shardRegionProxy);
             });
         }
@@ -592,7 +712,7 @@ namespace Akka.Cluster.Hosting
         /// </returns>
         public static AkkaConfigurationBuilder WithShardRegionProxy<TKey>(
             this AkkaConfigurationBuilder builder,
-            string typeName, 
+            string typeName,
             string roleName,
             IMessageExtractor messageExtractor)
         {
@@ -600,7 +720,7 @@ namespace Akka.Cluster.Hosting
             {
                 var shardRegionProxy = await ClusterSharding.Get(system)
                     .StartProxyAsync(typeName, roleName, messageExtractor);
-                
+
                 registry.Register<TKey>(shardRegionProxy);
             });
         }
@@ -657,7 +777,7 @@ namespace Akka.Cluster.Hosting
         ///     by this method.
         /// </param>
         /// <param name="actorProps">
-        ///     The underlying actor type. SHOULD NOT BE CREATED USING <see cref="ClusterSingletonManager.Props"/>
+        ///     The underlying actor type. SHOULD NOT BE CREATED USING <see cref="Props"/>
         /// </param>
         /// <param name="options">
         ///     Optional. The set of options for configuring both the <see cref="ClusterSingletonManager"/> and
@@ -692,7 +812,7 @@ namespace Akka.Cluster.Hosting
                     clusterSingletonManagerSettings = clusterSingletonManagerSettings
                         .WithLeaseSettings(new LeaseUsageSettings(options.LeaseImplementation.ConfigPath, retry));
                 }
-                
+
                 var singletonProxySettings =
                     ClusterSingletonProxySettings.Create(system).WithSingletonName(singletonName);
 
@@ -718,7 +838,8 @@ namespace Akka.Cluster.Hosting
                         singletonProxySettings = singletonProxySettings.WithBufferSize(options.BufferSize.Value);
                     }
 
-                    CreateAndRegisterSingletonProxy<TKey>(singletonManagerRef.Path.Name, $"/user/{singletonManagerRef.Path.Name}", singletonProxySettings, system, registry);
+                    CreateAndRegisterSingletonProxy<TKey>(singletonManagerRef.Path.Name,
+                        $"/user/{singletonManagerRef.Path.Name}", singletonProxySettings, system, registry);
                 }
             });
         }
@@ -733,7 +854,7 @@ namespace Akka.Cluster.Hosting
             var singletonProxyProps = ClusterSingletonProxy.Props(singletonActorPath,
                 singletonProxySettings);
             var singletonProxy = system.ActorOf(singletonProxyProps, $"{singletonActorName}-proxy");
-            
+
             registry.Register<TKey>(singletonProxy);
         }
 
@@ -780,15 +901,16 @@ namespace Akka.Cluster.Hosting
                 {
                     singletonProxySettings = singletonProxySettings.WithRole(options.Role);
                 }
-                
+
                 if (options.BufferSize != null)
                 {
                     singletonProxySettings = singletonProxySettings.WithBufferSize(options.BufferSize.Value);
                 }
 
                 singletonManagerPath ??= $"/user/{singletonName}";
-                
-                CreateAndRegisterSingletonProxy<TKey>(singletonName, singletonManagerPath, singletonProxySettings, system, registry);
+
+                CreateAndRegisterSingletonProxy<TKey>(singletonName, singletonManagerPath, singletonProxySettings,
+                    system, registry);
             });
         }
 
@@ -819,16 +941,16 @@ namespace Akka.Cluster.Hosting
         internal static Config CreateReceptionistConfig(string name, string? role)
         {
             const string root = "akka.cluster.client.receptionist.";
-            
+
             var sb = new StringBuilder()
                 .Append(root).Append("name:").AppendLine(name.ToHocon());
-            
-            if(!string.IsNullOrEmpty(role))
+
+            if (!string.IsNullOrEmpty(role))
                 sb.Append(root).Append("role:").AppendLine(role!.ToHocon());
 
             return ConfigurationFactory.ParseString(sb.ToString());
         }
-        
+
         /// <summary>
         ///     Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
         ///     <see cref="TKey"/>.
@@ -860,7 +982,7 @@ namespace Akka.Cluster.Hosting
 
             if (initialContacts.Count < 1)
                 throw new ArgumentException("Must specify at least one initial contact", nameof(initialContacts));
-            
+
             return builder.WithActors((system, registry) =>
             {
                 var clusterClient = system.ActorOf(ClusterClient.Props(
@@ -929,7 +1051,8 @@ namespace Akka.Cluster.Hosting
             IEnumerable<string> initialContacts)
             => builder.WithClusterClient<TKey>(initialContacts.Select(ActorPath.Parse).ToList());
 
-        internal static ClusterClientSettings CreateClusterClientSettings(Config config, IEnumerable<ActorPath> initialContacts)
+        internal static ClusterClientSettings CreateClusterClientSettings(Config config,
+            IEnumerable<ActorPath> initialContacts)
         {
             var clientConfig = config.GetConfig("akka.cluster.client");
             return ClusterClientSettings.Create(clientConfig)
