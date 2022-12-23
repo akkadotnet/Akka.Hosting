@@ -26,8 +26,8 @@ namespace Akka.Hosting.Tests.Logging;
 public class LoggerFactoryLoggerSpec: IAsyncLifetime
 {
     private readonly TestLogger _logger;
-    private IHost _host;
-    private IActorRef _echo;
+    private IHost? _host;
+    private IActorRef? _echo;
 
     public LoggerFactoryLoggerSpec(ITestOutputHelper helper)
     {
@@ -43,7 +43,7 @@ public class LoggerFactoryLoggerSpec: IAsyncLifetime
 
     public Task DisposeAsync()
     {
-        _host.Dispose();
+        _host?.Dispose();
         return Task.CompletedTask;
     }
 

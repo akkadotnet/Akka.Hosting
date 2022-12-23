@@ -82,7 +82,7 @@ namespace Akka.Hosting
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new HashSet<SerializerRegistration>();
-        internal readonly HashSet<Type> Extensions = new HashSet<Type>();
+        internal readonly List<Type> Extensions = new List<Type>();
 
         /// <summary>
         /// INTERNAL API.
@@ -112,8 +112,8 @@ namespace Akka.Hosting
         /// </summary>
         internal Option<ActorSystem> Sys { get; set; } = Option<ActorSystem>.None;
 
-        private readonly HashSet<ActorStarter> _actorStarters = new HashSet<ActorStarter>();
-        private readonly HashSet<StartupTask> _startupTasks = new HashSet<StartupTask>();
+        private readonly List<ActorStarter> _actorStarters = new List<ActorStarter>();
+        private readonly List<StartupTask> _startupTasks = new List<StartupTask>();
         private bool _complete = false;
 
         public AkkaConfigurationBuilder(IServiceCollection serviceCollection, string actorSystemName)

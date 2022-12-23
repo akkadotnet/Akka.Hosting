@@ -18,9 +18,8 @@ namespace Akka.Hosting.TestKit.Tests.TestKitBaseTests;
 
 public class ReceiveTests : TestKit
 {
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
     }
 
     [Fact]
@@ -199,7 +198,7 @@ public class ReceiveTests : TestKit
         TestActor.Tell("3");
         TestActor.Tell(99999.0);
         TestActor.Tell(4);
-        ReceiveWhile<string>(_ => _ is double ? null : _.ToString())
+        ReceiveWhile<string>(_ => (_ is double ? null : _.ToString())!)
             .Should().BeEquivalentTo(new[] { "1", "2", "3" }, opt => opt.WithStrictOrdering());
     }
 
@@ -209,7 +208,7 @@ public class ReceiveTests : TestKit
         TestActor.Tell("1");
         TestActor.Tell("2");
         TestActor.Tell(4711);
-        ReceiveWhile<object>(_ => _ is string ? _ : null);
+        ReceiveWhile<object>(_ => (_ is string ? _ : null)!);
         ExpectMsg(4711);
     }
 

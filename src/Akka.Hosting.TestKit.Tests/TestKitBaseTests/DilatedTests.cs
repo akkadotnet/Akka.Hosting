@@ -7,7 +7,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Akka.Configuration;
 using Xunit;
 using Xunit.Sdk;
@@ -26,9 +25,8 @@ public class DilatedTests : TestKit
 
     protected override Config Config { get; } = $"akka.test.timefactor={TimeFactor}";
 
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
     }
 
     [Fact]
@@ -77,7 +75,7 @@ public class DilatedTests : TestKit
         AssertDilated(stopwatch.ElapsedMilliseconds, $"Expected the timeout to be {ExpectedTimeout} but in fact it was {stopwatch.ElapsedMilliseconds}.");
     }
 
-    private static void AssertDilated(double diff, string message = null)
+    private static void AssertDilated(double diff, string? message = null)
     {
         Assert.True(diff >= ExpectedTimeout - DiffDelta, message);
         Assert.True(diff < ExpectedTimeout + Margin, message); // margin for GC

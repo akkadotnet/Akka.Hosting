@@ -4,6 +4,9 @@ using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
+using Akka.Hosting.Configuration;
+using Akka.Util;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -89,6 +92,62 @@ namespace Akka.Hosting
             return builder.AddHoconConfiguration(hocon, addMode);
         }
 
+        /// <summary>
+        ///     Converts an <see cref="IConfiguration"/> into HOCON <see cref="Config"/> instance and adds it to the
+        ///     <see cref="ActorSystem"/> being configured.<br/>
+        ///     <b>NOTES:</b><br/>
+        ///     <list type="bullet">
+        ///         <item>All variable name are automatically converted to lower case.</item>
+        ///         <item>All "." (period) in the <see cref="IConfiguration"/> key will be treated as a HOCON object key separator</item>
+        ///         <item>For environment variable configuration provider:
+        ///             <list type="bullet">
+        ///                 <item>"__" (double underline) will be converted to "." (period).</item>
+        ///                 <item>"_" (single underline) will be converted to "-" (dash).</item>
+        ///                 <item>If all keys are composed of integer parseable keys, the whole object is treated as an array</item>
+        ///             </list>
+        ///         </item>
+        ///     </list>
+        ///     Example:<br/>
+        ///     JSON configuration:
+        ///     <code>
+        /// {
+        ///     "akka.cluster": {
+        ///         "roles": [ "front-end", "back-end" ],
+        ///         "min-nr-of-members": 3,
+        ///         "log-info": true
+        ///     }
+        /// }
+        ///     </code>
+        ///     and environment variables:
+        ///     <code>
+        /// AKKA__CLUSTER__ROLES__0=front-end
+        /// AKKA__CLUSTER__ROLES__1=back-end
+        /// AKKA__CLUSTER__MIN_NR_OF_MEMBERS=3
+        /// AKKA__CLUSTER__LOG_INFO=true
+        ///     </code>
+        ///     is equivalent to HOCON configuration of:
+        ///     <code>
+        /// akka {
+        ///     cluster {
+        ///         roles: [ front-end, back-end ]
+        ///         min-nr-of-members: 3
+        ///         log-info: true
+        ///     }
+        /// }
+        ///     </code>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="configuration">The <see cref="IConfiguration"/> instance to be converted to HOCON <see cref="Config"/>.</param>
+        /// <param name="addMode">The <see cref="HoconAddMode"/> - defaults to appending this HOCON as a fallback.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder AddHocon(
+            this AkkaConfigurationBuilder builder, 
+            IConfiguration configuration,
+            HoconAddMode addMode)
+        {
+            return builder.AddHoconConfiguration(configuration.ToHocon(), addMode);
+        }
+        
         /// <summary>
         /// Automatically loads the given HOCON file from <see cref="hoconFilePath"/>
         /// and inserts it into the <see cref="ActorSystem"/>s' configuration.

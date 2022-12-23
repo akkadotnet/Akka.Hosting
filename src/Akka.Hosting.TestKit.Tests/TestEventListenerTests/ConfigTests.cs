@@ -15,9 +15,8 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
 {
     public class ConfigTests : TestKit
     {
-        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
-            return Task.CompletedTask;
         }
         
         [Fact]

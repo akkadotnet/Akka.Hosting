@@ -13,13 +13,13 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests;
 
 public class ForwardAllEventsTestEventListener : TestEventListener
 {
-    private IActorRef _forwarder;
+    private IActorRef? _forwarder;
 
     protected override void Print(LogEvent m)
     {           
-        if(m.Message is ForwardAllEventsTo)
+        if(m.Message is ForwardAllEventsTo to)
         {
-            _forwarder = ((ForwardAllEventsTo)m.Message).Forwarder;
+            _forwarder = to.Forwarder;
             _forwarder.Tell("OK");
         }
         else if(_forwarder != null)
@@ -34,13 +34,11 @@ public class ForwardAllEventsTestEventListener : TestEventListener
 
     public class ForwardAllEventsTo
     {
-        private readonly IActorRef _forwarder;
-
         public ForwardAllEventsTo(IActorRef forwarder)
         {
-            _forwarder = forwarder;
+            Forwarder = forwarder;
         }
 
-        public IActorRef Forwarder { get { return _forwarder; } }
+        public IActorRef Forwarder { get; }
     }
 }

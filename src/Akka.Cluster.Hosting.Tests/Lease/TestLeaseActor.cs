@@ -31,7 +31,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 Owner = owner;
             }
 
-            public bool Equals(Acquire other)
+            public bool Equals(Acquire? other)
             {
                 if (ReferenceEquals(other, null)) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -39,7 +39,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 return Equals(Owner, other.Owner);
             }
 
-            public override bool Equals(object obj) => obj is Acquire a && Equals(a);
+            public override bool Equals(object? obj) => obj is Acquire a && Equals(a);
 
             public override int GetHashCode() => Owner.GetHashCode();
 
@@ -55,7 +55,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 Owner = owner;
             }
 
-            public bool Equals(Release other)
+            public bool Equals(Release? other)
             {
                 if (ReferenceEquals(other, null)) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -63,7 +63,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 return Equals(Owner, other.Owner);
             }
 
-            public override bool Equals(object obj) => obj is Release r && Equals(r);
+            public override bool Equals(object? obj) => obj is Release r && Equals(r);
 
             public override int GetHashCode() => Owner.GetHashCode();
 
@@ -81,7 +81,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 OwnerName = ownerName;
             }
 
-            public bool Equals(Create other)
+            public bool Equals(Create? other)
             {
                 if (ReferenceEquals(other, null)) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -89,7 +89,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 return Equals(LeaseName, other.LeaseName) && Equals(OwnerName, other.OwnerName);
             }
 
-            public override bool Equals(object obj) => obj is Create c && Equals(c);
+            public override bool Equals(object? obj) => obj is Create c && Equals(c);
 
             public override int GetHashCode()
             {

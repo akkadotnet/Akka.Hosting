@@ -9,7 +9,7 @@ public class TestLogger : ILogger
 {
     private readonly ITestOutputHelper _helper;
     public bool Recording { get; private set; }
-    private string _stopsWhen;
+    private string? _stopsWhen;
 
     public readonly List<string> Debugs = new();
     public readonly List<string> Infos = new();

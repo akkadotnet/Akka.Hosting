@@ -26,7 +26,6 @@ using Xunit.Abstractions;
 using Xunit.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-#nullable enable
 namespace Akka.Hosting.TestKit
 {
     public abstract class TestKit: TestKitBase, IAsyncLifetime
@@ -78,7 +77,7 @@ namespace Akka.Hosting.TestKit
         {
             ConfigureServices(context, services);
             
-            services.AddAkka(ActorSystemName, async (builder, provider) =>
+            services.AddAkka(ActorSystemName, (builder, provider) =>
             {
                 builder.AddHocon(DefaultConfig, HoconAddMode.Prepend);
                 if (Config is { })
@@ -93,7 +92,7 @@ namespace Akka.Hosting.TestKit
 
                 if (Output is { })
                 {
-                    builder.StartActors(async (system, registry) =>
+                    builder.StartActors(async (system, _) =>
                     {
                         var extSystem = (ExtendedActorSystem)system;
                         var logger = extSystem.SystemActorOf(Props.Create(() => new LoggerFactoryLogger()), "log-test");
@@ -101,9 +100,9 @@ namespace Akka.Hosting.TestKit
                     });
                 }
 
-                await ConfigureAkka(builder, provider);
+                ConfigureAkka(builder, provider);
 
-                builder.AddStartup((system, registry) =>
+                builder.AddStartup((system, _) =>
                 {
                     base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
                     _initialized.SetResult(Done.Instance);
@@ -116,7 +115,7 @@ namespace Akka.Hosting.TestKit
         protected virtual void ConfigureLogging(ILoggingBuilder builder)
         { }
 
-        protected abstract Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider);
+        protected abstract void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider);
         
         [InternalApi]
         public async Task InitializeAsync()
