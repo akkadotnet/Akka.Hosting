@@ -13,8 +13,8 @@ namespace Akka.Hosting
     /// </summary>
     internal sealed class AkkaHostedService : IHostedService
     {
-        private ActorSystem _actorSystem;
-        private CoordinatedShutdown _coordinatedShutdown; // grab a reference to CoordinatedShutdown early
+        private ActorSystem? _actorSystem;
+        private CoordinatedShutdown? _coordinatedShutdown; // grab a reference to CoordinatedShutdown early
         private readonly IServiceProvider _serviceProvider;
         private readonly AkkaConfigurationBuilder _configurationBuilder;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;

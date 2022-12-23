@@ -51,11 +51,10 @@ namespace Akka.Hosting.Configuration
             }
             
             var currentObj = parent;
-            HoconValue currentValue = null;
             while (keys.Count > 1)
             {
                 var key = keys.Pop();
-                currentValue = currentObj.GetOrCreateKey(key);
+                var currentValue = currentObj.GetOrCreateKey(key);
                 if (currentValue.IsObject())
                 {
                     currentObj = currentValue.GetObject();

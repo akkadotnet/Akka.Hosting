@@ -84,6 +84,6 @@ namespace Akka.Hosting
         /// <exception cref="ArgumentNullException">
         ///     Thrown when <see cref="Apply"/> requires a setup but it was <c>null</c>
         /// </exception>
-        void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
+        void Apply(AkkaConfigurationBuilder builder, Setup? setup = null);
     }
 }
