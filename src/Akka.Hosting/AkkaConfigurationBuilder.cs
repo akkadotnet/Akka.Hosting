@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
@@ -53,6 +52,8 @@ namespace Akka.Hosting
     /// Delegate used to instantiate <see cref="IActorRef"/>s once the <see cref="ActorSystem"/> has booted.
     /// </summary>
     public delegate Task ActorStarter(ActorSystem system, IActorRegistry registry);
+    
+    public delegate Task ActorStarterWithResolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver);
 
     public delegate Task StartupTask(ActorSystem system, IActorRegistry registry);
     
@@ -112,9 +113,9 @@ namespace Akka.Hosting
         /// </summary>
         internal Option<ActorSystem> Sys { get; set; } = Option<ActorSystem>.None;
 
-        private readonly List<ActorStarter> _actorStarters = new List<ActorStarter>();
-        private readonly List<StartupTask> _startupTasks = new List<StartupTask>();
-        private bool _complete = false;
+        private readonly List<ActorStarter> _actorStarters = new();
+        private readonly List<StartupTask> _startupTasks = new();
+        private bool _complete;
 
         public AkkaConfigurationBuilder(IServiceCollection serviceCollection, string actorSystemName)
         {
@@ -189,6 +190,18 @@ namespace Akka.Hosting
 
             return Starter;
         }
+
+        private static ActorStarter ToAsyncStarter(
+            Action<ActorSystem, IActorRegistry, IDependencyResolver> nonAsyncStarter)
+        {
+            Task Starter(ActorSystem f, IActorRegistry registry)
+            {
+                nonAsyncStarter(f, registry, DependencyResolver.For(f).Resolver);
+                return Task.CompletedTask;
+            }
+
+            return Starter;
+        }
         
         private static StartupTask ToAsyncStartup(Action<ActorSystem, IActorRegistry> nonAsyncStartup)
         {
@@ -207,11 +220,28 @@ namespace Akka.Hosting
             _actorStarters.Add(ToAsyncStarter(starter));
             return this;
         }
+        
+        public AkkaConfigurationBuilder StartActors(Action<ActorSystem, IActorRegistry, IDependencyResolver> starter)
+        {
+            if (_complete) return this;
+            _actorStarters.Add(ToAsyncStarter(starter));
+            return this;
+        }
 
         public AkkaConfigurationBuilder StartActors(ActorStarter starter)
         {
             if (_complete) return this;
             _actorStarters.Add(starter);
+            return this;
+        }
+        
+        public AkkaConfigurationBuilder StartActors(ActorStarterWithResolver starter)
+        {
+            if (_complete) return this;
+
+            Task Starter1(ActorSystem f, IActorRegistry registry) => starter(f, registry, DependencyResolver.For(f).Resolver);
+
+            _actorStarters.Add(Starter1);
             return this;
         }
 
@@ -305,7 +335,7 @@ namespace Akka.Hosting
         internal void Bind()
         {
             // register as singleton - not interested in supporting multi-Sys use cases
-            ServiceCollection.AddSingleton<ActorSystem>(ActorSystemFactory());
+            ServiceCollection.AddSingleton(ActorSystemFactory());
 
             ServiceCollection.AddSingleton<ActorRegistry>(sp =>
             {
