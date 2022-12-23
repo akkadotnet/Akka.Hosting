@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster.Hosting.SBR;
 using Akka.Cluster.Sharding;
@@ -630,17 +631,15 @@ namespace Akka.Cluster.Hosting
             ExtractShardId extractShardId,
             ShardOptions shardOptions)
         {
-            return builder.WithActors(async (system, registry, resolver) =>
+            async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
-                var settings = PopulateClusterShardingSettings(shardOptions, system);
-
-                var finalPropsFactory = entityPropsFactory(system, registry, resolver);
-
-                var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, finalPropsFactory, settings, extractEntityId, extractShardId);
-
+                var props = entityPropsFactory(system, registry, resolver);
+                var settings = ClusterShardingSettings.Create(system).WithRole(shardOptions.Role);
+                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, props, settings, extractEntityId, extractShardId).ConfigureAwait(false);
                 registry.Register<TKey>(shardRegion);
-            });
+            }
+
+            return builder.StartActors(Resolver);
         }
 
         /// <summary>
