@@ -635,7 +635,8 @@ namespace Akka.Cluster.Hosting
             {
                 var props = entityPropsFactory(system, registry, resolver);
                 var settings = ClusterShardingSettings.Create(system).WithRole(shardOptions.Role);
-                var shardRegion = await ClusterSharding.Get(system).StartAsync(typeName, props, settings, extractEntityId, extractShardId).ConfigureAwait(false);
+                var shardRegion = await ClusterSharding.Get(system)
+                    .StartAsync(typeName, props, settings, extractEntityId, extractShardId).ConfigureAwait(false);
                 registry.Register<TKey>(shardRegion);
             }
 
@@ -775,8 +776,9 @@ namespace Akka.Cluster.Hosting
         ///     <see cref="ClusterSingletonManager"/> and optionally, the <see cref="ClusterSingletonProxy"/> created
         ///     by this method.
         /// </param>
-        /// <param name="actorProps">
-        ///     The underlying actor type. SHOULD NOT BE CREATED USING <see cref="Props"/>
+        /// <param name="propsFactory">
+        ///     A function that accepts the <see cref="ActorSystem"/>, <see cref="ActorRegistry"/>, and <see cref="IDependencyResolver"/>
+        ///     and returns the <see cref="Props"/> for the actor
         /// </param>
         /// <param name="options">
         ///     Optional. The set of options for configuring both the <see cref="ClusterSingletonManager"/> and
@@ -795,12 +797,14 @@ namespace Akka.Cluster.Hosting
         public static AkkaConfigurationBuilder WithSingleton<TKey>(
             this AkkaConfigurationBuilder builder,
             string singletonName,
-            Props actorProps,
+            Func<ActorSystem, IActorRegistry, IDependencyResolver, Props> propsFactory,
             ClusterSingletonOptions? options = null,
             bool createProxyToo = true)
         {
-            return builder.WithActors((system, registry) =>
+            return builder.WithActors((system, registry, resolver) =>
             {
+                var actorProps = propsFactory(system, registry, resolver);
+
                 options ??= new ClusterSingletonOptions();
                 var clusterSingletonManagerSettings =
                     ClusterSingletonManagerSettings.Create(system).WithSingletonName(singletonName);
@@ -841,6 +845,51 @@ namespace Akka.Cluster.Hosting
                         $"/user/{singletonManagerRef.Path.Name}", singletonProxySettings, system, registry);
                 }
             });
+        }
+
+        /// <summary>
+        ///     <para>
+        ///         Creates a new <see cref="ClusterSingletonManager"/> to host an actor created via <see cref="actorProps"/>.
+        ///     </para>
+        ///
+        ///     If <paramref name="createProxyToo"/> is set to <c>true</c> then this method will also create a
+        ///     <see cref="ClusterSingletonProxy"/> that will be added to the <see cref="ActorRegistry"/> using the key
+        ///     <see cref="TKey"/>. Otherwise this method will register nothing with the <see cref="ActorRegistry"/>.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="singletonName">
+        ///     The name of this singleton instance. Will also be used in the <see cref="ActorPath"/> for the
+        ///     <see cref="ClusterSingletonManager"/> and optionally, the <see cref="ClusterSingletonProxy"/> created
+        ///     by this method.
+        /// </param>
+        /// <param name="actorProps">
+        ///     The underlying actor type. SHOULD NOT BE CREATED USING <see cref="Props"/>
+        /// </param>
+        /// <param name="options">
+        ///     Optional. The set of options for configuring both the <see cref="ClusterSingletonManager"/> and
+        ///     optionally, the <see cref="ClusterSingletonProxy"/>.
+        /// </param>
+        /// <param name="createProxyToo">
+        ///     When set to <c>true></c>, creates a <see cref="ClusterSingletonProxy"/> that automatically points to
+        ///     the <see cref="ClusterSingletonManager"/> created by this method.
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The key type to use for the <see cref="ActorRegistry"/> when <paramref name="createProxyToo"/> is set to <c>true</c>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithSingleton<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string singletonName,
+            Props actorProps,
+            ClusterSingletonOptions? options = null,
+            bool createProxyToo = true)
+        {
+            return builder.WithSingleton<TKey>(singletonName, (_, _, _) => actorProps, options,
+                createProxyToo);
         }
 
         private static void CreateAndRegisterSingletonProxy<TKey>(
