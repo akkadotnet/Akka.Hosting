@@ -322,7 +322,7 @@ namespace Akka.Hosting
                 return sp.GetRequiredService<ActorRegistry>();
             });
 
-            ServiceCollection.AddScoped(typeof(IRequiredActor<>), typeof(RequiredActor<>));
+            ServiceCollection.AddSingleton(typeof(IRequiredActor<>), typeof(RequiredActor<>));
         }
 
         /// <summary>
