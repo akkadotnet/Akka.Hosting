@@ -824,7 +824,7 @@ namespace Akka.Cluster.Hosting
                 .Append(root).Append("name:").AppendLine(name.ToHocon());
             
             if(!string.IsNullOrEmpty(role))
-                sb.Append(root).Append("role:").AppendLine(role.ToHocon());
+                sb.Append(root).Append("role:").AppendLine(role!.ToHocon());
 
             return ConfigurationFactory.ParseString(sb.ToString());
         }
