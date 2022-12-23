@@ -13,6 +13,6 @@ namespace Akka.Hosting.Coordination
     {
         public abstract string ConfigPath { get; }
         public abstract Type Class { get; }
-        public abstract void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
+        public abstract void Apply(AkkaConfigurationBuilder builder, Setup? setup = null);
     }
 }
