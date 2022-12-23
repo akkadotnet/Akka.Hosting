@@ -7,7 +7,7 @@ namespace Akka.Hosting.Tests.Performance
     /// </summary>
     public class CombinedPerfSpecs
     {
-        private Counter _counter;
+        private Counter? _counter;
 
         [PerfSetup]
         public void Setup(BenchmarkContext context)
@@ -22,7 +22,7 @@ namespace Akka.Hosting.Tests.Performance
         [GcTotalAssertion(GcMetric.TotalCollections, GcGeneration.Gen2, MustBe.ExactlyEqualTo, 0.0d)]
         public void Benchmark()
         {
-            _counter.Increment();
+            _counter!.Increment();
         }
     }
 }
