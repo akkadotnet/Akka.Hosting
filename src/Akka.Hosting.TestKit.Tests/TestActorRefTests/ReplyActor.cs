@@ -5,6 +5,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using Akka.Actor;
 using Akka.TestKit;
 
@@ -12,7 +13,7 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests;
 
 public class ReplyActor : TActorBase
 {
-    private IActorRef _replyTo;
+    private IActorRef? _replyTo;
 
     protected override bool ReceiveMessage(object message)
     {
@@ -29,6 +30,9 @@ public class ReplyActor : TActorBase
                 worker2.Tell(Sender, Self);
                 return true;
             case "workDone":
+                if (_replyTo is null)
+                    throw new NullReferenceException("_replyTo is null, make sure that \"complexRequest\" is sent first");
+                
                 _replyTo.Tell("complexReply", Self);
                 return true;
             case "simpleRequest":

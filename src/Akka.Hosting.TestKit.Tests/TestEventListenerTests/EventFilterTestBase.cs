@@ -21,7 +21,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         /// </summary>
         protected bool TestSuccessful;
 
-        protected EventFilterTestBase(LogLevel logLevel, ITestOutputHelper output = null) : base(output: output)
+        protected EventFilterTestBase(LogLevel logLevel, ITestOutputHelper? output = null) : base(output: output)
         {
             _logLevel = logLevel;
         }

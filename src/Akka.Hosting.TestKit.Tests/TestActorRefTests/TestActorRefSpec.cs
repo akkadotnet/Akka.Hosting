@@ -22,8 +22,7 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
     {
         public static int Counter = 4;
         public static readonly Thread Thread = Thread.CurrentThread;
-        public static Thread OtherThread;
-
+        public static Thread? OtherThread;
 
         public TestActorRefSpec()
         {
@@ -110,13 +109,16 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
         [Fact]
         public void TestActorRef_must_stop_when_sent_a_PoisonPill()
         {
-            //TODO: Should have this surrounding all code EventFilter[ActorKilledException]() intercept {            
+            //TODO: Should have this surrounding all code EventFilter[ActorKilledException]() intercept {
+            var probe = CreateTestProbe();
             var a = new TestActorRef<WorkerActor>(Sys, Props.Create<WorkerActor>(), null, "will-be-killed");
-            Sys.ActorOf(Props.Create(() => new WatchAndForwardActor(a, TestActor)), "forwarder");
-            a.Tell(PoisonPill.Instance);
-            ExpectMsg<WrappedTerminated>(w => w.Terminated.ActorRef == a, TimeSpan.FromSeconds(10), string.Format("that the terminated actor was the one killed, i.e. {0}", a.Path));
             var actorRef = (InternalTestActorRef)a.Ref;
-            actorRef.IsTerminated.Should().Be(true);
+            probe.Watch(actorRef);
+            Sys.ActorOf(Props.Create(() => new WatchAndForwardActor(a, TestActor)), "forwarder");
+            
+            a.Tell(PoisonPill.Instance);
+            ExpectMsg<WrappedTerminated>(w => w.Terminated.ActorRef == a, TimeSpan.FromSeconds(10), $"that the terminated actor was the one killed, i.e. {a.Path}");
+            probe.ExpectTerminated(actorRef);
             AssertThread();
         }
 
@@ -178,19 +180,22 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
         public void TestActorRef_must_proxy_receive_for_the_underlying_actor_without_sender()
         {
             var a = new TestActorRef<WorkerActor>(Sys, Props.Create<WorkerActor>());
-            a.Receive("work");
             var actorRef = (InternalTestActorRef)a.Ref;
-            Assert.True(actorRef.IsTerminated);
+            Watch(actorRef);
+            a.Receive("work");
+            ExpectTerminated(actorRef);
         }
 
         [Fact]
         public void TestActorRef_must_proxy_receive_for_the_underlying_actor_with_sender()
         {
             var a = new TestActorRef<WorkerActor>(Sys, Props.Create<WorkerActor>());
-            a.Receive("work", TestActor);   //This will stop the actor
+            var probe = CreateTestProbe();
             var actorRef = (InternalTestActorRef)a.Ref;
-            Assert.True(actorRef.IsTerminated);
+            probe.Watch(actorRef);
+            a.Receive("work", TestActor);   //This will stop the actor
             ExpectMsg("workDone");
+            probe.ExpectTerminated(actorRef);
         }
 
         [Fact]
@@ -221,7 +226,7 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
 
         private class SaveStringActor : TActorBase
         {
-            public string ReceivedString { get; private set; }
+            public string? ReceivedString { get; private set; }
 
             protected override bool ReceiveMessage(object message)
             {
