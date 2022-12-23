@@ -1,13 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
-using Akka.Util;
+using Akka.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ServiceProvider = Microsoft.Extensions.DependencyInjection.ServiceProvider;
 
 namespace Akka.Hosting
 {
@@ -127,6 +125,21 @@ namespace Akka.Hosting
         /// for configuring and starting actors.</param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder WithActors(this AkkaConfigurationBuilder builder, Action<ActorSystem, IActorRegistry> actorStarter)
+        {
+            return builder.StartActors(actorStarter);
+        }
+        
+        /// <summary>
+        /// Adds a <see cref="ActorStarter"/> delegate that will be used exactly once to instantiate
+        /// actors once the <see cref="ActorSystem"/> is started in this process. 
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="actorStarter">A delegate for starting and configuring actors.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <remarks>
+        /// This method supports Akka.DependencyInjection directly by making the <see cref="ActorSystem"/>'s <see cref="IDependencyResolver"/> immediately available.
+        /// </remarks>
+        public static AkkaConfigurationBuilder WithActors(this AkkaConfigurationBuilder builder, Action<ActorSystem, IActorRegistry, IDependencyResolver> actorStarter)
         {
             return builder.StartActors(actorStarter);
         }

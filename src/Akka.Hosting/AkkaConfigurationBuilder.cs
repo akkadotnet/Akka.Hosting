@@ -189,6 +189,18 @@ namespace Akka.Hosting
 
             return Starter;
         }
+
+        private static ActorStarter ToAsyncStarter(
+            Action<ActorSystem, IActorRegistry, IDependencyResolver> nonAsyncStarter)
+        {
+            Task Starter(ActorSystem f, IActorRegistry registry)
+            {
+                nonAsyncStarter(f, registry, DependencyResolver.For(f).Resolver);
+                return Task.CompletedTask;
+            }
+
+            return Starter;
+        }
         
         private static StartupTask ToAsyncStartup(Action<ActorSystem, IActorRegistry> nonAsyncStartup)
         {
@@ -202,6 +214,13 @@ namespace Akka.Hosting
         }
 
         public AkkaConfigurationBuilder StartActors(Action<ActorSystem, IActorRegistry> starter)
+        {
+            if (_complete) return this;
+            _actorStarters.Add(ToAsyncStarter(starter));
+            return this;
+        }
+        
+        public AkkaConfigurationBuilder StartActors(Action<ActorSystem, IActorRegistry, IDependencyResolver> starter)
         {
             if (_complete) return this;
             _actorStarters.Add(ToAsyncStarter(starter));

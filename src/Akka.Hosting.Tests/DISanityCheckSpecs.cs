@@ -98,4 +98,30 @@ public class DiSanityCheckSpecs
         // assert
         singletonFromActor.Should().Be(singletonInstance);
     }
+
+    [Fact(DisplayName = "Should start actors correctly via DI using the built-in IDependencyResolver delegates")]
+    public async Task ShouldStartActorsViaDiUsingBuiltInResolver()
+    {
+        // arrange
+        using var host = await StartHost(collection =>
+        {
+            collection.AddAkka("MyActorSys", (builder, sp) =>
+            {
+                builder.WithActors((system, registry, resolver) =>
+                {
+                    var singletonActor = system.ActorOf(resolver.Props<SingletonActor>(), "singleton");
+                    registry.TryRegister<SingletonActor>(singletonActor);
+                });
+            });
+        });
+        
+        // act
+        var singletonInstance = host.Services.GetRequiredService<IMySingletonInterface>();
+        var singletonActor = host.Services.GetRequiredService<ActorRegistry>().Get<SingletonActor>();
+        var singletonFromActor =
+            await singletonActor.Ask<IMySingletonInterface>(SingletonActor.GetSingleton.Instance, TimeSpan.FromSeconds(3));
+        
+        // assert
+        singletonFromActor.Should().Be(singletonInstance);
+    }
 }
