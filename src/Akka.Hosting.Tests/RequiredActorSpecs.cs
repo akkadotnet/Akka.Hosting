@@ -33,6 +33,23 @@ public class RequiredActorSpecs
         }
     }
     
+    public class MissingActor{}
+    
+    public sealed class BadConsumer
+    {
+        private readonly IActorRef _actor;
+
+        public BadConsumer(IRequiredActor<MissingActor> actor)
+        {
+            _actor = actor.ActorRef;
+        }
+
+        public async Task<string> Say(string word)
+        {
+            return await _actor.Ask<string>(word, TimeSpan.FromSeconds(3));
+        }
+    }
+    
     [Fact]
     public async Task ShouldRetrieveRequiredActorFromIServiceProvider()
     {
@@ -60,5 +77,32 @@ public class RequiredActorSpecs
 
         // assert
         spoken.Should().Be(input);
+    }
+    
+    [Fact]
+    public async Task ShouldFailRetrieveRequiredActorWhenNotDefined()
+    {
+        // arrange
+        using var host = new HostBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddAkka("MySys", (builder, provider) =>
+                {
+                    builder.WithActors((system, registry) =>
+                    {
+                        var actor = system.ActorOf(Props.Create(() => new MyActorType()), "myactor");
+                        registry.Register<MyActorType>(actor);
+                    });
+                });
+                services.AddScoped<BadConsumer>();
+            })
+            .Build();
+        await host.StartAsync();
+
+        // act
+        Action shouldThrow = () => host.Services.GetRequiredService<BadConsumer>();
+        
+        // assert
+        shouldThrow.Should().Throw<MissingActorRegistryEntryException>();
     }
 }

@@ -16,9 +16,16 @@ namespace Akka.Hosting
     /// </remarks>
     public interface IRequiredActor<TActor>
     {
+        /// <summary>
+        /// The underlying actor resolved via <see cref="ActorRegistry"/> using the given <see cref="TActor"/> key.
+        /// </summary>
         IActorRef ActorRef { get; }
     }
 
+    /// <summary>
+    /// INTERNAL API
+    /// </summary>
+    /// <typeparam name="TActor">The type key of the actor - corresponds to a matching entry inside the <see cref="IActorRegistry"/>.</typeparam>
     public sealed class RequiredActor<TActor> : IRequiredActor<TActor>
     {
         public RequiredActor(IReadOnlyActorRegistry registry)
@@ -26,6 +33,7 @@ namespace Akka.Hosting
             ActorRef = registry.Get<TActor>();
         }
 
+        /// <inheritdoc cref="IRequiredActor{TActor}.ActorRef"/>
         public IActorRef ActorRef { get; }
     } 
 
