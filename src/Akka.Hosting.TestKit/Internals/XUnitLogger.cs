@@ -19,7 +19,7 @@ namespace Akka.Hosting.TestKit.Internals
             _logLevel = logLevel;
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
             if (!IsEnabled(logLevel))
                 return;
@@ -30,7 +30,7 @@ namespace Akka.Hosting.TestKit.Internals
             WriteLogEntry(logLevel, eventId, formattedMessage, exception);
         }
 
-        private void WriteLogEntry(LogLevel logLevel, EventId eventId, string message, Exception exception)
+        private void WriteLogEntry(LogLevel logLevel, EventId eventId, string? message, Exception? exception)
         {
             var level = logLevel switch
             {
@@ -65,9 +65,9 @@ namespace Akka.Hosting.TestKit.Internals
         
         private static bool TryFormatMessage<TState>(
             TState state,
-            Exception exception,
-            Func<TState, Exception, string> formatter,
-            out string result)
+            Exception? exception,
+            Func<TState, Exception?, string> formatter,
+            out string? result)
         {
             formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
             
