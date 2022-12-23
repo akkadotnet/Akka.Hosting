@@ -21,13 +21,13 @@ public class DistributedPubSubSpecs : IAsyncLifetime
     private readonly ITestOutputHelper _helper;
     private readonly Action<AkkaConfigurationBuilder> _specBuilder;
     private readonly ClusterOptions _clusterOptions;    
-    private IHost _host;
-    private ActorSystem _system;
-    private ILoggingAdapter _log;
-    private Cluster _cluster;
-    private TestKit.Xunit2.TestKit _testKit;
+    private IHost? _host;
+    private ActorSystem? _system;
+    private ILoggingAdapter? _log;
+    private Cluster? _cluster;
+    private TestKit.Xunit2.TestKit? _testKit;
 
-    private IActorRef _mediator;
+    private IActorRef? _mediator;
 
     public DistributedPubSubSpecs(ITestOutputHelper helper)
     {
@@ -40,14 +40,14 @@ public class DistributedPubSubSpecs : IAsyncLifetime
     [Fact]
     public Task Should_launch_distributed_pub_sub_with_roles()
     {
-        var testProbe = _testKit.CreateTestProbe(_system);
+        var testProbe = _testKit!.CreateTestProbe(_system);
 
         // act
         testProbe.Send(_mediator, new Subscribe("testSub", testProbe));
         var response = testProbe.ExpectMsg<SubscribeAck>();
 
         // assert
-        _system.Settings.Config.GetString("akka.cluster.pub-sub.role").Should().Be("my-host");
+        _system!.Settings.Config.GetString("akka.cluster.pub-sub.role").Should().Be("my-host");
         response.Subscribe.Topic.Should().Be("testSub");
         response.Subscribe.Ref.Should().Be(testProbe);
 
@@ -59,7 +59,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
     {
         const string topic = "testSub";
         
-        var subscriber = _testKit.CreateTestProbe(_system);
+        var subscriber = _testKit!.CreateTestProbe(_system);
         var publisher = _testKit.CreateTestProbe(_system);
 
         subscriber.Send(_mediator, new Subscribe(topic, subscriber));
@@ -111,7 +111,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
         lifetime.ApplicationStopping.IsCancellationRequested.Should().BeFalse();
         
         // Join cluster
-        var myAddress = _cluster.SelfAddress;
+        var myAddress = _cluster!.SelfAddress;
         await _cluster.JoinAsync(myAddress, cancellationTokenSource.Token); // force system to wait until we're up
 
         // Prepare test
@@ -121,6 +121,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _host.StopAsync();
+        if (_host != null) 
+            await _host.StopAsync();
     }
 }
