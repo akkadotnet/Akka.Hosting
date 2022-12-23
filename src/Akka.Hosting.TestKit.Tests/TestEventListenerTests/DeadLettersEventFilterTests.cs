@@ -16,7 +16,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests;
 
 public abstract class DeadLettersEventFilterTestsBase : EventFilterTestBase
 {
-    private IActorRef _deadActor;
+    private IActorRef? _deadActor;
 
     // ReSharper disable ConvertToLambdaExpression
     protected DeadLettersEventFilterTestsBase() : base(Event.LogLevel.ErrorLevel)
