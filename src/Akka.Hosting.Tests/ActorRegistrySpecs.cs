@@ -45,7 +45,7 @@ public class ActorRegistrySpecs
 
         // act
 
-        var register = () => registry.Register<Nobody>(null);
+        var register = () => registry.Register<Nobody>(null!); // intentionally null for the test
 
         // assert
         register.Should().Throw<ArgumentNullException>();
