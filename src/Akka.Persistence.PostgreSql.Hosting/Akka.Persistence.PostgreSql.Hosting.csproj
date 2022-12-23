@@ -3,7 +3,6 @@
     <TargetFramework>$(LibraryFramework)</TargetFramework>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Akka.Persistence.PostgreSql Microsoft.Extensions.Hosting support.</Description>
-    <LangVersion>9</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
