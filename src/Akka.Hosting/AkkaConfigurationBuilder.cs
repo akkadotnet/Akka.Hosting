@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
@@ -14,6 +13,7 @@ using Akka.Hosting.Logging;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
@@ -321,6 +321,8 @@ namespace Akka.Hosting
             {
                 return sp.GetRequiredService<ActorRegistry>();
             });
+
+            ServiceCollection.AddScoped(typeof(IRequiredActor<>), typeof(RequiredActor<>));
         }
 
         /// <summary>
