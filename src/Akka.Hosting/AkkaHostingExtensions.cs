@@ -162,6 +162,11 @@ namespace Akka.Hosting
             return AddHocon(builder, hoconText, addMode);
         }
 
+        public static AkkaConfigurationBuilder WithActorAskTimeout(this AkkaConfigurationBuilder builder, TimeSpan timeout)
+        {
+            return AddHocon(builder, $"akka.actor.ask-timeout = {timeout.ToHocon(true, true)}", HoconAddMode.Prepend);
+        }
+        
         /// <summary>
         /// Configures the <see cref="ProviderSelection"/> for this <see cref="ActorSystem"/>. Can be used to
         /// configure whether or not Akka, Akka.Remote, or Akka.Cluster starts.

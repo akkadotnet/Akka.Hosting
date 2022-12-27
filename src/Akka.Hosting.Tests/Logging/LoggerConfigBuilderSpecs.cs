@@ -4,6 +4,8 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
+using System;
+using Akka.Configuration;
 using Akka.Hosting.Logging;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +29,11 @@ public class LoggerConfigBuilderSpecs
         var loggers = config.GetStringList("akka.loggers");
         loggers.Count.Should().Be(1);
         loggers[0].Should().Contain("Akka.Event.DefaultLogger");
+
+        config.GetConfig("akka.actor.debug").Should().BeNull();
+        config.GetString("akka.log-dead-letters").Should().BeNull();
+        config.GetString("akka.log-dead-letters-during-shutdown").Should().BeNull();
+        config.GetString("akka.log-dead-letters-suspend-duration").Should().BeNull();
     }
     
     [Fact(DisplayName = "LoggerConfigBuilder should override config values")]
@@ -38,6 +45,22 @@ public class LoggerConfigBuilderSpecs
                 setup.LogLevel = LogLevel.WarningLevel;
                 setup.LogConfigOnStart = true;
                 setup.ClearLoggers();
+                setup.DebugOptions = new DebugOptions
+                {
+                    Receive = true,
+                    AutoReceive = true,
+                    LifeCycle = true,
+                    EventStream = true,
+                    FiniteStateMachine = true,
+                    Unhandled = true,
+                    RouterMisconfiguration = true
+                };
+                setup.DeadLetterOptions = new DeadLetterOptions
+                {
+                    LogCount = 99,
+                    LogDuringShutdown = false,
+                    LogSuspendDuration = TimeSpan.Zero
+                };
             });
 
         builder.Configuration.HasValue.Should().BeTrue();
@@ -46,5 +69,41 @@ public class LoggerConfigBuilderSpecs
         config.GetString("akka.log-config-on-start").Should().Be("true");
         var loggers = config.GetStringList("akka.loggers");
         loggers.Count.Should().Be(0);
+        
+        var debug = config.GetConfig("akka.actor.debug");
+        debug.Should().NotBeNull();
+        debug.GetBoolean("receive").Should().BeTrue();
+        debug.GetBoolean("autoreceive").Should().BeTrue();
+        debug.GetBoolean("lifecycle").Should().BeTrue();
+        debug.GetBoolean("fsm").Should().BeTrue();
+        debug.GetBoolean("event-stream").Should().BeTrue();
+        debug.GetBoolean("unhandled").Should().BeTrue();
+        debug.GetBoolean("router-misconfiguration").Should().BeTrue();
+        
+        config.GetInt("akka.log-dead-letters").Should().Be(99);
+        config.GetBoolean("akka.log-dead-letters-during-shutdown").Should().BeFalse();
+        config.GetString("akka.log-dead-letters-suspend-duration").Should().Be("infinite");
+    }
+
+    [Fact(DisplayName = "DeadLetterOptions should override log-dead-letters properly")]
+    public void DeadLetterOptionsTest()
+    {
+        var cfg = (Config)new DeadLetterOptions
+        {
+            ShouldLog = TriStateValue.All
+        }.ToString();
+        cfg.GetBoolean("akka.log-dead-letters").Should().BeTrue();
+        
+        cfg = new DeadLetterOptions
+        {
+            ShouldLog = TriStateValue.None
+        }.ToString();
+        cfg.GetBoolean("akka.log-dead-letters").Should().BeFalse();
+        
+        cfg = new DeadLetterOptions
+        {
+            ShouldLog = TriStateValue.Some
+        }.ToString();
+        cfg.GetInt("akka.log-dead-letters").Should().Be(10);
     }
 }
