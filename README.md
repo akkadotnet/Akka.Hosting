@@ -97,7 +97,7 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 
 One of the other design goals of Akka.Hosting is to make the dependency injection experience with Akka.NET as seamless as any other .NET technology. We accomplish this through two new APIs:
 
-* The `ActorRegistry`, a `IServiceCollection`-ish container that is designed to be populated with `Type`s for keys and `IActorRef`s for values _after_ the Akka.NET `IHostedService` and the `ActorSystem` have been started.
+* The `ActorRegistry`, a DI container that is designed to be populated with `Type`s for keys and `IActorRef`s for values, just like the `IServiceCollection` does for ASP.NET services.
 * The `IRequiredActor<TKey>` - you can place this type the constructor of any DI'd resource and it will automatically resolve a reference to the actor stored inside the `ActorRegistry` with `TKey`. This is how we inject actors into ASP.NET, SignalR, gRPC, and other Akka.NET actors!
 
 > **N.B.** The `ActorRegistry` and the `ActorSystem` are automatically registered with the `IServiceCollection` / `IServiceProvider` associated with your application.
@@ -178,20 +178,25 @@ Akka.NET does not use dependency injection to start actors by default primarily 
 Therefore, users have to explicitly signal when they want to use Microsoft.Extensions.DependencyInjection via [the `IDependencyResolver` interface in Akka.DependencyInjection](https://getakka.net/articles/actors/dependency-injection.html) - which is easy to do in most of the Akka.Hosting APIs for starting actors:
 
 ```csharp
-protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
-{
-    services.AddSingleton<IMyThing>(new ThingImpl("foo1"));
-    base.ConfigureServices(context, services);
-}
+var builder = WebApplication.CreateBuilder(args);
 
-protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+builder.Services.AddScoped<IReplyGenerator, DefaultReplyGenerator>();
+builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 {
-    builder.ConfigureHost(configurationBuilder =>
-    {
-        configurationBuilder.WithSingleton<MySingletonDiActor>("my-singleton",
-            (_, _, dependencyResolver) => dependencyResolver.Props<MySingletonDiActor>());
-    },  new ClusterOptions(){ Roles = new[] { "my-host" }}, _tcs, Output!);
-}
+    configurationBuilder
+        .WithRemoting(hostname: "localhost", port: 8110)
+        .WithClustering(new ClusterOptions{SeedNodes = new []{ "akka.tcp://MyActorSystem@localhost:8110", }})
+        .WithShardRegion<Echo>(
+            typeName: "myRegion",
+            entityPropsFactory: (_, _, resolver) =>
+            {
+                // uses DI to inject `IReplyGenerator` into EchoActor
+                return s => resolver.Props<EchoActor>(s);
+            },
+            extractEntityId: ExtractEntityId,
+            extractShardId: ExtractShardId,
+            shardOptions: new ShardOptions());
+});
 ```
 
 The `dependencyResolver.Props<MySingletonDiActor>()` call will leverage the `ActorSystem`'s built-in `IDependencyResolver` to instantiate the `MySingletonDiActor` and inject it with all of the necessary dependences, including `IRequiredActor<TKey>`.
