@@ -1,4 +1,5 @@
-﻿namespace Akka.Hosting
+﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Akka.Hosting.Tests")]
+namespace Akka.Hosting
 {
     public class ActorRegistry : Akka.Actor.IExtension, Akka.Hosting.IActorRegistry, Akka.Hosting.IReadOnlyActorRegistry, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.Type, Akka.Actor.IActorRef>>, System.Collections.IEnumerable
     {
@@ -50,11 +51,33 @@
         public static Akka.Hosting.AkkaConfigurationBuilder AddHocon(this Akka.Hosting.AkkaConfigurationBuilder builder, Microsoft.Extensions.Configuration.IConfiguration configuration, Akka.Hosting.HoconAddMode addMode) { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddHoconFile(this Akka.Hosting.AkkaConfigurationBuilder builder, string hoconFilePath, Akka.Hosting.HoconAddMode addMode) { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddSetup(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup setup) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithActorAskTimeout(this Akka.Hosting.AkkaConfigurationBuilder builder, System.TimeSpan timeout) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActorRefProvider(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.ProviderSelection providerSelection) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Hosting.ActorStarter actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Hosting.ActorStarterWithResolver actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry> actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, Akka.DependencyInjection.IDependencyResolver> actorStarter) { }
+    }
+    public class DeadLetterOptions
+    {
+        public DeadLetterOptions() { }
+        public int LogCount { get; set; }
+        public bool? LogDuringShutdown { get; set; }
+        public System.TimeSpan? LogSuspendDuration { get; set; }
+        public Akka.Hosting.TriStateValue ShouldLog { get; set; }
+        public override string ToString() { }
+    }
+    public class DebugOptions
+    {
+        public DebugOptions() { }
+        public bool? AutoReceive { get; set; }
+        public bool? EventStream { get; set; }
+        public bool? FiniteStateMachine { get; set; }
+        public bool? LifeCycle { get; set; }
+        public bool? Receive { get; set; }
+        public bool? RouterMisconfiguration { get; set; }
+        public bool? Unhandled { get; set; }
+        public override string ToString() { }
     }
     public sealed class DuplicateActorRegistryException : Akka.Hosting.ActorRegistryException
     {
@@ -70,11 +93,11 @@
     public delegate Akka.Configuration.Config HoconConfigurator(Akka.Configuration.Config currentConfig, Akka.Configuration.Config configToAdd);
     public static class HoconExtensions
     {
-        public static string ToHocon(this System.TimeSpan value) { }
-        public static string ToHocon(this System.TimeSpan? value) { }
         public static string ToHocon(this bool value) { }
         public static string ToHocon(this bool? value) { }
         public static string ToHocon(this string text) { }
+        public static string ToHocon(this System.TimeSpan value, bool allowInfinite = false, bool zeroIsInfinite = false) { }
+        public static string ToHocon(this System.TimeSpan? value, bool allowInfinite = false, bool zeroIsInfinite = false) { }
     }
     public interface IActorRegistry : Akka.Hosting.IReadOnlyActorRegistry, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.Type, Akka.Actor.IActorRef>>, System.Collections.IEnumerable
     {
@@ -100,6 +123,8 @@
     }
     public sealed class LoggerConfigBuilder
     {
+        public Akka.Hosting.DeadLetterOptions? DeadLetterOptions { get; set; }
+        public Akka.Hosting.DebugOptions? DebugOptions { get; set; }
         public bool LogConfigOnStart { get; set; }
         public Akka.Event.LogLevel LogLevel { get; set; }
         public Akka.Hosting.LoggerConfigBuilder AddLogger<T>()
@@ -124,6 +149,12 @@
         public Akka.Actor.IActorRef ActorRef { get; }
     }
     public delegate System.Threading.Tasks.Task StartupTask(Akka.Actor.ActorSystem system, Akka.Hosting.IActorRegistry registry);
+    public enum TriStateValue
+    {
+        None = 0,
+        All = 1,
+        Some = 2,
+    }
     public static class Util
     {
         public static Akka.Configuration.Config MoveTo(this Akka.Configuration.Config config, string path) { }
