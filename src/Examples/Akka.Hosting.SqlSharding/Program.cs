@@ -23,10 +23,10 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
         .WithShardRegion<UserActionsEntity>("userActions", s => UserActionsEntity.Props(s),
             new UserMessageExtractor(),
             new ShardOptions(){ StateStoreMode = StateStoreMode.DData, Role = "myRole"})
-        .WithActors((system, registry) =>
+        .WithActors((system, registry, resolver) =>
         {
-            var userActionsShard = registry.Get<UserActionsEntity>();
-            var indexer = system.ActorOf(Props.Create(() => new Indexer(userActionsShard)), "index");
+            var props = resolver.Props<Indexer>();
+            var indexer = system.ActorOf(props, "index");
             registry.TryRegister<Index>(indexer); // register for DI
         });
 })

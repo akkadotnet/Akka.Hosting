@@ -17,9 +17,9 @@ public sealed class Indexer : ReceiveActor
 
     private Dictionary<string, UserDescriptor> _users = new Dictionary<string, UserDescriptor>();
 
-    public Indexer(IActorRef userActionsShardRegion)
+    public Indexer(IRequiredActor<UserActionsEntity> userActionsShardRegion)
     {
-        _userActionsShardRegion = userActionsShardRegion;
+        _userActionsShardRegion = userActionsShardRegion.ActorRef;
 
         Receive<UserDescriptor>(d =>
         {
