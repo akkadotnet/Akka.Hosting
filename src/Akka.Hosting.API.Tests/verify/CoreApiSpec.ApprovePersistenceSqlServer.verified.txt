@@ -1,0 +1,37 @@
+﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Akka.Persistence.Hosting.Tests")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETStandard,Version=v2.0", FrameworkDisplayName=".NET Standard 2.0")]
+namespace Akka.Persistence.SqlServer.Hosting
+{
+    public static class AkkaPersistenceSqlServerHostingExtensions
+    {
+        public static Akka.Hosting.AkkaConfigurationBuilder WithSqlServerPersistence(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.SqlServer.Hosting.SqlServerJournalOptions? journalOptions = null, Akka.Persistence.SqlServer.Hosting.SqlServerSnapshotOptions? snapshotOptions = null) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithSqlServerPersistence(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Persistence.SqlServer.Hosting.SqlServerJournalOptions>? journalOptionConfigurator = null, System.Action<Akka.Persistence.SqlServer.Hosting.SqlServerSnapshotOptions>? snapshotOptionConfigurator = null, bool isDefaultPlugin = true) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithSqlServerPersistence(this Akka.Hosting.AkkaConfigurationBuilder builder, string connectionString, Akka.Persistence.Hosting.PersistenceMode mode = 0, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder>? journalBuilder = null, bool autoInitialize = true, string pluginIdentifier = "sql-server", bool isDefaultPlugin = true) { }
+    }
+    public sealed class SqlServerJournalOptions : Akka.Persistence.Hosting.SqlJournalOptions
+    {
+        public SqlServerJournalOptions() { }
+        public SqlServerJournalOptions(bool isDefaultPlugin, string identifier = "sql-server") { }
+        protected override Akka.Configuration.Config InternalDefaultConfig { get; }
+        public System.TimeSpan QueryRefreshInterval { get; set; }
+        public bool UseConstantParameterSize { get; set; }
+        public override string Identifier { get; set; }
+        public override string MetadataTableName { get; set; }
+        public override string SchemaName { get; set; }
+        public override bool SequentialAccess { get; set; }
+        public override string TableName { get; set; }
+        protected override System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
+    }
+    public sealed class SqlServerSnapshotOptions : Akka.Persistence.Hosting.SqlSnapshotOptions
+    {
+        public SqlServerSnapshotOptions() { }
+        public SqlServerSnapshotOptions(bool isDefaultPlugin, string identifier = "sql-server") { }
+        protected override Akka.Configuration.Config InternalDefaultConfig { get; }
+        public bool UseConstantParameterSize { get; set; }
+        public override string Identifier { get; set; }
+        public override string SchemaName { get; set; }
+        public override bool SequentialAccess { get; set; }
+        public override string TableName { get; set; }
+        protected override System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
+    }
+}
