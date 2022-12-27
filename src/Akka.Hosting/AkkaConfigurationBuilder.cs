@@ -13,6 +13,7 @@ using Akka.Hosting.Logging;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
@@ -351,6 +352,8 @@ namespace Akka.Hosting
             {
                 return sp.GetRequiredService<ActorRegistry>();
             });
+
+            ServiceCollection.AddSingleton(typeof(IRequiredActor<>), typeof(RequiredActor<>));
         }
 
         /// <summary>
