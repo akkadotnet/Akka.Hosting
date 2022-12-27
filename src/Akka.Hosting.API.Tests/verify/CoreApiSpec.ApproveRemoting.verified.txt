@@ -1,0 +1,18 @@
+﻿namespace Akka.Remote.Hosting
+{
+    public static class AkkaRemoteHostingExtensions
+    {
+        public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Remote.Hosting.RemoteOptions options) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Remote.Hosting.RemoteOptions> configure) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, string? hostname = null, int? port = default, string? publicHostname = null, int? publicPort = default) { }
+    }
+    public sealed class RemoteOptions
+    {
+        public RemoteOptions() { }
+        public string? HostName { get; set; }
+        public int? Port { get; set; }
+        public string? PublicHostName { get; set; }
+        public int? PublicPort { get; set; }
+        public override string ToString() { }
+    }
+}

@@ -1,0 +1,99 @@
+﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Akka.Cluster.Hosting.Tests")]
+namespace Akka.Cluster.Hosting
+{
+    public static class AkkaClusterHostingExtensions
+    {
+        public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<string> initialContacts) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IList<Akka.Actor.ActorPath> initialContacts) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<Akka.Actor.Address> initialContactAddresses, string receptionistActorName = "receptionist") { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientReceptionist(this Akka.Hosting.AkkaConfigurationBuilder builder, string name = "receptionist", string? role = null) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithClustering(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ClusterOptions? options = null) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedPubSub(this Akka.Hosting.AkkaConfigurationBuilder builder, string role) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<string, Akka.Actor.Props> entityPropsFactory, Akka.Cluster.Sharding.IMessageExtractor messageExtractor, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, System.Func<string, Akka.Actor.Props>> entityPropsFactory, Akka.Cluster.Sharding.IMessageExtractor messageExtractor, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, Akka.DependencyInjection.IDependencyResolver, System.Func<string, Akka.Actor.Props>> entityPropsFactory, Akka.Cluster.Sharding.IMessageExtractor messageExtractor, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<string, Akka.Actor.Props> entityPropsFactory, Akka.Cluster.Sharding.ExtractEntityId extractEntityId, Akka.Cluster.Sharding.ExtractShardId extractShardId, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, System.Func<string, Akka.Actor.Props>> entityPropsFactory, Akka.Cluster.Sharding.ExtractEntityId extractEntityId, Akka.Cluster.Sharding.ExtractShardId extractShardId, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, Akka.DependencyInjection.IDependencyResolver, System.Func<string, Akka.Actor.Props>> entityPropsFactory, Akka.Cluster.Sharding.ExtractEntityId extractEntityId, Akka.Cluster.Sharding.ExtractShardId extractShardId, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegionProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, string roleName, Akka.Cluster.Sharding.IMessageExtractor messageExtractor) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegionProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, string roleName, Akka.Cluster.Sharding.ExtractEntityId extractEntityId, Akka.Cluster.Sharding.ExtractShardId extractShardId) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithSingleton<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonName, Akka.Actor.Props actorProps, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null, bool createProxyToo = true) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithSingleton<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonName, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, Akka.DependencyInjection.IDependencyResolver, Akka.Actor.Props> propsFactory, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null, bool createProxyToo = true) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithSingletonProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonName, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null, string? singletonManagerPath = null) { }
+    }
+    public sealed class ClusterOptions
+    {
+        public ClusterOptions() { }
+        public string? AppVersion { get; set; }
+        public bool? LogInfo { get; set; }
+        public bool? LogInfoVerbose { get; set; }
+        public int? MinimumNumberOfMembers { get; set; }
+        public System.Collections.Generic.Dictionary<string, int>? MinimumNumberOfMembersPerRole { get; set; }
+        public string[]? Roles { get; set; }
+        public string[]? SeedNodes { get; set; }
+        public Akka.Cluster.Hosting.SBR.SplitBrainResolverOption? SplitBrainResolver { get; set; }
+    }
+    public sealed class ClusterSingletonOptions
+    {
+        public ClusterSingletonOptions() { }
+        public int? BufferSize { get; set; }
+        public Akka.Hosting.Coordination.LeaseOptionBase? LeaseImplementation { get; set; }
+        public System.TimeSpan? LeaseRetryInterval { get; set; }
+        public string? Role { get; set; }
+        public object? TerminationMessage { get; set; }
+    }
+    public sealed class ShardOptions
+    {
+        public ShardOptions() { }
+        public object? HandOffStopMessage { get; set; }
+        public Akka.Persistence.Hosting.JournalOptions? JournalOptions { get; set; }
+        public string? JournalPluginId { get; set; }
+        public Akka.Hosting.Coordination.LeaseOptionBase? LeaseImplementation { get; set; }
+        public System.TimeSpan? LeaseRetryInterval { get; set; }
+        public bool RememberEntities { get; set; }
+        public string? Role { get; set; }
+        public Akka.Persistence.Hosting.SnapshotOptions? SnapshotOptions { get; set; }
+        public string? SnapshotPluginId { get; set; }
+        public Akka.Cluster.Sharding.StateStoreMode StateStoreMode { get; set; }
+    }
+}
+namespace Akka.Cluster.Hosting.SBR
+{
+    public sealed class KeepMajorityOption : Akka.Cluster.Hosting.SBR.SplitBrainResolverOption
+    {
+        public KeepMajorityOption() { }
+        public override string ConfigPath { get; }
+        public override void Apply(Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup? setup = null) { }
+    }
+    public sealed class KeepOldestOption : Akka.Cluster.Hosting.SBR.SplitBrainResolverOption
+    {
+        public KeepOldestOption() { }
+        public override string ConfigPath { get; }
+        public bool? DownIfAlone { get; set; }
+        public override void Apply(Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup? setup = null) { }
+    }
+    public sealed class LeaseMajorityOption : Akka.Cluster.Hosting.SBR.SplitBrainResolverOption
+    {
+        public LeaseMajorityOption() { }
+        public override string ConfigPath { get; }
+        public Akka.Hosting.Coordination.LeaseOptionBase? LeaseImplementation { get; set; }
+        public string? LeaseName { get; set; }
+        public override void Apply(Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup? setup = null) { }
+    }
+    public abstract class SplitBrainResolverOption : Akka.Hosting.IHoconOption
+    {
+        public static readonly Akka.Cluster.Hosting.SBR.SplitBrainResolverOption Default;
+        protected SplitBrainResolverOption() { }
+        public System.Type Class { get; }
+        public abstract string ConfigPath { get; }
+        public string? Role { get; set; }
+        public abstract void Apply(Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup? setup = null);
+    }
+    public sealed class StaticQuorumOption : Akka.Cluster.Hosting.SBR.SplitBrainResolverOption
+    {
+        public StaticQuorumOption() { }
+        public override string ConfigPath { get; }
+        public int? QuorumSize { get; set; }
+        public override void Apply(Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup? setup = null) { }
+    }
+}

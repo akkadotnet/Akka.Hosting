@@ -48,6 +48,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.CustomJournalIdDemo", "src\Examples\Akka.Hosting.CustomJournalIdDemo\Akka.Hosting.CustomJournalIdDemo.csproj", "{89865EC9-B8BF-414C-B69D-B84CAA00025D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.API.Tests", "src\Akka.Hosting.API.Tests\Akka.Hosting.API.Tests.csproj", "{410065E0-6636-4F34-85AE-4C4BA413ADB4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +126,10 @@ Global
 		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
