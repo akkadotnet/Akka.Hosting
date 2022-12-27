@@ -45,6 +45,7 @@ namespace Akka.Cluster.Hosting
     public sealed class ShardOptions
     {
         public ShardOptions() { }
+        public object? HandOffStopMessage { get; set; }
         public Akka.Persistence.Hosting.JournalOptions? JournalOptions { get; set; }
         public string? JournalPluginId { get; set; }
         public Akka.Hosting.Coordination.LeaseOptionBase? LeaseImplementation { get; set; }
