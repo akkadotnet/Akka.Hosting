@@ -1,3 +1,161 @@
+## [1.0.0] / 27 December 2022
+
+This 1.0.0 release is the RTM release for `Akka.Hosting` and contains major API breaking changes with a lot of its API. All current API will be frozen for all future releases and will be backed with our backward compatibility promise.
+
+**Change List**
+* [Update Akka.NET from 1.4.45 to 1.4.47](https://github.com/akkadotnet/akka.net/releases/tag/1.4.47)
+* [The `HoconAddMode` argument in `AddHocon()` and `AddHoconFile()` extension methods are not optional anymore](https://github.com/akkadotnet/Akka.Hosting/pull/135)
+* [`ActorRegistry.Get&lt;T&gt;` will throw if no actor with key T has been registered with the `ActorRegistry`](https://github.com/akkadotnet/Akka.Hosting/pull/147)
+* [Modularize and make Hosting.Persistence methods use the options pattern](https://github.com/akkadotnet/Akka.Hosting/pull/146)
+* [Add lease support to singleton and sharding extensions](https://github.com/akkadotnet/Akka.Hosting/pull/150)
+* [Fix bug in `AddActor` and `AddStartup` to make sure that they're executed in order](https://github.com/akkadotnet/Akka.Hosting/pull/155)
+* [Add IConfiguration to HOCON adapter](https://github.com/akkadotnet/Akka.Hosting/pull/158)
+* [Make `JournalOptions` and `SnapshotOptions` IConfigurable bindable](https://github.com/akkadotnet/Akka.Hosting/pull/161)
+* [Make `RemoteOptions` IConfiguration bindable](https://github.com/akkadotnet/Akka.Hosting/pull/160)
+* [Better integration with Akka.DependencyInjection](https://github.com/akkadotnet/Akka.Hosting/pull/169)
+* [Add `WithActorAskTimeout` and extends debug logging options](https://github.com/akkadotnet/Akka.Hosting/pull/173)
+* Updated NuGet package versions:
+  * [Bump Akka.Persistence.PostgreSql from 1.4.45 to 1.4.46](https://github.com/akkadotnet/Akka.Hosting/pull/148)
+
+**General Changes**
+
+* Almost all options properties are changed to value types to allow direct binding to `Miscosoft.Extensions.Configuration` `IConfiguration` instance.
+* Implements `Nullable` on all projects.
+
+**Changes To `Akka.Hosting`**
+
+* The `HoconAddMode` argument in `AddHocon()` and `AddHoconFile()` extension methods are not optional anymore; you will need to declare that your HOCON will to append, prepend, or replace existing HOCON configuration. In almost all cases, unless you're adding a default configuration, you only need to use `HoconAddMode.Prepend`.
+
+* `ActorRegistry.Get&lt;T&gt;` will now throw an `ActorRegistryException` if no actor with key T has been registered with the `ActorRegistry`, this is done to make the API more consistent with all other .NET APIs. Use `ActorRegistry.TryGet&lt;T&gt;` if you do not want this behavior.
+
+* Better integration with `Akka.DependencyInjection`. Documentation can be read [here](https://github.com/akkadotnet/Akka.Hosting/blob/dev/README.md#dependency-injection-outside-and-inside-akkanet)
+
+* Added `WithActorAskTimeout()` extension method to configure the actor ask timeout settings.
+
+* Added extended debug logging support for dead letters and actor messages and events.
+
+* Adds a variation to `AddHocon` that can convert `Microsoft.Extensions.Configuration` `IConfiguration` into HOCON `Config` instance and adds it to the ActorSystem being configured.
+  * All variable name are automatically converted to lower case.
+  * All "." (period) in the `IConfiguration` key will be treated as a HOCON object key separator
+  * For environment variable configuration provider:
+    * "__" (double underline) will be converted to "." (period).
+    * "_" (single underline) will be converted to "-" (dash).
+    * If all keys are composed of integer parseable keys, the whole object is treated as an array
+    
+  Example:
+  
+  JSON configuration:
+  ```json
+  {
+     "akka.cluster": {
+         "roles": [ "front-end", "back-end" ],
+         "min-nr-of-members": 3,
+         "log-info": true
+     }
+  }
+  ```
+  
+  and environment variables:
+ 
+  ```powershell
+  AKKA__CLUSTER__ROLES__0=front-end
+  AKKA__CLUSTER__ROLES__1=back-end
+  AKKA__CLUSTER__MIN_NR_OF_MEMBERS=3
+  AKKA__CLUSTER__LOG_INFO=true
+  ```
+  
+  is equivalent to HOCON configuration of:
+ 
+  ```HOCON
+  akka {
+      cluster {
+          roles: [ front-end, back-end ]
+          min-nr-of-members: 3
+          log-info: true
+      }
+  }
+  ```
+
+**Changes to `Akka.Persistence.Hosting`**
+
+* You can now use option classes to configure persistence. Currently, the persistence plugins that supports this are `Akka.Persistence.PostgreSql.Hosting` and `Akka.Persistence.SqlServer.Hosting`. Support for other Akka.Hosting enabled plugins will be rolled out after this release.
+* These option classes are modular: 
+  * Multiple options can be registered with the builder using different names 
+  * The same persistence plugin (e.g. PostgreSql) can be declared and registered multiple times using different names and configuration.
+  * Options can be declared as the default persistence plugin and not.
+  * Different or the same registered option can be used as the normal persistence options and `Akka.Cluster.Hosting` sharding extension methods.
+  * There can only be one option declared as the default journal and one option declared as the default snapshot plugin. If multiple default plugin options are declared, only the last registered option will have an effect.
+* Journal event adapters can now be composed directly using the `Adapters` property inside the journal option class.
+* An example project can be seen [here](https://github.com/akkadotnet/Akka.Hosting/tree/dev/src/Examples/Akka.Hosting.CustomJournalIdDemo)
+
+Example code:
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+{
+    // Grab connection strings from appsettings.json
+    var localConn = builder.Configuration.GetConnectionString("sqlServerLocal");
+    var shardingConn = builder.Configuration.GetConnectionString("sqlServerSharding");
+
+    // Custom journal options with the id "sharding"
+    // The absolute id will be "akka.persistence.journal.sharding"
+    var shardingJournalOptions = new SqlServerJournalOptions(
+        isDefaultPlugin: false)
+    {
+        Identifier = "sharding",
+        ConnectionString = shardingConn,
+        AutoInitialize = true
+    };
+    
+    // Custom snapshots options with the id "sharding"
+    // The absolute id will be "akka.persistence.snapshot-store.sharding"
+    var shardingSnapshotOptions = new SqlServerSnapshotOptions(
+        isDefaultPlugin: false)
+    {
+        Identifier = "sharding",
+        ConnectionString = shardingConn,
+        AutoInitialize = true
+    };
+    
+    configurationBuilder
+        // Standard way to create a default persistence 
+        // journal and snapshot
+        .WithSqlServerPersistence(localConn)
+        // This is a custom persistence setup using the options 
+        // instances we've set up earlier.
+        // Note that we are calling WithSqlServerPersistence()
+        // twice, these two calls registers two different
+        // persistence options with two different identifier names.
+        .WithSqlServerPersistence(shardingJournalOptions, shardingSnapshotOptions) 
+        .WithShardRegion<UserActionsEntity>(
+            "userActions", 
+            s => UserActionsEntity.Props(s),
+            new UserMessageExtractor(),
+            new ShardOptions
+            {
+                StateStoreMode = StateStoreMode.Persistence, 
+                Role = "myRole",
+                // Supplying sharding with separate persistence plugin options
+                JournalOptions = shardingJournalOptions,
+                SnapshotOptions = shardingSnapshotOptions
+                // NOTE: you can supply the plugin id instead
+                // JournalPluginId = shardingJournalOptions.PluginId,
+                // SnapshotPluginId = shardingSnapshotOptions.PluginId 
+            });
+})
+```
+
+**Changes to `Akka.Cluster.Hosting`**
+
+* `ClusterOptions` are expanded with more properties to make it more configurable. These new properties are:
+  * `MinimumNumberOfMembers`: Allows you to set the minimum number of joined cluster members for a cluster to be considered to be in the `Up` state.
+  * `MinimumNumberOfMembersPerRole`: Similar to ``MinimumNumberOfMembers`, but it is scoped to each cluster role.
+  * `AppVersion`: Allows you to set the current cluster application version, useful for performing rolling update of the cluster members.
+  * `LogInfo`: Enable info level logging of cluster events.
+  * `LogInfoVerbose`: Enable a more verbose info level logging of cluster events, used for temporary troubleshooting.
+  * `SplitBrainResolver`: The split brain resolver property is moved into the options class instead of being part of the extension method arguments.
+* `ClusterSingletonOptions` and `ShardOptions` now have a `LeaseImplementation` property that can be used to configure leasing for cluster singleton and sharding. Currently, two lease plugins are supported: `Akka.Coordination.KubernetesApi` and `Akka.Coordination.Azure` by assigning `KubernetesLeaseOption.Instance` or `AzureLeaseOption.Instance` respectively to the property.
+
 ## [0.5.2-beta1] / 29 November 2022
 * [Update Akka.NET from 1.4.45 to 1.4.46](https://github.com/akkadotnet/akka.net/releases/tag/1.4.46)
 * [Remove default `HoconAddMode` value from `AddHocon` and `AddHoconFile`](https://github.com/akkadotnet/Akka.Hosting/pull/135)
