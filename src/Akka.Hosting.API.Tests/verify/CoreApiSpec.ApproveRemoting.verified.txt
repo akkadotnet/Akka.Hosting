@@ -1,5 +1,4 @@
-﻿[assembly: System.Runtime.Versioning.TargetFramework(".NETStandard,Version=v2.0", FrameworkDisplayName=".NET Standard 2.0")]
-namespace Akka.Remote.Hosting
+﻿namespace Akka.Remote.Hosting
 {
     public static class AkkaRemoteHostingExtensions
     {

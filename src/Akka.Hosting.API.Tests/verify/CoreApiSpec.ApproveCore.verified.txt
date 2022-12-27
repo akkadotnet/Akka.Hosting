@@ -1,5 +1,4 @@
-﻿[assembly: System.Runtime.Versioning.TargetFramework(".NETStandard,Version=v2.0", FrameworkDisplayName=".NET Standard 2.0")]
-namespace Akka.Hosting
+﻿namespace Akka.Hosting
 {
     public class ActorRegistry : Akka.Actor.IExtension, Akka.Hosting.IActorRegistry, Akka.Hosting.IReadOnlyActorRegistry, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.Type, Akka.Actor.IActorRef>>, System.Collections.IEnumerable
     {

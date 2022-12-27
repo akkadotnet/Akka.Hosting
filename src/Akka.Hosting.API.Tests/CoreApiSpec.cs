@@ -18,6 +18,7 @@ public class CoreApiSpec
     static CoreApiSpec()
     {
         VerifierSettings.ScrubLinesContaining("\"RepositoryUrl\"");
+        VerifierSettings.ScrubLinesContaining("Versioning.TargetFramework");
         VerifyDiffPlex.Initialize();
     }
 

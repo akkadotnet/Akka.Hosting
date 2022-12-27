@@ -1,5 +1,4 @@
 ﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Akka.Persistence.Hosting.Tests")]
-[assembly: System.Runtime.Versioning.TargetFramework(".NETStandard,Version=v2.0", FrameworkDisplayName=".NET Standard 2.0")]
 namespace Akka.Persistence.PostgreSql.Hosting
 {
     public static class AkkaPersistencePostgreSqlHostingExtensions
