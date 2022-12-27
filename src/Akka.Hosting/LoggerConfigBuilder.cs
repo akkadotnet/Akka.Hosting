@@ -41,6 +41,10 @@ namespace Akka.Hosting
         /// </summary>
         public bool LogConfigOnStart { get; set; } = false;
 
+        public DeadLetterOptions? DeadLetterOptions { get; set; }
+
+        public DebugOptions? DebugOptions { get; set; }
+
         /// <summary>
         /// Clear all loggers currently registered.
         /// </summary>
@@ -80,6 +84,11 @@ namespace Akka.Hosting
                 .Append("akka.loglevel=").AppendLine(ParseLogLevel(LogLevel))
                 .Append("akka.loggers=[").Append(string.Join(",", _loggers.Select(t => $"\"{t.AssemblyQualifiedName}\""))).AppendLine("]")
                 .Append("akka.log-config-on-start=").AppendLine(LogConfigOnStart ? "true" : "false");
+            if (DebugOptions is { })
+                sb.AppendLine(DebugOptions.ToString());
+            if (DeadLetterOptions is { })
+                sb.AppendLine(DeadLetterOptions.ToString());
+            
             return ConfigurationFactory.ParseString(sb.ToString());
         }
 
