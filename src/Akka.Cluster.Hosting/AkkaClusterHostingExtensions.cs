@@ -233,6 +233,12 @@ namespace Akka.Cluster.Hosting
         /// The interval between retries for acquiring the lease
         /// </summary>
         public TimeSpan? LeaseRetryInterval { get; set; }
+        
+        /// <summary>
+        /// The message that will be sent to entities when they are to be stopped for a rebalance or
+        /// graceful shutdown of a <see cref="Sharding.ShardRegion"/>, e.g. <see cref="PoisonPill"/>.
+        /// </summary>
+        public object? HandOffStopMessage { get; set; }
     }
 
     public static class AkkaClusterHostingExtensions
@@ -634,9 +640,10 @@ namespace Akka.Cluster.Hosting
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
                 var props = entityPropsFactory(system, registry, resolver);
-                var settings = ClusterShardingSettings.Create(system).WithRole(shardOptions.Role);
+                var settings = PopulateClusterShardingSettings(shardOptions, system);
+                var allocationStrategy = ClusterSharding.Get(system).DefaultShardAllocationStrategy(settings);
                 var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, props, settings, extractEntityId, extractShardId).ConfigureAwait(false);
+                    .StartAsync(typeName, props, settings, extractEntityId, extractShardId, allocationStrategy, shardOptions.HandOffStopMessage ?? PoisonPill.Instance).ConfigureAwait(false);
                 registry.Register<TKey>(shardRegion);
             }
 
