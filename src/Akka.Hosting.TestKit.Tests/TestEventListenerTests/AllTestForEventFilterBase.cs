@@ -20,9 +20,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
     public abstract class AllTestForEventFilterBase<TLogEvent> : EventFilterTestBase where TLogEvent : LogEvent
     {
         // ReSharper disable ConvertToLambdaExpression
-        private EventFilterFactory _testingEventFilter;
+        private EventFilterFactory? _testingEventFilter;
 
-        protected AllTestForEventFilterBase(LogLevel logLevel, ITestOutputHelper output = null)
+        protected AllTestForEventFilterBase(LogLevel logLevel, ITestOutputHelper? output = null)
             : base(logLevel, output)
         {
         }
@@ -31,7 +31,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         {
             await base.BeforeTestStart();
             LogLevel = Event.Logging.LogLevelFor<TLogEvent>();
-            // ReSharper disable once VirtualMemberCallInContructor
+            // ReSharper disable once VirtualMemberCallInConstructor
             _testingEventFilter = CreateTestingEventFilter();
         }
 
@@ -53,6 +53,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Single_message_is_intercepted()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel).ExpectOne(() => LogMessage("whatever"));
             TestSuccessful = true;
         }
@@ -61,6 +64,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Can_intercept_messages_when_start_is_specified()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel, start: "what").ExpectOne(() => LogMessage("whatever"));
             TestSuccessful = true;
         }
@@ -68,6 +74,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Do_not_intercept_messages_when_start_does_not_match()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel, start: "what").ExpectOne(() =>
             {
                 LogMessage("let-me-thru");
@@ -80,6 +89,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Can_intercept_messages_when_message_is_specified()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel, message: "whatever").ExpectOne(() => LogMessage("whatever"));
             TestSuccessful = true;
         }
@@ -99,6 +111,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Can_intercept_messages_when_contains_is_specified()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel, contains: "ate").ExpectOne(() => LogMessage("whatever"));
             TestSuccessful = true;
         }
@@ -106,6 +121,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Do_not_intercept_messages_when_contains_does_not_match()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel, contains: "eve").ExpectOne(() =>
             {
                 LogMessage("let-me-thru");
@@ -119,6 +137,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Can_intercept_messages_when_source_is_specified()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel, source: LogSource.FromType(GetType(), Sys)).ExpectOne(() => LogMessage("whatever"));
             TestSuccessful = true;
         }
@@ -126,6 +147,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Do_not_intercept_messages_when_source_does_not_match()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel, source: "expected-source").ExpectOne(() =>
             {
                 PublishMessage("message", source: "expected-source");
@@ -136,8 +160,11 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         }
 
         [Fact]
-        public void Specified_numbers_of_messagesan_be_intercepted()
+        public void Specified_numbers_of_messages_and_be_intercepted()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel).Expect(2, () =>
             {
                 LogMessage("whatever");
@@ -161,7 +188,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public async Task ExpectAsync_0_events_Should_work()
         {
-            Exception ex = null;
+            Exception? ex = null;
             try
             {
                 await EventFilter.Error().ExpectAsync(0, async () =>
@@ -182,6 +209,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public async Task ExpectAsync_should_await_actionAsync()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             await Assert.ThrowsAnyAsync<FalseException>(async () =>
             {
                 await _testingEventFilter.ForLogLevel(LogLevel).ExpectAsync(0, actionAsync: async () =>
@@ -196,6 +226,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public async Task InterceptAsync_should_await_func()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             await Assert.ThrowsAnyAsync<FalseException>(async () =>
             {
                 await _testingEventFilter.ForLogLevel(LogLevel).ExpectAsync(0, async () =>
@@ -209,6 +242,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Messages_can_be_muted()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel).Mute(() =>
             {
                 LogMessage("whatever");
@@ -221,6 +257,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Messages_can_be_muted_from_now_on()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             var unmutableFilter = _testingEventFilter.ForLogLevel(LogLevel).Mute();
             LogMessage("whatever");
             LogMessage("whatever");
@@ -231,6 +270,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Messages_can_be_muted_from_now_on_with_using()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             using(_testingEventFilter.ForLogLevel(LogLevel).Mute())
             {
                 LogMessage("whatever");
@@ -243,15 +285,21 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Make_sure_async_works()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter.ForLogLevel(LogLevel).Expect(1, TimeSpan.FromSeconds(2), () =>
             {
-                Task.Delay(TimeSpan.FromMilliseconds(10)).ContinueWith(t => { LogMessage("whatever"); });
+                Task.Delay(TimeSpan.FromMilliseconds(10)).ContinueWith(_ => { LogMessage("whatever"); });
             });
         }
 
         [Fact]
         public void Chain_many_filters()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             _testingEventFilter
                 .ForLogLevel(LogLevel,message:"Message 1").And
                 .ForLogLevel(LogLevel,message:"Message 3")
@@ -269,6 +317,9 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         [Fact]
         public void Should_timeout_if_too_few_messages()
         {
+            if (_testingEventFilter is null)
+                throw new NullReferenceException("_testingEventFilter should not be null, check CreateTestingEventFilter implementation.");
+            
             Invoking(() =>
             {
                 _testingEventFilter.ForLogLevel(LogLevel).Expect(2, TimeSpan.FromMilliseconds(50), () =>

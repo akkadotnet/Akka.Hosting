@@ -3,7 +3,6 @@
         <TargetFramework>$(LibraryFramework)</TargetFramework>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Description>Akka.Persistence Microsoft.Extensions.Hosting support.</Description>
-        <LangVersion>9</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

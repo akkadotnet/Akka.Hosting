@@ -68,16 +68,8 @@ namespace Akka.Persistence.Hosting.Tests
             public override string PersistenceId { get; }
         }
         
-        public static async Task<IHost> StartHost(Action<IServiceCollection> testSetup)
-        {
-            var host = new HostBuilder()
-                .ConfigureServices(testSetup).Build();
-        
-            await host.StartAsync();
-            return host;
-        }
-        
-        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+
+        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             builder
                 .WithInMemoryJournal()
@@ -87,8 +79,6 @@ namespace Akka.Persistence.Hosting.Tests
                     var myActor = system.ActorOf(Props.Create(() => new MyPersistenceActor("ac1")), "actor1");
                     registry.Register<MyPersistenceActor>(myActor);
                 });
-            
-            return Task.CompletedTask;
         }
 
         [Fact]

@@ -21,7 +21,7 @@ namespace Akka.Hosting
             if (text is null)
                 throw new ConfigurationException("Value can not be null");
             
-            return EscapeRegex.IsMatch(text) ? $"\"{text}\"" : text;
+            return EscapeRegex.IsMatch(text) || text == string.Empty ? $"\"{text}\"" : text;
         }
 
         public static string ToHocon(this bool? value)
@@ -35,15 +35,25 @@ namespace Akka.Hosting
         public static string ToHocon(this bool value)
             => value ? "on" : "off";
 
-        public static string ToHocon(this TimeSpan? value)
+        public static string ToHocon(this TimeSpan? value, bool allowInfinite = false, bool zeroIsInfinite = false)
         {
             if (value is null)
                 throw new ConfigurationException("Value can not be null");
-            
-            return value.Value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
+            return value.Value.ToHocon(allowInfinite, zeroIsInfinite);
         }
 
-        public static string ToHocon(this TimeSpan value)
-            => value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
+        public static string ToHocon(this TimeSpan value, bool allowInfinite = false, bool zeroIsInfinite = false)
+        {
+            if (!allowInfinite)
+            {
+                if ((zeroIsInfinite && value <= TimeSpan.Zero) || (!zeroIsInfinite && value < TimeSpan.Zero))
+                    throw new ConfigurationException("Infinite value is not allowed");
+            }
+
+            if ((zeroIsInfinite && value <= TimeSpan.Zero) || (!zeroIsInfinite && value < TimeSpan.Zero))
+                return "infinite";
+            
+            return value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
+        }
     }
 }

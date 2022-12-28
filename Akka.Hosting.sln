@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
+		src\Directory.Build.props = src\Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.SimpleDemo", "src\Examples\Akka.Hosting.SimpleDemo\Akka.Hosting.SimpleDemo.csproj", "{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B}"
@@ -44,6 +45,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit", "src\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj", "{E28D4F3C-6C34-497B-BDC8-F2B3EA8BA309}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit.Tests", "src\Akka.Hosting.TestKit.Tests\Akka.Hosting.TestKit.Tests.csproj", "{3883AD08-B981-4943-8153-1E7FFD2C3127}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.CustomJournalIdDemo", "src\Examples\Akka.Hosting.CustomJournalIdDemo\Akka.Hosting.CustomJournalIdDemo.csproj", "{89865EC9-B8BF-414C-B69D-B84CAA00025D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.API.Tests", "src\Akka.Hosting.API.Tests\Akka.Hosting.API.Tests.csproj", "{410065E0-6636-4F34-85AE-4C4BA413ADB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -117,6 +122,14 @@ Global
 		{3883AD08-B981-4943-8153-1E7FFD2C3127}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3883AD08-B981-4943-8153-1E7FFD2C3127}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3883AD08-B981-4943-8153-1E7FFD2C3127}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -128,5 +141,6 @@ Global
 		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
+		{89865EC9-B8BF-414C-B69D-B84CAA00025D} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 	EndGlobalSection
 EndGlobal

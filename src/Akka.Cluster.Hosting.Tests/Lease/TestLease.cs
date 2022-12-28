@@ -15,6 +15,7 @@ using Akka.Configuration;
 using Akka.Coordination;
 using Akka.Event;
 using Akka.Hosting;
+using Akka.Hosting.Coordination;
 using Akka.Util;
 
 namespace Akka.Cluster.Hosting.Tests.Lease
@@ -36,7 +37,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
         }
 
         private readonly ExtendedActorSystem _system;
-        private readonly ConcurrentDictionary<string, TestLease> _testLeases = new ConcurrentDictionary<string, TestLease>();
+        private readonly ConcurrentDictionary<string, TestLease> _testLeases = new();
 
         public TestLeaseExt(ExtendedActorSystem system)
         {
@@ -63,7 +64,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
     {
         public override string ConfigPath => "test-lease";
         public override Type Class => typeof(TestLease);
-        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        public override void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
         {
             // no-op
         }
@@ -80,7 +81,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 Owner = owner;
             }
 
-            public bool Equals(AcquireReq other)
+            public bool Equals(AcquireReq? other)
             {
                 if (ReferenceEquals(other, null)) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -88,7 +89,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 return Equals(Owner, other.Owner);
             }
 
-            public override bool Equals(object obj) => obj is AcquireReq a && Equals(a);
+            public override bool Equals(object? obj) => obj is AcquireReq a && Equals(a);
 
             public override int GetHashCode() => Owner.GetHashCode();
 
@@ -104,7 +105,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 Owner = owner;
             }
 
-            public bool Equals(ReleaseReq other)
+            public bool Equals(ReleaseReq? other)
             {
                 if (ReferenceEquals(other, null)) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -112,7 +113,7 @@ namespace Akka.Cluster.Hosting.Tests.Lease
                 return Equals(Owner, other.Owner);
             }
 
-            public override bool Equals(object obj) => obj is ReleaseReq r && Equals(r);
+            public override bool Equals(object? obj) => obj is ReleaseReq r && Equals(r);
 
             public override int GetHashCode() => Owner.GetHashCode();
 

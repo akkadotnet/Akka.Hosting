@@ -6,7 +6,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Threading.Tasks;
 using Akka.Actor;
 using FluentAssertions;
 using Xunit;
@@ -17,23 +16,22 @@ public class IgnoreMessagesTests : TestKit
 {
     public class IgnoredMessage
     {
-        public IgnoredMessage(string ignoreMe = null)
+        public IgnoredMessage(string? ignoreMe = null)
         {
             IgnoreMe = ignoreMe;
         }
 
-        public string IgnoreMe { get; }
+        public string? IgnoreMe { get; }
     }
 
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
     }
 
     [Fact]
     public void IgnoreMessages_should_ignore_messages()
     {
-        IgnoreMessages(o => o is int && (int)o == 1);
+        IgnoreMessages(o => o is 1);
         TestActor.Tell(1);
         TestActor.Tell("1");
         string.Equals((string)ReceiveOne(), "1").Should().BeTrue();

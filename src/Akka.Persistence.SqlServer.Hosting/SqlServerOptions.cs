@@ -8,64 +8,80 @@ using System;
 using System.Text;
 using Akka.Configuration;
 using Akka.Hosting;
+using Akka.Persistence.Hosting;
 
+#nullable enable
 namespace Akka.Persistence.SqlServer.Hosting
 {
-    public sealed class SqlServerJournalOptions
+    /// <summary>
+    ///     Akka.Hosting options class to set up Microsoft SqlServer persistence journal.
+    /// </summary>
+    public sealed class SqlServerJournalOptions: SqlJournalOptions
     {
+        private static readonly Config Default = SqlServerPersistence.DefaultConfiguration()
+            .GetConfig(SqlServerJournalSettings.ConfigPath);
+
         /// <summary>
-        ///     Connection string used for database access
+        ///     Create a new instance of <see cref="SqlServerJournalOptions"/>
         /// </summary>
-        public string ConnectionString { get; set; }
+        public SqlServerJournalOptions() : this(true)
+        {
+        }
+        
+        /// <summary>
+        ///     Create a new instance of <see cref="SqlServerJournalOptions"/>
+        /// </summary>
+        /// <param name="isDefaultPlugin">
+        ///     Indicates if this journal configuration should be the default configuration for all persistence
+        /// </param>
+        /// <param name="identifier">
+        ///     The journal configuration identifier. <i>Default</i>: "sql-server"
+        /// </param>
+        public SqlServerJournalOptions(bool isDefaultPlugin, string identifier = "sql-server") : base(isDefaultPlugin)
+        {
+            Identifier = identifier;
+        }
         
         /// <summary>
         ///     <para>
-        ///         SQL commands timeout.
+        ///         The plugin identifier for this persistence plugin
         ///     </para>
-        ///     <b>Default</b>: 30 seconds
+        ///     <b>Default</b>: <c>"sql-server"</c>
         /// </summary>
-        public TimeSpan? ConnectionTimeout { get; set; }
+        public override string Identifier { get; set; }
         
         /// <summary>
         ///     <para>
-        ///         SQL server schema name to table corresponding with persistent journal.
+        ///         SQL schema name to table corresponding with persistent journal.
         ///     </para>
-        ///     <b>Default</b>: "dbo"
+        ///     <b>Default</b>: <c>"dbo"</c>
         /// </summary>
-        public string SchemaName { get; set; }
+        public override string SchemaName { get; set; } = "dbo";
         
         /// <summary>
         ///     <para>
         ///         SQL server table corresponding with persistent journal.
         ///     </para>
-        ///     <b>Default</b>: "EventJournal"
+        ///     <b>Default</b>: <c>"EventJournal"</c>
         /// </summary>
-        public string TableName { get; set; }
-        
-        /// <summary>
-        ///     <para>
-        ///         Should corresponding journal table be initialized automatically.
-        ///     </para>
-        ///     <b>Default</b>: false
-        /// </summary>
-        public bool? AutoInitialize { get; set; }
+        public override string TableName { get; set; } = "EventJournal";
         
         /// <summary>
         ///     <para>
         ///         SQL server table corresponding with persistent journal metadata.
         ///     </para>
-        ///     <b>Default</b>: "Metadata"
+        ///     <b>Default</b>: <c>"Metadata"</c>
         /// </summary>
-        public string MetadataTableName { get; set; }
-        
+        public override string MetadataTableName { get; set; } = "Metadata";
+
         /// <summary>
         ///     <para>
-        ///         Uses the CommandBehavior.SequentialAccess when creating the command, providing a performance
+        ///         Uses the CommandBehavior.SequentialAccess when creating DB commands, providing a performance
         ///         improvement for reading large BLOBS.
         ///     </para>
-        ///     <b>Default</b>: true
+        ///     <b>Default</b>: <c>true</c>
         /// </summary>
-        public bool? SequentialAccess { get; set; }
+        public override bool SequentialAccess { get; set; } = true;
         
         /// <summary>
         ///     <para>
@@ -74,146 +90,112 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///         If this parameter set to true, column sizes are loaded on journal startup from database schema, and 
         ///         string parameters have constant size which equals to corresponding column size.
         ///     </para>
-        ///     <b>Default</b>: false
+        ///     <b>Default</b>: <c>false</c>
         /// </summary>
-        public bool? UseConstantParameterSize { get; set; }
+        public bool UseConstantParameterSize { get; set; } = false;
         
         /// <summary>
-        /// <para>
-        ///     The SQL write journal is notifying the query side as soon as things
-        ///     are persisted, but for efficiency reasons the query side retrieves the events 
-        ///     in batches that sometimes can be delayed up to the configured <see cref="QueryRefreshInterval"/>.
-        /// </para>
+        ///     <para>
+        ///         The SQL write journal is notifying the query side as soon as things
+        ///         are persisted, but for efficiency reasons the query side retrieves the events 
+        ///         in batches that sometimes can be delayed up to the configured <see cref="QueryRefreshInterval"/>.
+        ///     </para>
         ///     <b>Default</b>: 3 seconds
         /// </summary>
-        public TimeSpan? QueryRefreshInterval { get; set; }
-        
-        internal Config ToConfig()
+        public TimeSpan QueryRefreshInterval { get; set; } = TimeSpan.FromSeconds(3);
+
+        protected override Config InternalDefaultConfig => Default;
+
+        protected override StringBuilder Build(StringBuilder sb)
         {
-            var sb = new StringBuilder()
-                .AppendLine("akka.persistence.journal.plugin = \"akka.persistence.journal.sql-server\"");
+            sb.AppendLine($"use-constant-parameter-size = {UseConstantParameterSize.ToHocon()}");
             
-            if (QueryRefreshInterval != null)
-                sb.AppendFormat("akka.persistence.query.journal.sql.refresh-interval = {0}\n", QueryRefreshInterval.ToHocon());
-
-            var innerSb = new StringBuilder();
-            if (ConnectionString != null)
-                innerSb.AppendFormat("connection-string = {0}\n", ConnectionString.ToHocon());
-
-            if (ConnectionTimeout != null)
-                innerSb.AppendFormat("connection-timeout = {0}\n", ConnectionTimeout.ToHocon());
-
-            if (SchemaName != null)
-                innerSb.AppendFormat("schema-name = {0}\n", SchemaName.ToHocon());
+            sb = base.Build(sb);
+            sb.AppendLine($"akka.persistence.query.journal.sql.refresh-interval = {QueryRefreshInterval.ToHocon()}");
             
-            if (TableName != null)
-                innerSb.AppendFormat("table-name = {0}\n", TableName.ToHocon());
-            
-            if (AutoInitialize != null)
-                innerSb.AppendFormat("auto-initialize = {0}\n", AutoInitialize.ToHocon());
-        
-            if (MetadataTableName != null)
-                innerSb.AppendFormat("metadata-table-name = {0}\n", MetadataTableName.ToHocon());
-            
-            if (SequentialAccess != null)
-                innerSb.AppendFormat("sequential-access = {0}\n", SequentialAccess.ToHocon());
-            
-            if(UseConstantParameterSize != null)
-                innerSb.AppendFormat("use-constant-parameter-size = {0}\n", UseConstantParameterSize.ToHocon());
-
-            if (innerSb.Length > 0)
-            {
-                sb.AppendLine("akka.persistence.journal.sql-server {")
-                    .Append(innerSb)
-                    .AppendLine("}");
-            }
-
-            return sb.ToString();
+            return sb;
         }
     }
 
-    public sealed class SqlServerSnapshotOptions
+    /// <summary>
+    /// Akka.Hosting options class to set up Microsoft SqlServer persistence snapshot store.
+    /// </summary>
+    public sealed class SqlServerSnapshotOptions: SqlSnapshotOptions
     {
+        private static readonly Config Default = SqlServerPersistence.DefaultConfiguration()
+            .GetConfig(SqlServerSnapshotSettings.ConfigPath);
+
         /// <summary>
-        ///     Connection string used for database access.
+        ///     Create a new instance of <see cref="SqlServerSnapshotOptions"/>
         /// </summary>
-        public string ConnectionString { get; set; }
+        public SqlServerSnapshotOptions() : this(true)
+        {
+        }
         
         /// <summary>
-        ///     SQL commands timeout.
-        ///     <b>Default</b>: 30 seconds
+        ///     Create a new instance of <see cref="SqlServerSnapshotOptions"/>
         /// </summary>
-        public TimeSpan? ConnectionTimeout { get; set; }
+        /// <param name="isDefaultPlugin">
+        ///     Indicates if this snapshot store configuration should be the default configuration for all persistence
+        /// </param>
+        /// <param name="identifier">
+        ///     The snapshot store configuration identifier. <i>Default</i>: "sql-server"
+        /// </param>
+        public SqlServerSnapshotOptions(bool isDefaultPlugin, string identifier = "sql-server") : base(isDefaultPlugin)
+        {
+            Identifier = identifier;
+        }
         
         /// <summary>
-        ///     SQL server schema name to table corresponding with persistent snapshot store.
-        ///     <b>Default</b>: "dbo"
+        ///     <para>
+        ///         The plugin identifier for this persistence plugin
+        ///     </para>
+        ///     <b>Default</b>: <c>"sql-server"</c>
         /// </summary>
-        public string SchemaName { get; set; }
+        public override string Identifier { get; set; }
         
         /// <summary>
-        ///     SQL server table corresponding with persistent snapshot store.
-        ///     <b>Default</b>: "EventJournal"
+        ///     <para>
+        ///         SQL server schema name to table corresponding with persistent snapshot store.
+        ///     </para>
+        ///     <b>Default</b>: <c>"dbo"</c>
         /// </summary>
-        public string TableName { get; set; }
+        public override string SchemaName { get; set; } = "dbo";
         
         /// <summary>
-        ///     Should corresponding snapshot store table be initialized automatically.
-        ///     <b>Default</b>: false
+        ///     <para>
+        ///         SQL server table corresponding with persistent snapshot store.
+        ///     </para>
+        ///     <b>Default</b>: <c>"SnapshotStore"</c>
         /// </summary>
-        public bool? AutoInitialize { get; set; }
+        public override string TableName { get; set; } = "SnapshotStore";
         
         /// <summary>
         ///     Uses the CommandBehavior.SequentialAccess when creating the command, providing a performance
         ///     improvement for reading large BLOBS.
-        ///     <b>Default</b>: true
+        ///     <b>Default</b>: <c>true</c>
         /// </summary>
-        public bool? SequentialAccess { get; set; }
-        
+        public override bool SequentialAccess { get; set; } = true;
+
         /// <summary>
-        ///     By default, string parameter size in ADO.NET queries are set dynamically based on current parameter
-        ///     value size.
-        ///     If this parameter set to true, column sizes are loaded on journal startup from database schema, and 
-        ///     string parameters have constant size which equals to corresponding column size.
-        ///     <b>Default</b>: false
+        ///     <para>
+        ///         By default, string parameter size in ADO.NET queries are set dynamically based on current parameter
+        ///         value size. If this parameter set to true, column sizes are loaded on journal startup from database
+        ///         schema, and string parameters have constant size which equals to corresponding column size.
+        ///     </para>
+        ///     <b>Default</b>: <c>false</c>
         /// </summary>
-        public bool? UseConstantParameterSize { get; set; }
+        public bool UseConstantParameterSize { get; set; } = false;
 
-        internal Config ToConfig()
+        protected override Config InternalDefaultConfig => Default;
+
+        protected override StringBuilder Build(StringBuilder sb)
         {
-            var sb = new StringBuilder()
-                .AppendLine("akka.persistence.snapshot-store.plugin = \"akka.persistence.snapshot-store.sql-server\"");
+            sb.AppendLine("class = \"Akka.Persistence.SqlServer.Snapshot.SqlServerSnapshotStore, Akka.Persistence.SqlServer\"");
+            sb.AppendLine("plugin-dispatcher = \"akka.actor.default-dispatcher\"");
+            sb.AppendLine($"use-constant-parameter-size = {UseConstantParameterSize.ToHocon()}");
             
-            var innerSb = new StringBuilder();
-            if (ConnectionString != null)
-                innerSb.AppendFormat("connection-string = {0}\n", ConnectionString.ToHocon());
-
-            if (ConnectionTimeout != null)
-                innerSb.AppendFormat("connection-timeout = {0}\n", ConnectionTimeout.ToHocon());
-
-            if (SchemaName != null)
-                innerSb.AppendFormat("schema-name = {0}\n", SchemaName.ToHocon());
-            
-            if (TableName != null)
-                innerSb.AppendFormat("table-name = {0}\n", TableName.ToHocon());
-            
-            if (AutoInitialize != null)
-                innerSb.AppendFormat("auto-initialize = {0}\n", AutoInitialize.ToHocon());
-        
-            if (SequentialAccess != null)
-                innerSb.AppendFormat("sequential-access = {0}\n", SequentialAccess.ToHocon());
-            
-            if(UseConstantParameterSize != null)
-                innerSb.AppendFormat("use-constant-parameter-size = {0}\n", UseConstantParameterSize.ToHocon());
-
-            if (innerSb.Length > 0)
-            {
-                sb.AppendLine("akka.persistence.snapshot-store.sql-server {")
-                    .Append(innerSb)
-                    .AppendLine("}");
-            }
-
-            return sb.ToString();
-        }        
+            return base.Build(sb);
+        }
     }
 }

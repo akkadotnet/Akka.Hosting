@@ -45,9 +45,29 @@ public class ActorRegistrySpecs
 
         // act
 
-        var register = () => registry.Register<Nobody>(null);
+        var register = () => registry.Register<Nobody>(null!); // intentionally null for the test
 
         // assert
         register.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Should_throw_on_missing_entry_during_Get()
+    {
+        // arrange
+        var registry = new ActorRegistry();
+        
+        // assert
+        registry.Invoking(x => x.Get<Nobody>()).Should().Throw<MissingActorRegistryEntryException>();
+    }
+    
+    [Fact]
+    public void Should_not_throw_on_missing_entry_during_TryGet()
+    {
+        // arrange
+        var registry = new ActorRegistry();
+        
+        // assert
+        registry.Invoking(x => x.TryGet<Nobody>(out var actor)).Should().NotThrow<MissingActorRegistryEntryException>();
     }
 }

@@ -9,6 +9,7 @@ using System.Text;
 using Akka.Actor.Setup;
 using Akka.Cluster.SBR;
 using Akka.Hosting;
+using Akka.Hosting.Coordination;
 
 namespace Akka.Cluster.Hosting.SBR
 {
@@ -19,13 +20,13 @@ namespace Akka.Cluster.Hosting.SBR
         /// <summary>
         /// if the <see cref="Role"/> is defined the decision is based only on members with that <see cref="Role"/>
         /// </summary>
-        public string Role { get; set; }
+        public string? Role { get; set; }
 
         public abstract string ConfigPath { get; }
 
         public Type Class => typeof(SplitBrainResolverProvider);
 
-        public abstract void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
+        public abstract void Apply(AkkaConfigurationBuilder builder, Setup? setup = null);
     }
 
     /// <summary>
@@ -53,7 +54,7 @@ namespace Akka.Cluster.Hosting.SBR
         /// </summary>
         public int? QuorumSize { get; set; } = 0;
         
-        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        public override void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
         {
             var sb = new StringBuilder("akka.cluster {");
             sb.AppendLine($"downing-provider-class = \"{Class.AssemblyQualifiedName}\"");
@@ -90,7 +91,7 @@ namespace Akka.Cluster.Hosting.SBR
     {
         public override string ConfigPath => SplitBrainResolverSettings.KeepMajorityName;
         
-        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        public override void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
         {
             var sb = new StringBuilder("akka.cluster {");
             sb.AppendLine($"downing-provider-class = \"{Class.AssemblyQualifiedName}\"");
@@ -128,7 +129,7 @@ namespace Akka.Cluster.Hosting.SBR
         /// </summary>
         public bool? DownIfAlone { get; set; } = true;
         
-        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        public override void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
         {
             var sb = new StringBuilder("akka.cluster {");
             sb.AppendLine($"downing-provider-class = \"{Class.AssemblyQualifiedName}\"");
@@ -154,13 +155,6 @@ namespace Akka.Cluster.Hosting.SBR
         }
     }
 
-    public abstract class LeaseOptionBase : IHoconOption
-    {
-        public abstract string ConfigPath { get; }
-        public abstract Type Class { get; }
-        public abstract void Apply(AkkaConfigurationBuilder builder, Setup setup = null);
-    }
-    
     /// <summary>
     /// Keep the part that can acquire the lease, and down the other part.
     /// Best effort is to keep the side that has most nodes, i.e. the majority side.
@@ -175,7 +169,7 @@ namespace Akka.Cluster.Hosting.SBR
         /// An class instance that extends <see cref="LeaseOptionBase"/>, used to configure the lease provider used in this
         /// <see cref="LeaseMajority"/> strategy.
         /// </summary>
-        public LeaseOptionBase LeaseImplementation { get; set; }
+        public LeaseOptionBase? LeaseImplementation { get; set; }
         
         /// <summary>
         /// <para>The name of the lease.</para>
@@ -183,9 +177,9 @@ namespace Akka.Cluster.Hosting.SBR
         /// The recommended format for the lease name is "{service-name}-akka-sbr".
         /// When lease-name is not defined, the name will be set to "{actor-system-name}-akka-sbr"
         /// </summary>
-        public string LeaseName { get; set; }
+        public string? LeaseName { get; set; }
         
-        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        public override void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
         {
             if (LeaseImplementation is null)
                 throw new NullReferenceException($"{nameof(LeaseMajorityOption)}.{nameof(LeaseImplementation)} must not be null");

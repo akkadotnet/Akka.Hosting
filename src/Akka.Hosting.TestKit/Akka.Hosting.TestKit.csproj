@@ -4,11 +4,12 @@
         <Description>TestKit for writing tests for Akka.NET using Akka.Hosting and xUnit.</Description>
         <TargetFramework>$(LibraryFramework)</TargetFramework>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <LangVersion>8.0</LangVersion>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
         <PackageReference Include="xunit" Version="$(XunitVersion)" />
     </ItemGroup>
     

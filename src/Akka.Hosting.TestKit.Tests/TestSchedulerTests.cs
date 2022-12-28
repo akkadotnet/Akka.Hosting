@@ -9,6 +9,7 @@ using System;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Event;
 using Akka.TestKit;
 using Akka.TestKit.Configs;
 using FluentAssertions;
@@ -18,11 +19,11 @@ namespace Akka.Hosting.TestKit.Tests;
 
 public class TestSchedulerTests : TestKit
 {
-    private IActorRef _testReceiveActor;
+    private IActorRef? _testReceiveActor;
 
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
+       
     }
 
     protected override async Task BeforeTestStart()
@@ -130,7 +131,7 @@ public class TestSchedulerTests : TestKit
 
     private class TestReceiveActor : ReceiveActor
     {
-        private Cancelable _cancelable;
+        private Cancelable? _cancelable;
 
         public TestReceiveActor()
         {
@@ -152,6 +153,9 @@ public class TestSchedulerTests : TestKit
 
             Receive<CancelMessage>(_ =>
             {
+                if (_cancelable is null)
+                    throw new NullReferenceException("_cancelable is null, actor has not received any CancelableMessage message");
+                
                 _cancelable.Cancel();
             });
 

@@ -85,7 +85,7 @@ partial class Build : NukeBuild
     {
         return "beta" + (BuildNumber() > 0 ? BuildNumber() : DateTime.UtcNow.Ticks.ToString());
     } 
-    public ChangeLog Changelog => ReadChangelog(ChangelogFile);
+    public ChangeLog Changelog => MdHelper.ReadChangelog(ChangelogFile);
 
     public ReleaseNotes ReleaseNotes => Changelog.ReleaseNotes.OrderByDescending(s => s.Version).FirstOrDefault() ?? throw new ArgumentException("Bad Changelog File. Version Should Exist");
 
@@ -123,7 +123,7 @@ partial class Build : NukeBuild
           var releaseNotes = GetNuGetReleaseNotes(ChangelogFile, GitRepository);
 
           var projects = SourceDirectory.GlobFiles("**/*.csproj")
-          .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj"));
+          .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj", "**/*Demo.csproj"));
           foreach (var project in projects)
           {
               DotNetPack(s => s
@@ -144,8 +144,8 @@ partial class Build : NukeBuild
     .Unlisted()
     .Description("Publishes .nuget packages to Nuget")
     .After(CreateNuget, SignClient)
-    .OnlyWhenDynamic(() => !NugetPublishUrl.IsNullOrEmpty())
-    .OnlyWhenDynamic(() => !NugetKey.IsNullOrEmpty())
+    .OnlyWhenDynamic(() => !NugetPublishUrl.IsNullOrWhiteSpace())
+    .OnlyWhenDynamic(() => !NugetKey.IsNullOrWhiteSpace())
     .Triggers(GitHubRelease)
     .Executes(() =>
     {
@@ -259,8 +259,8 @@ partial class Build : NukeBuild
         .Unlisted()
         .After(CreateNuget)
         .Before(PublishNuget)
-        .OnlyWhenDynamic(() => !SignClientSecret.IsNullOrEmpty())
-        .OnlyWhenDynamic(() => !SignClientUser.IsNullOrEmpty())
+        .OnlyWhenDynamic(() => !SignClientSecret.IsNullOrWhiteSpace())
+        .OnlyWhenDynamic(() => !SignClientUser.IsNullOrWhiteSpace())
         .Executes(() =>
         {
             var assemblies = OutputNuget.GlobFiles("*.nupkg");
@@ -381,7 +381,7 @@ partial class Build : NukeBuild
         .After(Restore)
         .Executes(() =>
         {
-            XmlTasks.XmlPoke(SourceDirectory / "Directory.Build.props", "//Project/PropertyGroup/PackageReleaseNotes", GetNuGetReleaseNotes(ChangelogFile));
+            XmlHelper.XmlPoke(SourceDirectory / "Directory.Build.props", "//Project/PropertyGroup/PackageReleaseNotes", MdHelper.GetNuGetReleaseNotes(ChangelogFile));
             XmlTasks.XmlPoke(SourceDirectory / "Directory.Build.props", "//Project/PropertyGroup/VersionPrefix", ReleaseVersion);
 
         });
@@ -390,9 +390,26 @@ partial class Build : NukeBuild
         .Description("Install `Nuke.GlobalTool` and SignClient")
         .Executes(() =>
         {
-            DotNet($@"dotnet tool install SignClient --version 1.3.155 --tool-path ""{ToolsDir}"" ");
-            DotNet($"tool install Nuke.GlobalTool --global");
-        });
+            try
+            {
+                DotNet($@"dotnet tool install SignClient --version 1.3.155 --tool-path ""{ToolsDir}"" ");
+            }
+            catch (ProcessException pex)
+            {
+                if (!pex.Message.Contains("is already installed"))
+                    throw;
+            }
+
+            try
+            {
+                DotNet($"tool install Nuke.GlobalTool --global");
+            }
+            catch (ProcessException pex)
+            {
+                if (!pex.Message.Contains("is already installed"))
+                    throw;
+            }
+        }).ProceedAfterFailure();
 
     static void Information(string info)
     {

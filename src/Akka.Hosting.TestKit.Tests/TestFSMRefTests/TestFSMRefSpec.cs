@@ -15,9 +15,9 @@ namespace Akka.Hosting.TestKit.Tests.TestFSMRefTests;
 
 public class TestFSMRefSpec : TestKit
 {
-    protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        return Task.CompletedTask;
+        
     }
     
     [Fact]
@@ -42,7 +42,7 @@ public class TestFSMRefSpec : TestKit
 
         fsm.SetStateTimeout(TimeSpan.FromMilliseconds(100));
         Within(TimeSpan.FromMilliseconds(80), TimeSpan.FromMilliseconds(500), () =>
-            AwaitCondition(() => fsm.StateName == 2 && fsm.StateData == "timeout")
+            AwaitCondition(() => fsm is { StateName: 2, StateData: "timeout" })
         );
     }
 
@@ -66,16 +66,16 @@ public class TestFSMRefSpec : TestKit
             {
                 var fsmEvent = e.FsmEvent;
                 if(Equals(fsmEvent, "go"))
-                    return GoTo(2, "go");
+                    return GoTo(2).Using("go");
                 if(fsmEvent is StateTimeout)
-                    return GoTo(2, "timeout");
+                    return GoTo(2).Using("timeout");
                 return null;
             });
             When(2, e =>
             {
                 var fsmEvent = e.FsmEvent;
                 if(Equals(fsmEvent, "back"))
-                    return GoTo(1, "back");
+                    return GoTo(1).Using("back");
                 return null;
             });
         }
@@ -84,7 +84,7 @@ public class TestFSMRefSpec : TestKit
     {
         public TimerTestFsm()
         {
-            StartWith(1, null);
+            StartWith(1, "");
             When(1, e => Stay());
         }
     }

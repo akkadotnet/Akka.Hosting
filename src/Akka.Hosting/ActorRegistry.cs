@@ -3,9 +3,40 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Akka.Actor;
+using Akka.Util;
 
 namespace Akka.Hosting
 {
+    /// <summary>
+    /// A strongly typed actor reference that can be used to send messages to an actor.
+    /// </summary>
+    /// <typeparam name="TActor">The type key of the actor - corresponds to a matching entry inside the <see cref="IActorRegistry"/>.</typeparam>
+    /// <remarks>
+    /// Designed to be used in combination with dependency injection to get references to specific actors inside your application.
+    /// </remarks>
+    public interface IRequiredActor<TActor>
+    {
+        /// <summary>
+        /// The underlying actor resolved via <see cref="ActorRegistry"/> using the given <see cref="TActor"/> key.
+        /// </summary>
+        IActorRef ActorRef { get; }
+    }
+
+    /// <summary>
+    /// INTERNAL API
+    /// </summary>
+    /// <typeparam name="TActor">The type key of the actor - corresponds to a matching entry inside the <see cref="IActorRegistry"/>.</typeparam>
+    public sealed class RequiredActor<TActor> : IRequiredActor<TActor>
+    {
+        public RequiredActor(IReadOnlyActorRegistry registry)
+        {
+            ActorRef = registry.Get<TActor>();
+        }
+
+        /// <inheritdoc cref="IRequiredActor{TActor}.ActorRef"/>
+        public IActorRef ActorRef { get; }
+    } 
+
     /// <summary>
     /// INTERNAL API
     /// </summary>
@@ -18,14 +49,49 @@ namespace Akka.Hosting
     }
 
     /// <summary>
+    /// Generic <see cref="ActorRegistry"/> exception.
+    /// </summary>
+    public class ActorRegistryException : Exception
+    {
+        public ActorRegistryException(string message) : base(message)
+        {
+            
+        }
+        
+        public ActorRegistryException(string message, Exception innerException) : base(message, innerException)
+        {
+            
+        }
+    }
+
+    /// <summary>
     /// Thrown when the same key is used twice in the registry and overwriting is not allowed.
     /// </summary>
-    public sealed class DuplicateActorRegistryException : Exception
+    public sealed class DuplicateActorRegistryException : ActorRegistryException
     {
 
         public DuplicateActorRegistryException(string message) : base(message)
         {
             
+        }
+        
+        public DuplicateActorRegistryException(string message, Exception innerException) : base(message, innerException)
+        {
+            
+        }
+    }
+
+    /// <summary>
+    /// Thrown when a user attempts to retrieve a non-existent key from the <see cref="ActorRegistry"/>.
+    /// </summary>
+    public sealed class MissingActorRegistryEntryException : ActorRegistryException
+    {
+        public MissingActorRegistryEntryException(string message) : base(message)
+        {
+        }
+
+        public MissingActorRegistryEntryException(string message, Exception innerException) : base(message, innerException)
+        {
         }
     }
 
@@ -39,9 +105,8 @@ namespace Akka.Hosting
     /// </remarks>
     public class ActorRegistry : IActorRegistry, IExtension
     {
-        private readonly ConcurrentDictionary<Type, IActorRef> _actorRegistrations =
-            new ConcurrentDictionary<Type, IActorRef>();
-
+        private readonly ConcurrentDictionary<Type, IActorRef> _actorRegistrations = new();
+        
         /// <inheritdoc cref="IActorRegistry.Register{TKey}"/>
         /// <exception cref="DuplicateActorRegistryException">Thrown when the same value is inserted twice and overwriting is not allowed.</exception>
         /// <exception cref="ArgumentNullException">Thrown when a <c>null</c> <see cref="IActorRef"/> is registered.</exception>
@@ -125,7 +190,7 @@ namespace Akka.Hosting
         {
             if (TryGet<TKey>(out var actor))
                 return actor;
-            return ActorRefs.Nobody;
+            throw new MissingActorRegistryEntryException("No actor registered for key " + typeof(TKey));
         }
 
         /// <summary>

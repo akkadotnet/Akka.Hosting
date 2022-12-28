@@ -21,14 +21,14 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
         /// </summary>
         protected bool TestSuccessful;
 
-        protected EventFilterTestBase(LogLevel logLevel, ITestOutputHelper output = null) : base(output: output)
+        protected EventFilterTestBase(LogLevel logLevel, ITestOutputHelper? output = null) : base(output: output)
         {
             _logLevel = logLevel;
         }
 
         protected abstract void SendRawLogEventMessage(object message);
 
-        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             builder.ConfigureLoggers(logger =>
             {
@@ -36,8 +36,6 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
                 logger.ClearLoggers();
                 logger.AddLogger<ForwardAllEventsTestEventListener>();
             });
-            
-            return Task.CompletedTask;
         }
 
         protected override async Task BeforeTestStart()
@@ -49,7 +47,16 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
             var initLoggerMessage = new ForwardAllEventsTestEventListener.ForwardAllEventsTo(TestActor);
             // ReSharper disable once DoNotCallOverridableMethodsInConstructor
             SendRawLogEventMessage(initLoggerMessage);
-            ExpectMsg("OK");
+            try
+            {
+                ExpectMsg("OK");
+            }
+            catch (Exception e)
+            {
+                throw new Exception(
+                    "Failed to receive an OK signal from ForwardAllEventsTestEventListener logger during test start " +
+                    $"inside EventFilterTestBase. Running loggers: [{string.Join(", ", Sys.Settings.Loggers)}]", e);
+            }
             //From now on we know that all messages will be forwarded to TestActor
         }
 

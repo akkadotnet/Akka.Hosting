@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
@@ -14,6 +13,7 @@ using Akka.Hosting.Logging;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
@@ -53,6 +53,8 @@ namespace Akka.Hosting
     /// Delegate used to instantiate <see cref="IActorRef"/>s once the <see cref="ActorSystem"/> has booted.
     /// </summary>
     public delegate Task ActorStarter(ActorSystem system, IActorRegistry registry);
+    
+    public delegate Task ActorStarterWithResolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver);
 
     public delegate Task StartupTask(ActorSystem system, IActorRegistry registry);
     
@@ -82,7 +84,7 @@ namespace Akka.Hosting
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new HashSet<SerializerRegistration>();
-        internal readonly HashSet<Type> Extensions = new HashSet<Type>();
+        internal readonly List<Type> Extensions = new List<Type>();
 
         /// <summary>
         /// INTERNAL API.
@@ -112,9 +114,9 @@ namespace Akka.Hosting
         /// </summary>
         internal Option<ActorSystem> Sys { get; set; } = Option<ActorSystem>.None;
 
-        private readonly HashSet<ActorStarter> _actorStarters = new HashSet<ActorStarter>();
-        private readonly HashSet<StartupTask> _startupTasks = new HashSet<StartupTask>();
-        private bool _complete = false;
+        private readonly List<ActorStarter> _actorStarters = new();
+        private readonly List<StartupTask> _startupTasks = new();
+        private bool _complete;
 
         public AkkaConfigurationBuilder(IServiceCollection serviceCollection, string actorSystemName)
         {
@@ -168,20 +170,15 @@ namespace Akka.Hosting
             return this;
         }
 
-        internal AkkaConfigurationBuilder AddHoconConfiguration(Config newHocon,
-            HoconAddMode addMode = HoconAddMode.Append)
+        internal AkkaConfigurationBuilder AddHoconConfiguration(Config newHocon, HoconAddMode addMode)
         {
-            switch (addMode)
+            return addMode switch
             {
-                case HoconAddMode.Append:
-                    return AddHoconConfiguration((config, add) => config.WithFallback(add), newHocon);
-                case HoconAddMode.Prepend:
-                    return AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon);
-                case HoconAddMode.Replace:
-                    return AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon);
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(addMode), addMode, null);
-            }
+                HoconAddMode.Append => AddHoconConfiguration((config, add) => config.WithFallback(add), newHocon),
+                HoconAddMode.Prepend => AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon),
+                HoconAddMode.Replace => AddHoconConfiguration((config, add) => add.WithFallback(config), newHocon),
+                _ => throw new ArgumentOutOfRangeException(nameof(addMode), addMode, null)
+            };
         }
 
         private static ActorStarter ToAsyncStarter(Action<ActorSystem, IActorRegistry> nonAsyncStarter)
@@ -189,6 +186,18 @@ namespace Akka.Hosting
             Task Starter(ActorSystem f, IActorRegistry registry)
             {
                 nonAsyncStarter(f, registry);
+                return Task.CompletedTask;
+            }
+
+            return Starter;
+        }
+
+        private static ActorStarter ToAsyncStarter(
+            Action<ActorSystem, IActorRegistry, IDependencyResolver> nonAsyncStarter)
+        {
+            Task Starter(ActorSystem f, IActorRegistry registry)
+            {
+                nonAsyncStarter(f, registry, DependencyResolver.For(f).Resolver);
                 return Task.CompletedTask;
             }
 
@@ -212,11 +221,28 @@ namespace Akka.Hosting
             _actorStarters.Add(ToAsyncStarter(starter));
             return this;
         }
+        
+        public AkkaConfigurationBuilder StartActors(Action<ActorSystem, IActorRegistry, IDependencyResolver> starter)
+        {
+            if (_complete) return this;
+            _actorStarters.Add(ToAsyncStarter(starter));
+            return this;
+        }
 
         public AkkaConfigurationBuilder StartActors(ActorStarter starter)
         {
             if (_complete) return this;
             _actorStarters.Add(starter);
+            return this;
+        }
+        
+        public AkkaConfigurationBuilder StartActors(ActorStarterWithResolver starter)
+        {
+            if (_complete) return this;
+
+            Task Starter1(ActorSystem f, IActorRegistry registry) => starter(f, registry, DependencyResolver.For(f).Resolver);
+
+            _actorStarters.Add(Starter1);
             return this;
         }
 
@@ -310,7 +336,7 @@ namespace Akka.Hosting
         internal void Bind()
         {
             // register as singleton - not interested in supporting multi-Sys use cases
-            ServiceCollection.AddSingleton<ActorSystem>(ActorSystemFactory());
+            ServiceCollection.AddSingleton(ActorSystemFactory());
 
             ServiceCollection.AddSingleton<ActorRegistry>(sp =>
             {
@@ -326,6 +352,8 @@ namespace Akka.Hosting
             {
                 return sp.GetRequiredService<ActorRegistry>();
             });
+
+            ServiceCollection.AddSingleton(typeof(IRequiredActor<>), typeof(RequiredActor<>));
         }
 
         /// <summary>
