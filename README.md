@@ -1,6 +1,6 @@
 # Akka.Hosting
 
-> **BETA**: this project is currently in beta status as part of the [Akka.NET v1.5 development effort](https://getakka.net/community/whats-new/akkadotnet-v1.5.html), but the packages published in this repository will be backwards compatible for Akka.NET v1.4 users.
+> This package is now stable.
 
 HOCON-less configuration, application lifecycle management, `ActorSystem` startup, and actor instantiation for [Akka.NET](https://getakka.net/).
 
