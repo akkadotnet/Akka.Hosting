@@ -26,7 +26,7 @@ namespace Akka.Hosting.Logging
         /// <summary>
         /// only used when we're shutting down / spinning up
         /// </summary>
-        private readonly ILoggingAdapter _internalLogger = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
+        protected readonly ILoggingAdapter InternalLogger = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
         private readonly ILoggerFactory _loggerFactory;
         private ILogger<ActorSystem> _akkaLogger;
         private readonly string _messageFormat;
@@ -45,7 +45,7 @@ namespace Akka.Hosting.Logging
 
         protected override void PostStop()
         {
-            _internalLogger.Info($"{nameof(LoggerFactoryLogger)} stopped");
+            InternalLogger.Info($"{nameof(LoggerFactoryLogger)} stopped");
         }
 
         protected override bool Receive(object message)
@@ -53,7 +53,7 @@ namespace Akka.Hosting.Logging
             switch (message)
             { 
                 case InitializeLogger _:
-                    _internalLogger.Info($"{nameof(LoggerFactoryLogger)} started");
+                    InternalLogger.Info($"{nameof(LoggerFactoryLogger)} started");
                     Sender.Tell(new LoggerInitialized());
                     return true;
                 
@@ -66,7 +66,7 @@ namespace Akka.Hosting.Logging
             }
         }
         
-        private void Log(LogEvent log, ActorPath path)
+        protected virtual void Log(LogEvent log, ActorPath path)
         {
             var message = GetMessage(log.Message);
             _akkaLogger.Log(GetLogLevel(log.LogLevel()), log.Cause, _messageFormat, GetArgs(log, path, message));
