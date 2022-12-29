@@ -182,7 +182,9 @@ namespace Akka.Hosting.Logging
     public class LoggerFactoryLogger : Akka.Actor.ActorBase, Akka.Dispatch.IRequiresMessageQueue<Akka.Event.ILoggerMessageQueueSemantics>
     {
         public const string DefaultTimeStampFormat = "yy/MM/dd-HH:mm:ss.ffff";
+        protected readonly Akka.Event.ILoggingAdapter InternalLogger;
         public LoggerFactoryLogger() { }
+        protected virtual void Log(Akka.Event.LogEvent log, Akka.Actor.ActorPath path) { }
         protected override void PostStop() { }
         protected override bool Receive(object message) { }
     }
