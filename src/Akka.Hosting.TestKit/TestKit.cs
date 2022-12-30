@@ -92,11 +92,9 @@ namespace Akka.Hosting.TestKit
 
                 if (Output is { })
                 {
-                    builder.StartActors(async (system, _) =>
+                    builder.StartActors(async (system, registry) =>
                     {
-                        var extSystem = (ExtendedActorSystem)system;
-                        var logger = extSystem.SystemActorOf(Props.Create(() => new LoggerFactoryLogger()), "log-test");
-                        await logger.Ask<LoggerInitialized>(new InitializeLogger(system.EventStream));
+                        await LoggerHook(system, registry);
                     });
                 }
 
@@ -108,6 +106,13 @@ namespace Akka.Hosting.TestKit
                     _initialized.SetResult(Done.Instance);
                 });
             });
+        }
+
+        internal virtual async Task LoggerHook(ActorSystem system, IActorRegistry registry)
+        {
+            var extSystem = (ExtendedActorSystem)system;
+            var logger = extSystem.SystemActorOf(Props.Create(() => new TestKitLoggerFactoryLogger()), "log-test");
+            await logger.Ask<LoggerInitialized>(new InitializeLogger(system.EventStream));
         }
 
         protected virtual Config? Config { get; } = null;
