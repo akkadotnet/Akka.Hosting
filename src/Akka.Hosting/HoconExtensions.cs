@@ -27,7 +27,7 @@ namespace Akka.Hosting
                 return $"\"\"\"{text}\"\"\"";
 
             // Not going to bother to check quote validity
-            if (text.StartsWith("\"") && text.EndsWith("\""))
+            if (text.Length > 1 && text.StartsWith("\"") && text.EndsWith("\""))
                 return text;
             
             // double quote support
