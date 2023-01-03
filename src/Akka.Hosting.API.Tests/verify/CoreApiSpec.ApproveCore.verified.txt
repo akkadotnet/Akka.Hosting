@@ -95,7 +95,7 @@ namespace Akka.Hosting
     {
         public static string ToHocon(this bool value) { }
         public static string ToHocon(this bool? value) { }
-        public static string ToHocon(this string text) { }
+        public static string ToHocon(this string? text) { }
         public static string ToHocon(this System.TimeSpan value, bool allowInfinite = false, bool zeroIsInfinite = false) { }
         public static string ToHocon(this System.TimeSpan? value, bool allowInfinite = false, bool zeroIsInfinite = false) { }
     }
