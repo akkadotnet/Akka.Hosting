@@ -49,4 +49,41 @@ public class UtilSpec
             .Throw<ConfigurationException>("Infinite value is not allowed", "Infinite value is not allowed");
         
     }
+
+    [InlineData("$")]
+    [InlineData("\"")]
+    [InlineData("{")]
+    [InlineData("}")]
+    [InlineData("[")]
+    [InlineData("]")]
+    [InlineData(":")]
+    [InlineData("=")]
+    [InlineData(",")]
+    [InlineData("#")]
+    [InlineData("`")]
+    [InlineData("^")]
+    [InlineData("?")]
+    [InlineData("!")]
+    [InlineData("@")]
+    [InlineData("*")]
+    [InlineData("&")]
+    [InlineData("\\")]
+    [Theory(DisplayName = "HoconExtensions String.ToHocon should put illegal characters in quotes")]
+    public void StringToHoconTest(string input)
+    {
+        var result = input.ToHocon();
+        result.Length.Should().Be(3);
+        result.Should().StartWith("\"").And.EndWith("\"");
+    }
+    
+    [InlineData("ab\ncd")]
+    [InlineData("ab\r\ncd")]
+    [Theory(DisplayName = "HoconExtensions String.ToHocon should put new lines in triple double quotes")]
+    public void StringToHoconNewlineTest(string input)
+    {
+        var result = input.ToHocon();
+        result.Should().Contain(input);
+        result.Should().StartWith("\"\"\"").And.EndWith("\"\"\"");
+    }
+    
 }

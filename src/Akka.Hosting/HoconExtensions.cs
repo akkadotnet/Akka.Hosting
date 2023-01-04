@@ -14,14 +14,24 @@ namespace Akka.Hosting
 {
     public static class HoconExtensions
     {
-        private static readonly Regex EscapeRegex = new Regex("[ \t:]{1}", RegexOptions.Compiled);
+        private static readonly Regex EscapeRegex = new ("[][$\"\\\\{}:=,#`^?!@*&]{1}", RegexOptions.Compiled);
         
-        public static string ToHocon(this string text)
+        public static string ToHocon(this string? text)
         {
+            // nullable literal value support
             if (text is null)
-                throw new ConfigurationException("Value can not be null");
+                return "null";
+
+            // triple double quote multi line support
+            if (text.Contains("\n") && !text.StartsWith("\"\"\"") && !text.EndsWith("\"\"\""))
+                return $"\"\"\"{text}\"\"\"";
+
+            // Not going to bother to check quote validity
+            if (text.Length > 1 && text.StartsWith("\"") && text.EndsWith("\""))
+                return text;
             
-            return EscapeRegex.IsMatch(text) || text == string.Empty ? $"\"{text}\"" : text;
+            // double quote support
+            return text == string.Empty || EscapeRegex.IsMatch(text) ? $"\"{text}\"" : text;
         }
 
         public static string ToHocon(this bool? value)
