@@ -16,7 +16,8 @@ module Messages =
 
     type UserDescriptor(UserId:string, UserName:string) =
         interface IWithUserId with
-            member this.UserId = UserId
+            member this.UserId = this.UserId
+        member this.UserId = UserId
     
         member this.UserName = UserName
         static member val Empty = new UserDescriptor(String.Empty, String.Empty) with get
@@ -25,21 +26,27 @@ module Messages =
         
         member this.Timestamp = Timestamp
         member this.Descriptor = Descriptor
+        member this.UserId = (Descriptor :> IWithUserId).UserId
         interface IWithUserId with
-            member this.UserId = (Descriptor :> IWithUserId).UserId
+            member this.UserId = this.UserId
+
 
     type FetchUsers () =
         static member Instance = new FetchUsers();
         member this.FetchUsers() = ()
 
+
     type FetchUser (userId:string) =
         interface IWithUserId with
-            member this.UserId = userId
+            member this.UserId = this.UserId
+        member this.UserId = userId
+
 
     type CreateUser(Descriptor:UserDescriptor) =
         interface IWithUserId with
-            member this.UserId = (Descriptor :> IWithUserId).UserId
+            member this.UserId = this.UserId
         member this.Descriptor = Descriptor
+        member this.UserId = (Descriptor :> IWithUserId).UserId
 
     type ResponseKind =
     | Success 
@@ -73,8 +80,7 @@ module Actors =
             
             this.Command<CreateUser>(fun (user:CreateUser) ->
                 let e = new UserCreatedEvent(user.Descriptor, DateTime.UtcNow.Ticks)
-                this.Persist(e, fun evt ->
-                
+                this.Persist(e, fun evt ->                
                     log.Info($"Persisted {evt}", [||])
                     cs <- evt.Descriptor;
                     if (not <| Context.Sender.IsNobody()) then
@@ -83,6 +89,7 @@ module Actors =
             )
 
             this.Command<FetchUser>(fun user ->
+                log.Info($"Sender =>>> {Context.Sender.Path.Address}")
                 Context.Sender.Tell(cs)
             )
 
@@ -91,7 +98,8 @@ module Actors =
             and set (v) = cs <- v
         override this.PersistenceId = persistenceId
         static member Props(userId:string) =
-            Props.Create(fun _ -> new UserActionsEntity(userId))    
+            Props.Create(fun _ -> new UserActionsEntity(userId))
+    
     
     type Indexer (userActionsShardRegion:IActorRef) as this =
         inherit ReceiveActor ()
@@ -115,32 +123,43 @@ module Actors =
                 )
 
             this.Receive<UserCreatedEvent>(fun (e:UserCreatedEvent) ->
-                _userActionsShardRegion.Ask<UserDescriptor>(
-                    new FetchUser((e :> IWithUserId).UserId), TimeSpan.FromSeconds(1)
-                    ).PipeTo(Context.Self)
-                |> ignore
+                //_log.Info($"UserCreatedEvent send FetchUser, {_userActionsShardRegion.Path.Address}")
+                let fc = new FetchUser((e :> IWithUserId).UserId)
+                let askResult = 
+                    _userActionsShardRegion.Ask<UserDescriptor>(
+                        fc, TimeSpan.FromSeconds(3)
+                        )
+                askResult.PipeTo(Context.Self) |> ignore
                 )
+        override this.PreStart() =
+        
+            this.FetchIds()
+        
 
-        override this.PreStart() =        
-            this.FetchIds()        
-
-        member this.FetchIds() =    
+        member this.FetchIds() =
+    
             let readJournal = 
                 Context.System.ReadJournalFor<SqlReadJournal>(SqlReadJournal.Identifier)
             let r = 
                 Sink.ActorRef<UserCreatedEvent>(Context.Self, "complete")
                 :> IGraph<SinkShape<UserCreatedEvent>, Akka.NotUsed>
+            //let rOrig = Sink.ActorRef<UserCreatedEvent>(Context.Self, "complete")
             let srj0 =
                 readJournal.AllEvents()
                     .Where(fun e -> 
                         match e.Event with
-                        | :? UserCreatedEvent -> true
+                        | :? UserCreatedEvent as uce ->
+                            true
                         | _ -> false)
-                    .Select(fun uc -> uc.Event :?> UserCreatedEvent)
+                    .Select(fun uc -> 
+                        uc.Event :?> UserCreatedEvent
+                        )
                     .WithAttributes(ActorAttributes.CreateSupervisionStrategy(fun e -> Supervision.Directive.Restart))
             
             srj0.RunWith<Akka.NotUsed>(r, Context.Materializer()) |> ignore
-
+            //srj0.RunWith(rOrig, Context.Materializer()) |> ignore
+    
+  
 module CustomJournalIdDemo =
     open Messages
     open Microsoft.Extensions.Hosting
@@ -149,15 +168,23 @@ module CustomJournalIdDemo =
     open System.Threading.Tasks
     open Akka.Hosting
     open Actors
+    
     type UserMessageExtractor (maxNumberOfShards:int) =
         inherit HashCodeMessageExtractor (maxNumberOfShards)
-
-        override this.EntityId(message : obj) =
-            match message with
-            | :? IWithUserId as userId ->
-                userId.UserId
-            | _ ->
-                null
+            override this.EntityId(message : obj) =
+                match message with
+                | :? FetchUser as o ->
+                    (o :> IWithUserId).UserId
+                | :? UserCreatedEvent as o ->
+                    (o :> IWithUserId).UserId
+                | :? UserDescriptor as o ->
+                    (o :> IWithUserId).UserId
+                | :? CreateUser as o ->
+                    (o :> IWithUserId).UserId
+                | :? IWithUserId as userId ->
+                    userId.UserId
+                | oo ->
+                    null
 
         new () = UserMessageExtractor(30)
 
@@ -183,21 +210,25 @@ module CustomJournalIdDemo =
             printfn "userId: %d" userId
             new UserDescriptor(userId.ToString(), userName)
 
+
     type TestDataPopulatorService (system:ActorSystem) =
 
         let _system = system
         let mutable _cancelable = Unchecked.defaultof<ICancelable>
 
         interface IHostedService with
-            override this.StartAsync(cancellationToken:CancellationToken) =    
+            override this.StartAsync(cancellationToken:CancellationToken) =
+    
                 _cancelable <- _system.Scheduler.Advanced.ScheduleRepeatedlyCancelable(
                     TimeSpan.Zero
                     , TimeSpan.FromSeconds(1)
                     , fun _ ->
                         let entityRegion = ActorRegistry.For(_system).Get<UserActionsEntity>()
                         let user = UserGenerator.CreateRandom()
+                        printfn "entityRegion: %A" entityRegion.Path.Address
                         entityRegion.Tell(new CreateUser(user))
                     )
+
                 Task.CompletedTask
 
             override this.StopAsync(cancellationToken:CancellationToken) =
@@ -231,7 +262,8 @@ module Main =
         let builder = WebApplication.CreateBuilder(argv)
         
         let akkaFun =
-            Action<_>(fun (configurationBuilder: AkkaConfigurationBuilder) ->   
+            Action<_>(fun (configurationBuilder: AkkaConfigurationBuilder) ->
+   
             // Grab connection strings from appsettings.json
                 let localConn = builder.Configuration.GetConnectionString("sqlServerLocal");
                 let shardingConn = builder.Configuration.GetConnectionString("sqlServerSharding");
@@ -243,7 +275,8 @@ module Main =
                         , Identifier = "sharding"
                         )
                 shardingJournalOptions.ConnectionString <- shardingConn
-                shardingJournalOptions.AutoInitialize <- false
+                shardingJournalOptions.AutoInitialize <- true
+                //shardingJournalOptions.Serializer <- "hyperion"
         
             // Custom snapshots options with the id "sharding"
             // The absolute id will be "akka.persistence.snapshot-store.sharding"
@@ -253,15 +286,19 @@ module Main =
                         , Identifier = "sharding"
                         )
                 shardingSnapshotOptions.ConnectionString <- shardingConn
-                shardingSnapshotOptions.AutoInitialize <- false
+                shardingSnapshotOptions.AutoInitialize <- true
+                //shardingSnapshotOptions.Serializer <- "hyperion"
+
                 let co = new ClusterOptions()
                 co.Roles <- [| "myRole" |]
                 co.SeedNodes <- [| "akka.tcp://FAkkaHttp@localhost:8110" |]
                 let so = new ShardOptions ()
                 so.StateStoreMode <- StateStoreMode.Persistence
                 so.Role <- "myRole"
+                //so.JournalOptions <- shardingJournalOptions
+                //so.SnapshotOptions<- shardingSnapshotOptions
                 so.JournalPluginId <- shardingJournalOptions.PluginId
-                so.SnapshotPluginId <- shardingSnapshotOptions.PluginId
+                so.SnapshotPluginId <- shardingSnapshotOptions.PluginId                
 
                 let actorsFun = 
                     Action<_, _>(
@@ -305,7 +342,9 @@ module Main =
             UserHandler(fun (userId:string) (registry:ActorRegistry) ->
                 task {
                     let index = registry.Get<UserActionsEntity>();
-                    return! index.Ask<UserDescriptor>(new FetchUser(userId), TimeSpan.FromSeconds(3))
+                    return! index.Ask<UserDescriptor>(
+                        (new FetchUser(userId))
+                        , TimeSpan.FromSeconds(3))
                         .ConfigureAwait(false)
                 })
 
@@ -316,3 +355,10 @@ module Main =
         app.Run()
 
         0
+
+(*
+truncate table Akka.[dbo].[EventJournal]
+truncate table Akka.[dbo].[SnapshotStore]
+truncate table [AkkaSharding].[dbo].[EventJournal]
+truncate table [AkkaSharding].[dbo].[SnapshotStore]
+*)
