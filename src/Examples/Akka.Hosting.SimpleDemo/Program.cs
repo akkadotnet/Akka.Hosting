@@ -52,7 +52,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddScoped<IReplyGenerator, DefaultReplyGenerator>();
+        builder.Services.AddTransient<IReplyGenerator, DefaultReplyGenerator>();
         builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
         {
             configurationBuilder
