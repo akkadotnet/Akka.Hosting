@@ -43,14 +43,14 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
             })
             .WithSqlServerPersistence(localConn) // Standard way to create a default persistence journal and snapshot
             .WithSqlServerPersistence(shardingJournalOptions, shardingSnapshotOptions) // This is a custom persistence setup using the options instances we've set up earlier
-            .WithShardRegion<UserActionsEntity>("userActions", s => UserActionsEntity.Props(s),
+            .WithShardRegion<UserActionsEntity>("userActions", UserActionsEntity.Props,
                 new UserMessageExtractor(),
                 new ShardOptions
                 {
                     StateStoreMode = StateStoreMode.Persistence, 
                     Role = "myRole", 
-                    JournalPluginId = shardingJournalOptions.PluginId,
-                    SnapshotPluginId = shardingSnapshotOptions.PluginId 
+                    JournalOptions = shardingJournalOptions,
+                    SnapshotOptions = shardingSnapshotOptions 
                 })
             .WithActors((system, registry) =>
             {
