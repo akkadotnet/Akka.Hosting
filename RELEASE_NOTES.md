@@ -1,3 +1,24 @@
+## [1.0.2] / 31 January 2023
+
+Version 1.0.2 introduces a new method to the `ActorRegistry.GetAsync` in order to allow users to force parts of their application to wait until a specific `IActorRef` has been started and added to the `ActorRegistry`.
+
+```csharp
+// arrange
+var registry = new ActorRegistry();
+
+// act
+var task = registry.GetAsync<Nobody>();
+task.IsCompletedSuccessfully.Should().BeFalse();
+
+registry.Register<Nobody>(Nobody.Instance);
+var result = await task;
+
+// assert
+result.Should().Be(Nobody.Instance);
+```
+
+This method is designed to allow users to wait via `async Task<IActorRef>` for an actor to be registered in the event that a specific `IRequiredActor<TKey>` is needed before Akka.Hosting can start the `ActorSystem` inside its `IHostedService`.
+
 ## [1.0.1] / 6 January 2023
 
 Version 1.0.1 fixes options bug used in the cluster sharding Akka.Hosting extension method.
