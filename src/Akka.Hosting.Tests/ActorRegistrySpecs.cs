@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using FluentAssertions;
 using Xunit;
@@ -69,5 +72,78 @@ public class ActorRegistrySpecs
         
         // assert
         registry.Invoking(x => x.TryGet<Nobody>(out var actor)).Should().NotThrow<MissingActorRegistryEntryException>();
+    }
+
+    [Fact]
+    public async Task Should_complete_GetAsync_upon_KeyRegistered()
+    {
+        // arrange
+        var registry = new ActorRegistry();
+        
+        // act
+        var task = registry.GetAsync<Nobody>();
+        task.IsCompletedSuccessfully.Should().BeFalse();
+        
+        registry.Register<Nobody>(Nobody.Instance);
+        var result = await task;
+
+        // assert
+        result.Should().Be(Nobody.Instance);
+    }
+    
+    [Fact]
+    public async Task Should_complete_multiple_GetAsync_upon_KeyRegistered()
+    {
+        // arrange
+        var registry = new ActorRegistry();
+        
+        // act
+        var task1 = registry.GetAsync<Nobody>();
+        var task2 = registry.GetAsync<Nobody>();
+        var task3 = registry.GetAsync<Nobody>();
+
+        // validate that all three tasks are distinct
+        task1.Should().NotBe(task2).And.NotBe(task3);
+
+        var aggregate = Task.WhenAll(task1, task2, task3);
+
+        registry.Register<Nobody>(Nobody.Instance);
+        var result = await aggregate;
+
+        // assert
+        result.First().Should().Be(Nobody.Instance);
+    }
+    
+    [Fact]
+    public void GetAsync_should_return_CompletedTask_if_Key_AlreadyExists()
+    {
+        // arrange
+        var registry = new ActorRegistry();
+        registry.Register<Nobody>(Nobody.Instance);
+        
+        // act
+        var task = registry.GetAsync<Nobody>();
+
+        // assert
+        task.IsCompletedSuccessfully.Should().BeTrue();
+    }
+    
+    [Fact]
+    public void GetAsync_should_Cancel_after_Timeout()
+    {
+        // arrange
+        var registry = new ActorRegistry();
+        var cancellationTokenSource = new CancellationTokenSource();
+
+        // act
+        var task = registry.GetAsync<Nobody>(cancellationTokenSource.Token);
+        Action cancel = () =>
+        {
+            cancellationTokenSource.Cancel();
+            task.Wait(TimeSpan.FromSeconds(3));
+        };
+
+        // assert
+        cancel.Should().Throw<TaskCanceledException>();
     }
 }

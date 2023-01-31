@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util;
 
@@ -35,12 +38,12 @@ namespace Akka.Hosting
 
         /// <inheritdoc cref="IRequiredActor{TActor}.ActorRef"/>
         public IActorRef ActorRef { get; }
-    } 
+    }
 
     /// <summary>
     /// INTERNAL API
     /// </summary>
-    public class ActorRegistryExtension : ExtensionIdProvider<ActorRegistry>
+    public sealed class ActorRegistryExtension : ExtensionIdProvider<ActorRegistry>
     {
         public override ActorRegistry CreateExtension(ExtendedActorSystem system)
         {
@@ -55,12 +58,10 @@ namespace Akka.Hosting
     {
         public ActorRegistryException(string message) : base(message)
         {
-            
         }
-        
+
         public ActorRegistryException(string message, Exception innerException) : base(message, innerException)
         {
-            
         }
     }
 
@@ -69,15 +70,12 @@ namespace Akka.Hosting
     /// </summary>
     public sealed class DuplicateActorRegistryException : ActorRegistryException
     {
-
         public DuplicateActorRegistryException(string message) : base(message)
         {
-            
         }
-        
+
         public DuplicateActorRegistryException(string message, Exception innerException) : base(message, innerException)
         {
-            
         }
     }
 
@@ -90,8 +88,57 @@ namespace Akka.Hosting
         {
         }
 
-        public MissingActorRegistryEntryException(string message, Exception innerException) : base(message, innerException)
+        public MissingActorRegistryEntryException(string message, Exception innerException) : base(message,
+            innerException)
         {
+        }
+    }
+
+    /// <summary>
+    /// Used to implement "wait for actor" mechanics
+    /// </summary>
+    internal sealed class WaitForActorRegistration : IEquatable<WaitForActorRegistration>
+    {
+        public WaitForActorRegistration(Type key, TaskCompletionSource<IActorRef> waiter)
+        {
+            Key = key;
+            Waiter = waiter;
+        }
+
+        public Type Key { get; }
+
+        public TaskCompletionSource<IActorRef> Waiter { get; }
+
+        public CancellationTokenRegistration CancellationRegistration { get; set; }
+
+        public bool Equals(WaitForActorRegistration other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Key == other.Key;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return ReferenceEquals(this, obj) || obj is WaitForActorRegistration other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (Key.GetHashCode() * 397) ^ Waiter.GetHashCode();
+            }
+        }
+
+        public static bool operator ==(WaitForActorRegistration? left, WaitForActorRegistration? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(WaitForActorRegistration? left, WaitForActorRegistration? right)
+        {
+            return !Equals(left, right);
         }
     }
 
@@ -106,7 +153,7 @@ namespace Akka.Hosting
     public class ActorRegistry : IActorRegistry, IExtension
     {
         private readonly ConcurrentDictionary<Type, IActorRef> _actorRegistrations = new();
-        
+
         /// <inheritdoc cref="IActorRegistry.Register{TKey}"/>
         /// <exception cref="DuplicateActorRegistryException">Thrown when the same value is inserted twice and overwriting is not allowed.</exception>
         /// <exception cref="ArgumentNullException">Thrown when a <c>null</c> <see cref="IActorRef"/> is registered.</exception>
@@ -114,13 +161,23 @@ namespace Akka.Hosting
         {
             if (actor == null)
                 throw new ArgumentNullException(nameof(actor), "Cannot register null actors");
-            
+
             if (!TryRegister<TKey>(actor, overwrite))
             {
                 throw new DuplicateActorRegistryException(
                     $"An actor for type {typeof(TKey)} has already been registered. Call `Register(IActorRef, bool overwrite=true)` to avoid this error or use a different key.");
             }
         }
+
+        /// <summary>
+        /// In the event that an actor is not available yet, typically during the very beginning of ActorSystem startup,
+        /// we can wait on that actor becoming available.
+        /// </summary>
+        /// <remarks>
+        /// Have to store a collection of <see cref="WaitForActorRegistration"/>s here so each waiter gets its own cancellation token.
+        /// </remarks>
+        private readonly ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>> _actorWaiters =
+            new ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>>();
 
         /// <summary>
         /// Attempts to register an actor with the registry.
@@ -144,11 +201,16 @@ namespace Akka.Hosting
         {
             if (actor == null)
                 return false;
-            
+
             if (!overwrite)
-                return _actorRegistrations.TryAdd(key, actor);
+            {
+                if (!_actorRegistrations.TryAdd(key, actor))
+                    return false;
+            }
             else
                 _actorRegistrations[key] = actor;
+
+            NotifyWaiters(key, _actorRegistrations[key]);
             return true;
         }
 
@@ -163,7 +225,7 @@ namespace Akka.Hosting
         }
 
         /// <summary>
-        /// Try to retrieve an <see cref="IActorRef"/> with the given <see cref="TKey"/>.
+        /// Try to retrieve an <see cref="IActorRef"/> with the given type.
         /// </summary>
         /// <param name="key">The key for a particular actor.</param>
         /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
@@ -178,6 +240,64 @@ namespace Akka.Hosting
 
             actor = ActorRefs.Nobody;
             return false;
+        }
+
+        /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync{TKey}"/>
+        public async Task<IActorRef> GetAsync<TKey>(CancellationToken ct = default)
+        {
+            return await GetAsync(typeof(TKey), ct);
+        }
+
+        /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync"/>
+        public async Task<IActorRef> GetAsync(Type key, CancellationToken ct = default)
+        {
+            // try to get the populated actor first, if available
+            if (TryGet(key, out var storedActor))
+            {
+                return storedActor;
+            }
+
+            var tcs = new TaskCompletionSource<IActorRef>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var waitingRegistration = new WaitForActorRegistration(key, tcs);
+            var registration = ct.Register(CancelWaiter(key, ct, waitingRegistration), _actorWaiters);
+            waitingRegistration.CancellationRegistration = registration;
+
+            var r = _actorWaiters.AddOrUpdate(key,
+                type => { return ImmutableHashSet<WaitForActorRegistration>.Empty.Add(waitingRegistration); },
+                (type, set) => { return set.Add(waitingRegistration); });
+
+            var b = r;
+
+
+            return await tcs.Task.ConfigureAwait(false);
+        }
+
+        private void NotifyWaiters(Type key, IActorRef value)
+        {
+            // remove the registrations and then iterate over them
+            if (_actorWaiters.TryRemove(key, out var registrations))
+            {
+                foreach (var r in registrations)
+                {
+                    r.Waiter.TrySetResult(value);
+                    r.CancellationRegistration.Dispose();
+                }
+            }
+        }
+
+        private static Action<object> CancelWaiter(Type key, CancellationToken ct,
+            WaitForActorRegistration waitingRegistration)
+        {
+            return dict =>
+            {
+                // first step during timeout is to remove our registration
+                var d = (ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>>)dict;
+                d.AddOrUpdate(key, type => ImmutableHashSet<WaitForActorRegistration>.Empty,
+                    (type, set) => set.Remove(waitingRegistration));
+
+                // next, cancel the task
+                waitingRegistration.Waiter.TrySetCanceled(ct);
+            };
         }
 
         /// <summary>
@@ -201,6 +321,7 @@ namespace Akka.Hosting
         {
             return _actorRegistrations.GetEnumerator();
         }
+
         /// <summary>
         /// Allows enumerated access to the collection of all registered actors.
         /// </summary>
@@ -214,8 +335,8 @@ namespace Akka.Hosting
         {
             return actorSystem.WithExtension<ActorRegistry, ActorRegistryExtension>();
         }
-        }
-    
+    }
+
     /// <summary>
     /// Represents a read-only collection of <see cref="IActorRef"/> instances keyed by the actor name.
     /// </summary>
@@ -227,7 +348,7 @@ namespace Akka.Hosting
         /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
         /// <returns><c>true</c> if an actor with this key exists, <c>false</c> otherwise.</returns>
         bool TryGet<TKey>(out IActorRef actor);
-        
+
         /// <summary>
         /// Try to retrieve an <see cref="IActorRef"/> with the given <see cref="TKey"/>.
         /// </summary>
@@ -235,7 +356,7 @@ namespace Akka.Hosting
         /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
         /// <returns><c>true</c> if an actor with this key exists, <c>false</c> otherwise.</returns>
         bool TryGet(Type key, out IActorRef actor);
-        
+
         /// <summary>
         /// Fetches the <see cref="IActorRef"/> by key.
         /// </summary>
@@ -243,6 +364,24 @@ namespace Akka.Hosting
         /// <returns>If found, the underlying <see cref="IActorRef"/>.
         /// If not found, returns <see cref="ActorRefs.Nobody"/>.</returns>
         IActorRef Get<TKey>();
+
+        /// <summary>
+        /// Asynchronously fetches the <see cref="IActorRef"/> by key. Task will complete when the actor is registered.
+        /// </summary>
+        /// <param name="ct">The CancellationToken that can be used to cancel the GetAsync operation.</param>
+        /// <typeparam name="TKey">The key type to retrieve this actor.</typeparam>
+        /// <returns>A <see cref="Task{IActorRef}"/> that will complete when the actor is registered or will throw
+        /// a <see cref="TaskCanceledException"/> in the event that the <see cref="CancellationToken"/> is invoked.</returns>
+        public Task<IActorRef> GetAsync<TKey>(CancellationToken ct = default);
+
+        /// <summary>
+        /// Asynchronously fetches the <see cref="IActorRef"/> by key. Task will complete when the actor is registered.
+        /// </summary>
+        /// <param name="ct">The CancellationToken that can be used to cancel the GetAsync operation.</param>
+        /// <param name="key">The key type to retrieve this actor.</param>
+        /// <returns>A <see cref="Task{IActorRef}"/> that will complete when the actor is registered or will throw
+        /// a <see cref="TaskCanceledException"/> in the event that the <see cref="CancellationToken"/> is invoked.</returns>
+        public Task<IActorRef> GetAsync(Type key, CancellationToken ct = default);
     }
 
     /// <summary>
@@ -253,7 +392,7 @@ namespace Akka.Hosting
     ///
     /// If you are adding every single actor in your <see cref="ActorSystem"/> to the registry you are definitely using it wrong.
     /// </remarks>
-    public interface IActorRegistry: IReadOnlyActorRegistry
+    public interface IActorRegistry : IReadOnlyActorRegistry
     {
         /// <summary>
         /// Registers an actor into the registry. Throws an exception upon failure.
@@ -261,7 +400,7 @@ namespace Akka.Hosting
         /// <param name="actor">The bound <see cref="IActorRef"/>, if any. Is set to <see cref="ActorRefs.Nobody"/> if key is not found.</param>
         /// <param name="overwrite">If <c>true</c>, allows overwriting of a previous actor with the same key. Defaults to <c>false</c>.</param>
         void Register<TKey>(IActorRef actor, bool overwrite = false);
-        
+
         /// <summary>
         /// Attempts to register an actor with the registry.
         /// </summary>
