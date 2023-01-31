@@ -43,7 +43,7 @@ namespace Akka.Hosting
     /// <summary>
     /// INTERNAL API
     /// </summary>
-    public class ActorRegistryExtension : ExtensionIdProvider<ActorRegistry>
+    public sealed class ActorRegistryExtension : ExtensionIdProvider<ActorRegistry>
     {
         public override ActorRegistry CreateExtension(ExtendedActorSystem system)
         {
@@ -129,7 +129,20 @@ namespace Akka.Hosting
 
         public override int GetHashCode()
         {
-            return Key.GetHashCode();
+            unchecked
+            {
+                return (Key.GetHashCode() * 397) ^ Waiter.GetHashCode();
+            }
+        }
+
+        public static bool operator ==(WaitForActorRegistration? left, WaitForActorRegistration? right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(WaitForActorRegistration? left, WaitForActorRegistration? right)
+        {
+            return !Equals(left, right);
         }
     }
 
@@ -194,7 +207,7 @@ namespace Akka.Hosting
                 return false;
             
             if (!overwrite)
-                return _actorRegistrations.TryAdd(key, actor);
+                _actorRegistrations.TryAdd(key, actor);
             else
                 _actorRegistrations[key] = actor;
             
@@ -230,12 +243,14 @@ namespace Akka.Hosting
             return false;
         }
 
-        public async Task<IActorRef> GetAsync<TKey>(CancellationToken ct)
+        /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync{TKey}"/>
+        public async Task<IActorRef> GetAsync<TKey>(CancellationToken ct = default)
         {
             return await GetAsync(typeof(TKey), ct);
         }
 
-        public async Task<IActorRef> GetAsync(Type key, CancellationToken ct)
+        /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync"/>
+        public async Task<IActorRef> GetAsync(Type key, CancellationToken ct = default)
         {
             // try to get the populated actor first, if available
             if (TryGet(key, out var storedActor))
@@ -248,9 +263,17 @@ namespace Akka.Hosting
             var registration = ct.Register(CancelWaiter(key, ct, waitingRegistration), _actorWaiters);
             waitingRegistration.CancellationRegistration = registration;
 
-            _actorWaiters.AddOrUpdate(key,
-                type => ImmutableHashSet<WaitForActorRegistration>.Empty.Add(waitingRegistration),
-                (type, set) => set.Add(waitingRegistration));
+            var r = _actorWaiters.AddOrUpdate(key,
+                type =>
+                {
+                    return ImmutableHashSet<WaitForActorRegistration>.Empty.Add(waitingRegistration);
+                },
+                (type, set) =>
+                {
+                    return set.Add(waitingRegistration);
+                });
+
+            var b = r;
             
 
             return await tcs.Task.ConfigureAwait(false);
@@ -317,7 +340,7 @@ namespace Akka.Hosting
         {
             return actorSystem.WithExtension<ActorRegistry, ActorRegistryExtension>();
         }
-        }
+    }
     
     /// <summary>
     /// Represents a read-only collection of <see cref="IActorRef"/> instances keyed by the actor name.
@@ -346,6 +369,24 @@ namespace Akka.Hosting
         /// <returns>If found, the underlying <see cref="IActorRef"/>.
         /// If not found, returns <see cref="ActorRefs.Nobody"/>.</returns>
         IActorRef Get<TKey>();
+
+        /// <summary>
+        /// Asynchronously fetches the <see cref="IActorRef"/> by key. Task will complete when the actor is registered.
+        /// </summary>
+        /// <param name="ct">The CancellationToken that can be used to cancel the GetAsync operation.</param>
+        /// <typeparam name="TKey">The key type to retrieve this actor.</typeparam>
+        /// <returns>A <see cref="Task{IActorRef}"/> that will complete when the actor is registered or will throw
+        /// a <see cref="TaskCanceledException"/> in the event that the <see cref="CancellationToken"/> is invoked.</returns>
+        public Task<IActorRef> GetAsync<TKey>(CancellationToken ct = default);
+
+        /// <summary>
+        /// Asynchronously fetches the <see cref="IActorRef"/> by key. Task will complete when the actor is registered.
+        /// </summary>
+        /// <param name="ct">The CancellationToken that can be used to cancel the GetAsync operation.</param>
+        /// <param name="key">The key type to retrieve this actor.</param>
+        /// <returns>A <see cref="Task{IActorRef}"/> that will complete when the actor is registered or will throw
+        /// a <see cref="TaskCanceledException"/> in the event that the <see cref="CancellationToken"/> is invoked.</returns>
+        public Task<IActorRef> GetAsync(Type key, CancellationToken ct = default);
     }
 
     /// <summary>
