@@ -6,7 +6,10 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Akka.Configuration;
 
@@ -22,16 +25,41 @@ namespace Akka.Hosting
             if (text is null)
                 return "null";
 
-            // triple double quote multi line support
-            if (text.Contains("\n") && !text.StartsWith("\"\"\"") && !text.EndsWith("\"\"\""))
-                return $"\"\"\"{text}\"\"\"";
+            text = text
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("/", "\\/")
+                .Replace("\b", "\\b")
+                .Replace("\f", "\\f")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r")
+                .Replace("\t", "\\t");
 
-            // Not going to bother to check quote validity
-            if (text.Length > 1 && text.StartsWith("\"") && text.EndsWith("\""))
-                return text;
+            var needReplacement = new HashSet<char>(text.Where(c => c > 255));
+            foreach (var c in needReplacement)
+            {
+                text = text.Replace($"{c}", $"\\u{(int)c:x4}");
+            }
             
             // double quote support
-            return text == string.Empty || EscapeRegex.IsMatch(text) ? $"\"{text}\"" : text;
+            if (EscapeRegex.IsMatch(text) && !text.IsQuoted())
+                text = $"\"{text}\"";
+
+            if (text == string.Empty)
+                text = "\"\"";
+            
+            return text;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsQuoted(this string str)
+        {
+            if (str.Length < 2)
+                return false;
+            if (str.Length == 2 && str == "\"\"")
+                return true;
+
+            return str[0] == '"' && str[1] != '"' && str[str.Length - 1] == '"' && str[str.Length - 2] != '"';
         }
 
         public static string ToHocon(this bool? value)
