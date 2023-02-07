@@ -2,8 +2,12 @@
     <PropertyGroup>
         <Copyright>Copyright © 2013-2022 Akka.NET Team</Copyright>
         <Authors>Akka.NET Team</Authors>
-        <VersionPrefix>0.4.0</VersionPrefix>
-        <PackageReleaseNotes>• [Add Microsoft.Extensions.Logging.ILoggerFactory logging support](https://github.com/akkadotnet/Akka.Hosting/pull/72)</PackageReleaseNotes>
+        <VersionPrefix>1.0.1</VersionPrefix>
+        <PackageReleaseNotes>Version 1.0.1 fixes options bug used in the cluster sharding Akka.Hosting extension method.
+* [Update Akka.NET from 1.4.45 to 1.4.48](https://github.com/akkadotnet/akka.net/releases/tag/1.4.48)
+* [Fix SimpleDemo project failing on `Development` environment](https://github.com/akkadotnet/Akka.Hosting/pull/184)
+* [Add F# CustomJournalIdDemo project](https://github.com/akkadotnet/Akka.Hosting/pull/183)
+* [Fix cluster sharding hosting extension method options bug](https://github.com/akkadotnet/Akka.Hosting/pull/186)</PackageReleaseNotes>
         <PackageIcon>akkalogo.png</PackageIcon>
         <PackageProjectUrl>
             https://github.com/akkadotnet/Akka.Hosting
@@ -25,7 +29,7 @@
         <TestSdkVersion>17.4.1</TestSdkVersion>
         <CoverletVersion>3.2.0</CoverletVersion>
 	    <XunitRunneVisualstudio>2.4.5</XunitRunneVisualstudio>
-        <AkkaVersion>1.4.48</AkkaVersion>
+        <AkkaVersion>1.4.49</AkkaVersion>
         <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
     </PropertyGroup>
 
