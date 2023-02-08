@@ -6,7 +6,10 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Akka.Configuration;
 
@@ -14,14 +17,49 @@ namespace Akka.Hosting
 {
     public static class HoconExtensions
     {
-        private static readonly Regex EscapeRegex = new Regex("[ \t:]{1}", RegexOptions.Compiled);
+        private static readonly Regex EscapeRegex = new ("[][$\"\\\\{}:=,#`^?!@*&]{1}", RegexOptions.Compiled);
         
-        public static string ToHocon(this string text)
+        public static string ToHocon(this string? text)
         {
+            // nullable literal value support
             if (text is null)
-                throw new ConfigurationException("Value can not be null");
+                return "null";
+
+            text = text
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("/", "\\/")
+                .Replace("\b", "\\b")
+                .Replace("\f", "\\f")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r")
+                .Replace("\t", "\\t");
+
+            var needReplacement = new HashSet<char>(text.Where(c => c > 255));
+            foreach (var c in needReplacement)
+            {
+                text = text.Replace($"{c}", $"\\u{(int)c:x4}");
+            }
             
-            return EscapeRegex.IsMatch(text) || text == string.Empty ? $"\"{text}\"" : text;
+            // double quote support
+            if (EscapeRegex.IsMatch(text) && !text.IsQuoted())
+                text = $"\"{text}\"";
+
+            if (text == string.Empty)
+                text = "\"\"";
+            
+            return text;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsQuoted(this string str)
+        {
+            if (str.Length < 2)
+                return false;
+            if (str.Length == 2 && str == "\"\"")
+                return true;
+
+            return str[0] == '"' && str[1] != '"' && str[str.Length - 1] == '"' && str[str.Length - 2] != '"';
         }
 
         public static string ToHocon(this bool? value)

@@ -5,6 +5,8 @@ namespace Akka.Hosting
     {
         public ActorRegistry() { }
         public Akka.Actor.IActorRef Get<TKey>() { }
+        public System.Threading.Tasks.Task<Akka.Actor.IActorRef> GetAsync(System.Type key, System.Threading.CancellationToken ct = default) { }
+        public System.Threading.Tasks.Task<Akka.Actor.IActorRef> GetAsync<TKey>(System.Threading.CancellationToken ct = default) { }
         public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<System.Type, Akka.Actor.IActorRef>> GetEnumerator() { }
         public void Register<TKey>(Akka.Actor.IActorRef actor, bool overwrite = false) { }
         public bool TryGet(System.Type key, out Akka.Actor.IActorRef actor) { }
@@ -18,7 +20,7 @@ namespace Akka.Hosting
         public ActorRegistryException(string message) { }
         public ActorRegistryException(string message, System.Exception innerException) { }
     }
-    public class ActorRegistryExtension : Akka.Actor.ExtensionIdProvider<Akka.Hosting.ActorRegistry>
+    public sealed class ActorRegistryExtension : Akka.Actor.ExtensionIdProvider<Akka.Hosting.ActorRegistry>
     {
         public ActorRegistryExtension() { }
         public override Akka.Hosting.ActorRegistry CreateExtension(Akka.Actor.ExtendedActorSystem system) { }
@@ -95,7 +97,7 @@ namespace Akka.Hosting
     {
         public static string ToHocon(this bool value) { }
         public static string ToHocon(this bool? value) { }
-        public static string ToHocon(this string text) { }
+        public static string ToHocon(this string? text) { }
         public static string ToHocon(this System.TimeSpan value, bool allowInfinite = false, bool zeroIsInfinite = false) { }
         public static string ToHocon(this System.TimeSpan? value, bool allowInfinite = false, bool zeroIsInfinite = false) { }
     }
@@ -114,6 +116,8 @@ namespace Akka.Hosting
     public interface IReadOnlyActorRegistry : System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.Type, Akka.Actor.IActorRef>>, System.Collections.IEnumerable
     {
         Akka.Actor.IActorRef Get<TKey>();
+        System.Threading.Tasks.Task<Akka.Actor.IActorRef> GetAsync(System.Type key, System.Threading.CancellationToken ct = default);
+        System.Threading.Tasks.Task<Akka.Actor.IActorRef> GetAsync<TKey>(System.Threading.CancellationToken ct = default);
         bool TryGet(System.Type key, out Akka.Actor.IActorRef actor);
         bool TryGet<TKey>(out Akka.Actor.IActorRef actor);
     }
@@ -182,7 +186,9 @@ namespace Akka.Hosting.Logging
     public class LoggerFactoryLogger : Akka.Actor.ActorBase, Akka.Dispatch.IRequiresMessageQueue<Akka.Event.ILoggerMessageQueueSemantics>
     {
         public const string DefaultTimeStampFormat = "yy/MM/dd-HH:mm:ss.ffff";
+        protected readonly Akka.Event.ILoggingAdapter InternalLogger;
         public LoggerFactoryLogger() { }
+        protected virtual void Log(Akka.Event.LogEvent log, Akka.Actor.ActorPath path) { }
         protected override void PostStop() { }
         protected override bool Receive(object message) { }
     }

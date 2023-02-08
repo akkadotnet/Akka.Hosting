@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Akka.Configuration;
@@ -14,6 +15,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Hosting.Tests.Configuration;
 
@@ -61,6 +63,8 @@ public class ConfigurationHoconAdapterTest
         _config = configuration.ToHocon();
     }
 
+    #region Adapter unit tests
+
     [Fact(DisplayName = "Adaptor should read environment variable sourced configuration correctly")]
     public void EnvironmentVariableTest()
     {
@@ -100,4 +104,88 @@ public class ConfigurationHoconAdapterTest
         _config.GetBoolean("akka.cluster.log-info").Should().BeFalse();
         _config.GetBoolean("akka.cluster.log-info-verbose").Should().BeTrue();
     }
+
+    #endregion
+
+    #region ToHocon unit tests
+
+    [Fact(DisplayName = "Regression test: connection-string should convert to hocon properly")]
+    public void ConnectionStringShouldConvertToHoconProperly()
+    {
+        const string connectionString = "Server=COMPUTER1\\TEST;Database=BV_PROD_1;uid=**;pwd=--;TransparentNetworkIPResolution=False;Connection Timeout=180;Max Pool Size=120;Column Encryption Setting=Enabled;";
+        var hoconString = $"connection-string = {connectionString.ToHocon()}";
+        Config? cfg = null;
+        Invoking(() => cfg = ConfigurationFactory.ParseString(hoconString))
+            .Should().NotThrow();
+        
+        cfg!.GetString("connection-string").Should().Be(connectionString);
+    }
+    
+    [MemberData(nameof(IllegalCharacterGenerator))]
+    [Theory(DisplayName = "ToHocon(string) should add quotes to string with illegal characters")]
+    public void StringToHoconQuote(string c)
+    {
+        var testString = $"this is {c} a test";
+        var hoconized = testString.ToHocon();
+
+        switch (c)
+        {
+            case "\\":
+                // backslash is a special case
+                hoconized.Should().Be("\"this is \\\\ a test\"");
+                break;
+            case "\"":
+                // quote is a special case
+                hoconized.Should().Be("\"this is \\\" a test\"");
+                break;
+            default:
+                hoconized.Should().Be($"\"{testString}\"");
+                break;
+        }
+        
+        var hoconString = $"test-string = {hoconized}";
+        Config? cfg = null;
+        Invoking(() => cfg = ConfigurationFactory.ParseString(hoconString))
+            .Should().NotThrow();
+        
+        cfg!.GetString("test-string").Should().Be(testString);
+    }
+
+    [MemberData(nameof(EscapeCharacterGenerator))]
+    [Theory(DisplayName = "ToHocon(string) should add backslash escape character on escapable characters")]
+    public void StringToHoconEscape(string escape, string expected)
+    {
+        var hoconSafe = escape.ToHocon();
+        hoconSafe.Should().Be(expected);
+        
+        var hoconString = $"test-string = {$"a test {escape} string".ToHocon()}";
+        Config? cfg = null;
+        Invoking(() => cfg = ConfigurationFactory.ParseString(hoconString))
+            .Should().NotThrow();
+        cfg!.GetString("test-string").Should().Be($"a test {escape} string");
+    }
+
+    public static IEnumerable<object[]> IllegalCharacterGenerator()
+    {
+        const string illegals = "$\"{}[]:=,#`^?!@*&\\";
+        foreach (var c in illegals)
+        {
+            yield return new [] { (object) $"{c}" };
+        }
+    }
+    
+    public static IEnumerable<object[]> EscapeCharacterGenerator()
+    {
+        yield return new[] { (object)"\\", "\"\\\\\"" };
+        yield return new[] { (object)"\"", "\"\\\"\"" };
+        yield return new[] { (object)"/", "\"\\/\"" };
+        yield return new[] { (object)"\b", "\"\\b\"" };
+        yield return new[] { (object)"\f", "\"\\f\"" };
+        yield return new[] { (object)"\n", "\"\\n\"" };
+        yield return new[] { (object)"\r", "\"\\r\"" };
+        yield return new[] { (object)"\t", "\"\\t\"" };
+        yield return new[] { (object)"\uFB2F", "\"\\ufb2f\"" };
+    }
+    
+    #endregion
 }

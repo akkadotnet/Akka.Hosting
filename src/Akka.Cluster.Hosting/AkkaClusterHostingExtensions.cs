@@ -386,8 +386,8 @@ namespace Akka.Cluster.Hosting
 
             if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
                 settings = settings
-                    .WithJournalPluginId(shardOptions.JournalOptions?.Identifier ?? shardOptions.JournalPluginId)
-                    .WithSnapshotPluginId(shardOptions.SnapshotOptions?.Identifier ?? shardOptions.SnapshotPluginId);
+                    .WithJournalPluginId(shardOptions.JournalOptions?.PluginId ?? shardOptions.JournalPluginId)
+                    .WithSnapshotPluginId(shardOptions.SnapshotOptions?.PluginId ?? shardOptions.SnapshotPluginId);
             return settings;
         }
 

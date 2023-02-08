@@ -1,3 +1,39 @@
+## [1.0.3] / 8 February 2023
+
+Version 1.0.3 fixes a bug in the HOCON configuration generator where it did not generate the proper escape characters for the generated HOCON string.
+
+* [Fix HOCON generator](https://github.com/akkadotnet/Akka.Hosting/pull/207)
+
+## [1.0.2] / 31 January 2023
+
+Version 1.0.2 introduces a new method to the `ActorRegistry.GetAsync` in order to allow users to force parts of their application to wait until a specific `IActorRef` has been started and added to the `ActorRegistry`.
+
+```csharp
+// arrange
+var registry = new ActorRegistry();
+
+// act
+var task = registry.GetAsync<Nobody>();
+task.IsCompletedSuccessfully.Should().BeFalse();
+
+registry.Register<Nobody>(Nobody.Instance);
+var result = await task;
+
+// assert
+result.Should().Be(Nobody.Instance);
+```
+
+This method is designed to allow users to wait via `async Task<IActorRef>` for an actor to be registered in the event that a specific `IRequiredActor<TKey>` is needed before Akka.Hosting can start the `ActorSystem` inside its `IHostedService`.
+
+## [1.0.1] / 6 January 2023
+
+Version 1.0.1 fixes options bug used in the cluster sharding Akka.Hosting extension method.
+
+* [Update Akka.NET from 1.4.45 to 1.4.48](https://github.com/akkadotnet/akka.net/releases/tag/1.4.48)
+* [Fix SimpleDemo project failing on `Development` environment](https://github.com/akkadotnet/Akka.Hosting/pull/184)
+* [Add F# CustomJournalIdDemo project](https://github.com/akkadotnet/Akka.Hosting/pull/183)
+* [Fix cluster sharding hosting extension method options bug](https://github.com/akkadotnet/Akka.Hosting/pull/186)
+
 ## [1.0.0] / 27 December 2022
 
 This 1.0.0 release is the RTM release for `Akka.Hosting` and contains major API breaking changes with a lot of its API. All current API will be frozen for all future releases and will be backed with our backward compatibility promise.
