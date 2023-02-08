@@ -1,3 +1,9 @@
+## [1.0.3] / 8 February 2023
+
+Version 1.0.3 fixes a bug in the HOCON configuration generator where it did not generate the proper escape characters for the generated HOCON string.
+
+* [Fix HOCON generator](https://github.com/akkadotnet/Akka.Hosting/pull/207)
+
 ## [1.0.2] / 31 January 2023
 
 Version 1.0.2 introduces a new method to the `ActorRegistry.GetAsync` in order to allow users to force parts of their application to wait until a specific `IActorRef` has been started and added to the `ActorRegistry`.
