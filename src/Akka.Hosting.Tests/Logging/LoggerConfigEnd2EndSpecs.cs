@@ -67,7 +67,7 @@ public class LoggerConfigEnd2EndSpecs : TestKit.Xunit2.TestKit
         });
         
         // Make sure that the logger has already been created
-        await AwaitConditionAsync(() => loggingProvider.Created);
+        await AwaitConditionAsync(() => Task.FromResult(loggingProvider.Created));
         var actorSystem = host.Services.GetRequiredService<ActorSystem>();
 
         // act

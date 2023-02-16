@@ -29,7 +29,7 @@
         <TestSdkVersion>17.4.1</TestSdkVersion>
         <CoverletVersion>3.2.0</CoverletVersion>
 	    <XunitRunneVisualstudio>2.4.5</XunitRunneVisualstudio>
-        <AkkaVersion>1.4.49</AkkaVersion>
+        <AkkaVersion>1.5.0-alpha4</AkkaVersion>
         <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
     </PropertyGroup>
 
