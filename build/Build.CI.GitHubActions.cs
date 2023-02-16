@@ -13,8 +13,8 @@ using Nuke.Common.Utilities;
     GitHubActionsImage.WindowsLatest,
     GitHubActionsImage.UbuntuLatest,
     AutoGenerate = false,
-    OnPushBranches = new[] { "master", "dev" },
-    OnPullRequestBranches = new[] { "master", "dev" },
+    OnPushBranches = new[] { "master", "dev", "v1.*" },
+    OnPullRequestBranches = new[] { "master", "dev", "v1.*" },
     InvokedTargets = new[] { nameof(All) },
     PublishArtifacts = true,
     EnableGitHubToken = true)]
