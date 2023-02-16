@@ -157,17 +157,38 @@ namespace Akka.Cluster.Hosting
     public sealed class ShardOptions
     {
         /// <summary>
+        ///     <para>
         ///     Defines how the coordinator stores its state. The same setting is also used by the
-        ///     shards for RememberEntities.
+        ///     shards when <see cref="RememberEntities"/> is set to <c>true</c>.
+        ///     </para>
+        ///     
+        ///     Possible values are <see cref="Akka.Cluster.Sharding.StateStoreMode.Persistence"/> and
+        ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.DData"/>
         /// </summary>
-        public StateStoreMode StateStoreMode { get; set; } = StateStoreMode.DData;
+        public StateStoreMode? StateStoreMode { get; set; }
+
+        /// <summary>
+        ///     <para>
+        ///     When <see cref="RememberEntities"/> is enabled and the state store mode is
+        ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.DData"/>, this controls how the remembered entities
+        ///     and shards are stored.
+        ///     </para>
+        ///
+        ///     <para>
+        ///     Possible values are <see cref="Akka.Cluster.Sharding.RememberEntitiesStore.Eventsourced"/> and
+        ///     <see cref="Akka.Cluster.Sharding.RememberEntitiesStore.DData"/>
+        ///     </para> 
+        /// 
+        ///     Default is <see cref="Akka.Cluster.Sharding.RememberEntitiesStore.DData"/> for backwards compatibility.
+        /// </summary>
+        public RememberEntitiesStore? RememberEntitiesStore { get; set; }
 
         /// <summary>
         ///     When set to <c>true</c>, the active entity actors will automatically be restarted
         ///     upon Shard restart. i.e. if the Shard is started on a different ShardRegion
         ///     due to re-balance or crash.
         /// </summary>
-        public bool RememberEntities { get; set; } = false;
+        public bool? RememberEntities { get; set; }
 
         /// <summary>
         ///     Specifies that entities should be instantiated on cluster nodes with a specific role.
@@ -239,6 +260,44 @@ namespace Akka.Cluster.Hosting
         /// graceful shutdown of a <see cref="Sharding.ShardRegion"/>, e.g. <see cref="PoisonPill"/>.
         /// </summary>
         public object? HandOffStopMessage { get; set; }
+
+        internal void Apply(AkkaConfigurationBuilder builder)
+        {
+            var sb = new StringBuilder();
+
+            if (Role is { })
+                sb.AppendLine($"role = {Role.ToHocon()}");
+            
+            if(RememberEntities is { })
+                sb.AppendLine($"remember-entities = {RememberEntities.ToHocon()}");
+            
+            if(RememberEntitiesStore is { })
+                sb.AppendLine($"remember-entities-store = {RememberEntitiesStore.ToString().ToLowerInvariant().ToHocon()}");
+
+            var journalId = JournalOptions?.PluginId ?? JournalPluginId ?? null;
+            if (journalId is { })
+                sb.AppendLine($"journal-plugin-id = {journalId.ToHocon()}");
+
+            var snapshotId = SnapshotOptions?.PluginId ?? SnapshotPluginId ?? null;
+            if (snapshotId is { })
+                sb.AppendLine($"snapshot-plugin-id = {snapshotId.ToHocon()}");
+
+            if (StateStoreMode is { })
+                sb.AppendLine($"state-store-mode = {StateStoreMode.ToString().ToLowerInvariant().ToHocon()}");
+
+            if (LeaseImplementation is { })
+                sb.AppendLine($"use-lease = {LeaseImplementation.ConfigPath}");
+
+            if (LeaseRetryInterval is { })
+                sb.AppendLine($"lease-retry-interval = {LeaseRetryInterval.ToHocon()}");
+            
+            if(sb.Length == 0)
+                return;
+
+            sb.Insert(0, "akka.cluster.sharding {");
+            sb.AppendLine("}");
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        }
     }
 
     public static class AkkaClusterHostingExtensions
@@ -362,36 +421,6 @@ namespace Akka.Cluster.Hosting
             }
 
             return ExtractShardId;
-        }
-
-        /// <summary>
-        /// INTERNAL API
-        ///
-        /// Generates the <see cref="ClusterShardingSettings"/> for the specified <paramref name="shardOptions"/>.
-        /// </summary>
-        /// <param name="shardOptions">The options to use.</param>
-        /// <param name="system">The current <see cref="ActorSystem"/>.</param>
-        /// <returns>A fully populated <see cref="ClusterShardingSettings"/> instance for use with a specific <see cref="ShardRegion"/>.</returns>
-        private static ClusterShardingSettings PopulateClusterShardingSettings(ShardOptions shardOptions,
-            ActorSystem system)
-        {
-            var settings = ClusterShardingSettings.Create(system)
-                .WithRole(shardOptions.Role)
-                .WithRememberEntities(shardOptions.RememberEntities)
-                .WithStateStoreMode(shardOptions.StateStoreMode);
-
-            if (shardOptions.LeaseImplementation is { })
-            {
-                var retry = shardOptions.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
-                settings = settings
-                    .WithLeaseSettings(new LeaseUsageSettings(shardOptions.LeaseImplementation.ConfigPath, retry));
-            }
-
-            if (shardOptions.StateStoreMode == StateStoreMode.Persistence)
-                settings = settings
-                    .WithJournalPluginId(shardOptions.JournalOptions?.PluginId ?? shardOptions.JournalPluginId)
-                    .WithSnapshotPluginId(shardOptions.SnapshotOptions?.PluginId ?? shardOptions.SnapshotPluginId);
-            return settings;
         }
 
         /// <summary>
@@ -640,13 +669,17 @@ namespace Akka.Cluster.Hosting
             ExtractShardId extractShardId,
             ShardOptions shardOptions)
         {
+            shardOptions.Apply(builder);
+            builder.AddHocon(ClusterSharding.DefaultConfig(), HoconAddMode.Append);
+            
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
                 var props = entityPropsFactory(system, registry, resolver);
-                var settings = PopulateClusterShardingSettings(shardOptions, system);
+                var settings = ClusterShardingSettings.Create(system);
                 var allocationStrategy = ClusterSharding.Get(system).DefaultShardAllocationStrategy(settings);
-                var shardRegion = await ClusterSharding.Get(system)
-                    .StartAsync(typeName, props, settings, extractEntityId, extractShardId, allocationStrategy, shardOptions.HandOffStopMessage ?? PoisonPill.Instance).ConfigureAwait(false);
+                var shardRegion = await ClusterSharding.Get(system).StartAsync(
+                    typeName, props, settings, extractEntityId, extractShardId, allocationStrategy, 
+                    shardOptions.HandOffStopMessage ?? PoisonPill.Instance).ConfigureAwait(false);
                 registry.Register<TKey>(shardRegion);
             }
 
