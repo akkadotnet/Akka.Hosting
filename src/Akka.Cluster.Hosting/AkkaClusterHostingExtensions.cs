@@ -248,7 +248,10 @@ namespace Akka.Cluster.Hosting
             ClusterOptions? options)
         {
             if (options == null)
-                return builder;
+                return builder.AddHocon(ClusterSharding.DefaultConfig()
+                    .WithFallback(ClusterSingletonManager.DefaultConfig())
+                    .WithFallback(DistributedPubSub.DefaultConfig())
+                    .WithFallback(ClusterClientReceptionist.DefaultConfig()), HoconAddMode.Append);;
 
             var sb = new StringBuilder()
                 .AppendLine("akka.cluster {");
