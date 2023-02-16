@@ -178,8 +178,6 @@ namespace Akka.Cluster.Hosting
         ///     Possible values are <see cref="Akka.Cluster.Sharding.RememberEntitiesStore.Eventsourced"/> and
         ///     <see cref="Akka.Cluster.Sharding.RememberEntitiesStore.DData"/>
         ///     </para> 
-        /// 
-        ///     Default is <see cref="Akka.Cluster.Sharding.RememberEntitiesStore.DData"/> for backwards compatibility.
         /// </summary>
         public RememberEntitiesStore? RememberEntitiesStore { get; set; }
 
