@@ -15,7 +15,7 @@ using Nuke.Common.Utilities;
     AutoGenerate = false,
     OnPushBranches = new[] { "master", "dev", "v1.*" },
     OnPullRequestBranches = new[] { "master", "dev", "v1.*" },
-    InvokedTargets = new[] { nameof(All) },
+    InvokedTargets = new[] { nameof(RunTests) },
     PublishArtifacts = true,
     EnableGitHubToken = true)]
 
