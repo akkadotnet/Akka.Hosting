@@ -261,6 +261,13 @@ namespace Akka.Cluster.Hosting
         /// </summary>
         public object? HandOffStopMessage { get; set; }
 
+        /// <summary>
+        /// Throw an exception if the internal state machine in the Shard actor does an invalid state transition.
+        /// Mostly for the Akka test suite, if off the invalid transition is logged as a warning instead of throwing and
+        /// crashing the shard.
+        /// </summary>
+        public bool? FailOnInvalidEntityStateTransition { get; set; }
+        
         internal void Apply(AkkaConfigurationBuilder builder)
         {
             var sb = new StringBuilder();
@@ -290,6 +297,10 @@ namespace Akka.Cluster.Hosting
 
             if (LeaseRetryInterval is { })
                 sb.AppendLine($"lease-retry-interval = {LeaseRetryInterval.ToHocon()}");
+
+            if (FailOnInvalidEntityStateTransition is { })
+                sb.AppendLine(
+                    $"fail-on-invalid-entity-state-transition = {FailOnInvalidEntityStateTransition.ToHocon()}");
             
             if(sb.Length == 0)
                 return;
