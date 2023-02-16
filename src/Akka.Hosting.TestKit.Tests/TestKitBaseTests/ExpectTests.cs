@@ -27,7 +27,7 @@ public class ExpectTests : TestKit
         TestActor.Tell("2");
         TestActor.Tell("3");
         TestActor.Tell("4");
-        ExpectMsgAllOf("3", "1", "4", "2").Should()
+        ExpectMsgAllOf(new []{"3", "1", "4", "2"}).Should()
             .BeEquivalentTo(new[] { "1", "2", "3", "4" }, opt => opt.WithStrictOrdering());
     }
 
@@ -38,14 +38,14 @@ public class ExpectTests : TestKit
         TestActor.Tell("2");
         TestActor.Tell("Totally unexpected");
         TestActor.Tell("3");
-        Invoking(() => ExpectMsgAllOf("3", "1", "2"))
+        Invoking(() => ExpectMsgAllOf(new []{"3", "1", "2"} ))
             .Should().Throw<Exception>();
     }
 
     [Fact]
     public void ExpectMsgAllOf_should_timeout_when_not_receiving_any_messages()
     {
-        Invoking(() => ExpectMsgAllOf(TimeSpan.FromMilliseconds(100), "3", "1", "2"))
+        Invoking(() => ExpectMsgAllOf(TimeSpan.FromMilliseconds(100), new []{"3", "1", "2"} ))
             .Should().Throw<Exception>();
     }
 
@@ -54,7 +54,7 @@ public class ExpectTests : TestKit
     {
         TestActor.Tell("1");
         TestActor.Tell("2");
-        Invoking(() => ExpectMsgAllOf(TimeSpan.FromMilliseconds(100), "3", "1", "2"))
+        Invoking(() => ExpectMsgAllOf(TimeSpan.FromMilliseconds(100), new[]{"3", "1", "2"} ))
             .Should().Throw<Exception>();
     }
 

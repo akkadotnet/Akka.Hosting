@@ -59,7 +59,7 @@ public class DilatedTests : TestKit
     public void ExpectMsgAllOf_should_dilate_timeout()
     {
         var stopwatch = Stopwatch.StartNew();
-        Invoking(() => ExpectMsgAllOf(TimeSpan.FromMilliseconds(Timeout), "1", "2"))
+        Invoking(() => ExpectMsgAllOf(TimeSpan.FromMilliseconds(Timeout), new[]{"1", "2"} ))
             .Should().Throw<TrueException>();
         stopwatch.Stop();
         AssertDilated(stopwatch.ElapsedMilliseconds, $"Expected the timeout to be {ExpectedTimeout} but in fact it was {stopwatch.ElapsedMilliseconds}.");
