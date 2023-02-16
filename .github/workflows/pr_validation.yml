@@ -21,10 +21,12 @@ on:
     branches:
       - master
       - dev
+      - 'v1.*'
   pull_request:
     branches:
       - master
       - dev
+      - 'v1.*'
 
 jobs:
   windows-latest:
@@ -49,8 +51,8 @@ jobs:
             .nuke/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj') }}
-      - name: Run './build.cmd All'
-        run: ./build.cmd All
+      - name: Run './build.cmd RunTests'
+        run: ./build.cmd RunTests
   ubuntu-latest:
     name: ubuntu-latest
     runs-on: ubuntu-latest
@@ -73,5 +75,5 @@ jobs:
             .nuke/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj') }}
-      - name: Run './build.cmd All'
-        run: ./build.cmd All
+      - name: Run './build.cmd RunTests'
+        run: ./build.cmd RunTests
