@@ -191,7 +191,7 @@ partial class Build : NukeBuild
         .Executes(async () =>
         {
             var version = ReleaseNotes.Version.ToString();
-            var releaseNotes = GetNuGetReleaseNotes(ChangelogFile);
+            var releaseNotes = MdHelper.GetNuGetReleaseNotes(ChangelogFile);
             Release release;
             var releaseName = $"{version}";
 
