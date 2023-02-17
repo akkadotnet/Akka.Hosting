@@ -120,7 +120,7 @@ partial class Build : NukeBuild
       .Executes(() =>
       {
           var version = ReleaseNotes.Version.ToString();
-          var releaseNotes = GetNuGetReleaseNotes(ChangelogFile, GitRepository);
+          var releaseNotes = MdHelper.GetNuGetReleaseNotes(ChangelogFile, GitRepository);
 
           var projects = SourceDirectory.GlobFiles("**/*.csproj")
           .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj", "**/*Demo.csproj"));
