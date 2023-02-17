@@ -30,7 +30,8 @@ public static class MdHelper
                 .Replace("* ", "\u2022 ")
                 .Replace("+ ", "\u2022 ")
                 .Replace("`", string.Empty)
-                .Replace(",", "%2C")).ToList();
+                .Replace(",", "%2C")
+                .Replace(";", "%3B")).ToList();
 
         if (repository.IsGitHubRepository())
         {
