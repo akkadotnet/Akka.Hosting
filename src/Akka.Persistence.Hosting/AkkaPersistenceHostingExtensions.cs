@@ -251,5 +251,39 @@ akka.persistence.snapshot-store.{snapshotStoreId} {{
 
             return builder.AddHocon(liveConfig, HoconAddMode.Prepend);
         }
+
+        /// <summary>
+        /// Adds the Akka.NET v1.4 to v1.5 Akka.Cluster.Sharding persistence event migration adapter to a journal.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalOptions">The specific journal options instance used by Akka.Cluster.Sharding persistence. For example, an instance of <c>SqlServerJournalOptions</c></param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterShardingJournalMigrationAdapter(
+            this AkkaConfigurationBuilder builder,
+            JournalOptions journalOptions)
+            => builder.WithClusterShardingJournalMigrationAdapter(journalOptions.PluginId);
+
+        /// <summary>
+        /// Adds the Akka.NET v1.4 to v1.5 Akka.Cluster.Sharding persistence event migration adapter to a journal.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalId">The specific journal identifier used by Akka.Cluster.Sharding persistence. For example, "akka.persistence.journal.sql-server"</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithClusterShardingJournalMigrationAdapter(
+            this AkkaConfigurationBuilder builder,
+            string journalId)
+        {
+            var config = @$"{journalId} {{
+     event-adapters {{
+        coordinator-migration = ""Akka.Cluster.Sharding.OldCoordinatorStateMigrationEventAdapter, Akka.Cluster.Sharding""
+    }}
+
+    event-adapter-bindings {{
+        ""Akka.Cluster.Sharding.ShardCoordinator+IDomainEvent, Akka.Cluster.Sharding"" = coordinator-migration
+    }}
+}}";
+            return builder.AddHocon(config, HoconAddMode.Prepend);
+        }
+        
     }
 }
