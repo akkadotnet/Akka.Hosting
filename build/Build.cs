@@ -306,7 +306,7 @@ partial class Build : NukeBuild
         });
     Target All => _ => _
      .Description("Executes NBench, Tests and Nuget targets/commands")
-     .DependsOn(BuildRelease, RunTests, NBench, Nuget);
+     .DependsOn(BuildRelease, RunTests, NBench);
 
     Target NBench => _ => _
      .Description("Runs all BenchMarkDotNet tests")
