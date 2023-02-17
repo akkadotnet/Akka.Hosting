@@ -45,16 +45,18 @@ namespace Akka.Cluster.Hosting
     public sealed class ShardOptions
     {
         public ShardOptions() { }
+        public bool? FailOnInvalidEntityStateTransition { get; set; }
         public object? HandOffStopMessage { get; set; }
         public Akka.Persistence.Hosting.JournalOptions? JournalOptions { get; set; }
         public string? JournalPluginId { get; set; }
         public Akka.Hosting.Coordination.LeaseOptionBase? LeaseImplementation { get; set; }
         public System.TimeSpan? LeaseRetryInterval { get; set; }
-        public bool RememberEntities { get; set; }
+        public bool? RememberEntities { get; set; }
+        public Akka.Cluster.Sharding.RememberEntitiesStore? RememberEntitiesStore { get; set; }
         public string? Role { get; set; }
         public Akka.Persistence.Hosting.SnapshotOptions? SnapshotOptions { get; set; }
         public string? SnapshotPluginId { get; set; }
-        public Akka.Cluster.Sharding.StateStoreMode StateStoreMode { get; set; }
+        public Akka.Cluster.Sharding.StateStoreMode? StateStoreMode { get; set; }
     }
 }
 namespace Akka.Cluster.Hosting.SBR
