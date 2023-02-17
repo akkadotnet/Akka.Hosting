@@ -259,8 +259,7 @@ partial class Build : NukeBuild
         .Unlisted()
         .After(CreateNuget)
         .Before(PublishNuget)
-        .OnlyWhenDynamic(() => !SignClientSecret.IsNullOrWhiteSpace())
-        .OnlyWhenDynamic(() => !SignClientUser.IsNullOrWhiteSpace())
+        .OnlyWhenDynamic(() => !SignClientSecret.IsNullOrWhiteSpace() && !SignClientUser.IsNullOrWhiteSpace())
         .Executes(() =>
         {
             var assemblies = OutputNuget.GlobFiles("*.nupkg");
