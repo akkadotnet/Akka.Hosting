@@ -175,7 +175,7 @@ partial class Build : NukeBuild
     });
     Target AuthenticatedGitHubClient => _ => _
         .Unlisted()
-        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubActions.Token))
+        .OnlyWhenDynamic(() => GitHubActions != null && !string.IsNullOrWhiteSpace(GitHubActions.Token))
         .Executes(() =>
         {
             GitHubClient = new GitHubClient(new ProductHeaderValue("nuke-build"))
@@ -186,7 +186,7 @@ partial class Build : NukeBuild
     Target GitHubRelease => _ => _
         .Unlisted()
         .Description("Creates a GitHub release (or amends existing) and uploads the artifact")
-        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(GitHubActions.Token))
+        .OnlyWhenDynamic(() => GitHubActions != null && !string.IsNullOrWhiteSpace(GitHubActions.Token))
         .DependsOn(AuthenticatedGitHubClient)
         .Executes(async () =>
         {
