@@ -19,21 +19,15 @@ namespace Akka.Hosting.Logging
 {
     public class LoggerFactoryLogger: ActorBase, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
-        public const string DefaultTimeStampFormat = "yy/MM/dd-HH:mm:ss.ffff";
-        private const string DefaultMessageFormat = "[{{Timestamp:yy/MM/dd-HH:mm:ss.ffff}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
-        private static readonly Event.LogLevel[] AllLogLevels = Enum.GetValues(typeof(Event.LogLevel)).Cast<Event.LogLevel>().ToArray();
-        
         /// <summary>
         /// only used when we're shutting down / spinning up
         /// </summary>
         protected readonly ILoggingAdapter InternalLogger = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
         private readonly ILoggerFactory _loggerFactory;
         private ILogger<ActorSystem> _akkaLogger;
-        private readonly string _messageFormat;
 
         public LoggerFactoryLogger()
         {
-            _messageFormat = string.Format(DefaultMessageFormat, DefaultTimeStampFormat);
             var setup = Context.System.Settings.Setup.Get<LoggerFactorySetup>();
             if (!setup.HasValue) 
                 throw new ConfigurationException(
@@ -68,72 +62,19 @@ namespace Akka.Hosting.Logging
         
         protected virtual void Log(LogEvent log, ActorPath path)
         {
-            var args = GetArgs(log, path, log.Message);
-            _akkaLogger.Log(GetLogLevel(log.LogLevel()), log.Cause, DefaultMessageFormat, args);
-
+            _akkaLogger.Log<LogEvent>(GetLogLevel(log.LogLevel()), new EventId(), log, log.Cause, (@event, exception) => @event.ToString());
         }
-
-        private static object[] GetArgs(LogEvent log, ActorPath path, object message)
-            => new []{ log.Timestamp, log.LogSource, path, log.Thread.ManagedThreadId, message };
-        //
-        // private static object GetMessage(object obj)
-        // {
-        //     try
-        //     {
-        //         return obj is LogMessage m ? string.Format(m.Format, m.Args) : obj;
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         // Formatting/ToString error handling
-        //         var sb = new StringBuilder("Exception while recording log: ")
-        //             .Append(ex.Message)
-        //             .Append(' ');
-        //         switch (obj)
-        //         {
-        //             case LogMessage msg:
-        //                 var args = msg.Args.Select(o =>
-        //                 {
-        //                     try
-        //                     {
-        //                         return o.ToString();
-        //                     }
-        //                     catch(Exception e)
-        //                     {
-        //                         return $"{o.GetType()}.ToString() throws {e.GetType()}: {e.Message}";
-        //                     }
-        //                 });
-        //                 sb.Append($"Format: [{msg.Format}], Args: [{string.Join(",", args)}].");
-        //                 break;
-        //             case string str:
-        //                 sb.Append($"Message: [{str}].");
-        //                 break;
-        //             default:
-        //                 sb.Append($"Failed to invoke {obj.GetType()}.ToString().");
-        //                 break;
-        //         }
-        //
-        //         sb.AppendLine(" Please take a look at the logging call where this occurred and fix your format string.");
-        //         sb.Append(ex);
-        //         return sb.ToString();
-        //     }
-        // }
-
+        
         private static LogLevel GetLogLevel(Event.LogLevel level)
         {
-            switch (level)
+            return level switch
             {
-                case Event.LogLevel.DebugLevel:
-                    return LogLevel.Debug;
-                case Event.LogLevel.InfoLevel:
-                    return LogLevel.Information;
-                case Event.LogLevel.WarningLevel:
-                    return LogLevel.Warning;
-                case Event.LogLevel.ErrorLevel:
-                    return LogLevel.Error;
-                default:
-                    // Should never reach this code path
-                    return LogLevel.Error;
-            }
+                Event.LogLevel.DebugLevel => LogLevel.Debug,
+                Event.LogLevel.InfoLevel => LogLevel.Information,
+                Event.LogLevel.WarningLevel => LogLevel.Warning,
+                Event.LogLevel.ErrorLevel => LogLevel.Error,
+                _ => LogLevel.Error
+            };
         }
     }
 }
