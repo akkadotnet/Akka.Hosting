@@ -133,7 +133,7 @@ hostBuilder.Services.AddAkka("MyActorSystem"%2C builder =>
         <LibraryFramework>netstandard2.0</LibraryFramework>
         <TestsNetCoreFramework>net6.0</TestsNetCoreFramework>
         <XunitVersion>2.4.2</XunitVersion>
-        <TestSdkVersion>17.4.1</TestSdkVersion>
+        <TestSdkVersion>17.5.0</TestSdkVersion>
         <CoverletVersion>3.2.0</CoverletVersion>
 	    <XunitRunneVisualstudio>2.4.5</XunitRunneVisualstudio>
         <AkkaVersion>1.5.0-beta1</AkkaVersion>
