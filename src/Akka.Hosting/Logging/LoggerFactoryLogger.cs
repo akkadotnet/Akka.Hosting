@@ -20,7 +20,7 @@ namespace Akka.Hosting.Logging
     public class LoggerFactoryLogger: ActorBase, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
         public const string DefaultTimeStampFormat = "yy/MM/dd-HH:mm:ss.ffff";
-        private const string DefaultMessageFormat = "[{{Timestamp:{0}}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
+        private const string DefaultMessageFormat = "[{{Timestamp:yy/MM/dd-HH:mm:ss.ffff}}][{{LogSource}}][{{ActorPath}}][{{Thread:0000}}]: {{Message}}";
         private static readonly Event.LogLevel[] AllLogLevels = Enum.GetValues(typeof(Event.LogLevel)).Cast<Event.LogLevel>().ToArray();
         
         /// <summary>
@@ -68,54 +68,55 @@ namespace Akka.Hosting.Logging
         
         protected virtual void Log(LogEvent log, ActorPath path)
         {
-            var message = GetMessage(log.Message);
-            _akkaLogger.Log(GetLogLevel(log.LogLevel()), log.Cause, _messageFormat, GetArgs(log, path, message));
+            var args = GetArgs(log, path, log.Message);
+            _akkaLogger.Log(GetLogLevel(log.LogLevel()), log.Cause, DefaultMessageFormat, args);
+
         }
 
         private static object[] GetArgs(LogEvent log, ActorPath path, object message)
             => new []{ log.Timestamp, log.LogSource, path, log.Thread.ManagedThreadId, message };
-
-        private static object GetMessage(object obj)
-        {
-            try
-            {
-                return obj is LogMessage m ? string.Format(m.Format, m.Args) : obj;
-            }
-            catch (Exception ex)
-            {
-                // Formatting/ToString error handling
-                var sb = new StringBuilder("Exception while recording log: ")
-                    .Append(ex.Message)
-                    .Append(' ');
-                switch (obj)
-                {
-                    case LogMessage msg:
-                        var args = msg.Args.Select(o =>
-                        {
-                            try
-                            {
-                                return o.ToString();
-                            }
-                            catch(Exception e)
-                            {
-                                return $"{o.GetType()}.ToString() throws {e.GetType()}: {e.Message}";
-                            }
-                        });
-                        sb.Append($"Format: [{msg.Format}], Args: [{string.Join(",", args)}].");
-                        break;
-                    case string str:
-                        sb.Append($"Message: [{str}].");
-                        break;
-                    default:
-                        sb.Append($"Failed to invoke {obj.GetType()}.ToString().");
-                        break;
-                }
-
-                sb.AppendLine(" Please take a look at the logging call where this occurred and fix your format string.");
-                sb.Append(ex);
-                return sb.ToString();
-            }
-        }
+        //
+        // private static object GetMessage(object obj)
+        // {
+        //     try
+        //     {
+        //         return obj is LogMessage m ? string.Format(m.Format, m.Args) : obj;
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         // Formatting/ToString error handling
+        //         var sb = new StringBuilder("Exception while recording log: ")
+        //             .Append(ex.Message)
+        //             .Append(' ');
+        //         switch (obj)
+        //         {
+        //             case LogMessage msg:
+        //                 var args = msg.Args.Select(o =>
+        //                 {
+        //                     try
+        //                     {
+        //                         return o.ToString();
+        //                     }
+        //                     catch(Exception e)
+        //                     {
+        //                         return $"{o.GetType()}.ToString() throws {e.GetType()}: {e.Message}";
+        //                     }
+        //                 });
+        //                 sb.Append($"Format: [{msg.Format}], Args: [{string.Join(",", args)}].");
+        //                 break;
+        //             case string str:
+        //                 sb.Append($"Message: [{str}].");
+        //                 break;
+        //             default:
+        //                 sb.Append($"Failed to invoke {obj.GetType()}.ToString().");
+        //                 break;
+        //         }
+        //
+        //         sb.AppendLine(" Please take a look at the logging call where this occurred and fix your format string.");
+        //         sb.Append(ex);
+        //         return sb.ToString();
+        //     }
+        // }
 
         private static LogLevel GetLogLevel(Event.LogLevel level)
         {
