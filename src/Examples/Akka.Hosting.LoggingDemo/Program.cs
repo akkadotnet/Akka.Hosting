@@ -39,7 +39,7 @@ builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider
             setup.AddLoggerFactory();
             
             // Example: Adding a serilog logger
-            //setup.AddLogger<SerilogLogger>();
+            //setup.AddLogger<SerilogLogger>(); // TODO: add back once upgraded to v1.5 APIs
         })
         .WithRemoting("localhost", 8110)
         .WithClustering(new ClusterOptions(){ Roles = new[]{ "myRole" }, 
