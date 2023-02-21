@@ -54,7 +54,7 @@ partial class Build : NukeBuild
     [Parameter] string SymbolsPublishUrl;
 
     //usage:
-    //.\build.cmd createnuget --NugetPrerelease {suffix}
+    //.build.cmd createnuget --NugetPrerelease {suffix}
     [Parameter] string NugetPrerelease;
 
     // Metadata used when signing packages and DLLs
@@ -79,7 +79,10 @@ partial class Build : NukeBuild
     GitHubActions GitHubActions => GitHubActions.Instance;
     private  long BuildNumber()
     {
-        return GitHubActions.RunNumber;
+        if (GitHubActions != null!)
+            return GitHubActions.RunNumber;
+
+        return 0;
     }    
     private string PreReleaseVersionSuffix()
     {
@@ -118,10 +121,10 @@ partial class Build : NukeBuild
       .Description("Creates nuget packages")
       .DependsOn(Compile)
       .Executes(() =>
-      {
+      {          
           var version = ReleaseNotes.Version.ToString();
           var releaseNotes = MdHelper.GetNuGetReleaseNotes(ChangelogFile, GitRepository);
-
+          
           var projects = SourceDirectory.GlobFiles("**/*.csproj")
           .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj", "**/*Demo.csproj"));
           foreach (var project in projects)
@@ -138,7 +141,8 @@ partial class Build : NukeBuild
                   .SetVersionSuffix(VersionSuffix)
                   .SetPackageReleaseNotes(releaseNotes)
                   .SetOutputDirectory(OutputNuget));
-          }
+          }         
+
       });
     Target PublishNuget => _ => _
     .Unlisted()
