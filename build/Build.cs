@@ -14,15 +14,12 @@ using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.DocFX.DocFXTasks;
-using System.Text.Json;
 using System.IO;
-using static Nuke.Common.ChangeLog.ChangelogTasks;
 using Nuke.Common.ChangeLog;
 using Nuke.Common.Tools.DocFX;
 using Nuke.Common.Tools.Docker;
 using static Nuke.Common.Tools.SignClient.SignClientTasks;
 using Nuke.Common.Tools.SignClient;
-using static Nuke.Common.Tools.Git.GitTasks;
 using Octokit;
 using Nuke.Common.Utilities;
 using Nuke.Common.CI.GitHubActions;
@@ -122,9 +119,9 @@ partial class Build : NukeBuild
       .DependsOn(Compile)
       .Executes(() =>
       {          
-          var version = ReleaseNotes.Version.ToString();
+          var version = Version(ReleaseNotes, NugetPrerelease);
           var releaseNotes = MdHelper.GetNuGetReleaseNotes(ChangelogFile, GitRepository);
-          
+          var versionSuffix = VersionSuffix;
           var projects = SourceDirectory.GlobFiles("**/*.csproj")
           .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj", "**/*Demo.csproj"));
           foreach (var project in projects)
@@ -138,7 +135,7 @@ partial class Build : NukeBuild
                   .SetAssemblyVersion(version)
                   .SetFileVersion(version)
                   .SetVersionPrefix(version)
-                  .SetVersionSuffix(VersionSuffix)
+                  .SetVersionSuffix(versionSuffix)
                   .SetPackageReleaseNotes(releaseNotes)
                   .SetOutputDirectory(OutputNuget));
           }         
@@ -417,5 +414,11 @@ partial class Build : NukeBuild
     static void Information(string info)
     {
         Serilog.Log.Information(info);
+    }
+    static string Version(ReleaseNotes releaseNotes, string nugetPrerelease)
+    {
+        var version = releaseNotes.Version.ToString();
+        version = nugetPrerelease == "dev" ? version.Split('-')[0] : version;
+        return version;
     }
 }
