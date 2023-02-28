@@ -2,11 +2,9 @@
     <PropertyGroup>
         <Copyright>Copyright © 2013-2023 Akka.NET Team</Copyright>
         <Authors>Akka.NET Team</Authors>
-        <VersionPrefix>1.5.0-alpha4</VersionPrefix>
-        <PackageReleaseNotes><![CDATA[Version 1.5.0-alpha4 integrates Akka.NET v1.5 into Akka.Hosting
-• [Implement new cluster sharding options](https://github.com/akkadotnet/Akka.Hosting/pull/224)
-• [Add cluster sharding migration journal event adapter extension method](https://github.com/akkadotnet/Akka.Hosting/pull/226)
-• [Update Akka.NET to 1.5.0-alpha4](https://github.com/akkadotnet/akka.net/releases/tag/1.5.0-alpha4)
+        <VersionPrefix>1.5.0-beta3</VersionPrefix>
+        <PackageReleaseNotes><![CDATA[Version 1.5.0-beta3 integrates Akka.NET v1.5 into Akka.Hosting
+• [Update Akka.NET to 1.5.0-beta3](https://github.com/akkadotnet/akka.net/releases/tag/1.5.0-beta3)
 #### Upgrading From v1.4 To v1.5
 As noted in [the upgrade advisories](https://github.com/akkadotnet/akka.net/blob/c9ccc25207b5a4cfa963a5a23f96c0676fbbef10/docs/community/whats-new/akkadotnet-v1.5-upgrade-advisories.md)%2C there was a major change in Akka.Cluster.Sharding state storage. These notes contains the same documentation%2C but tailored for Akka.Hosting users
 The recommended settings for maximum ease-of-use for Akka.Cluster.Sharding in new applications going forward will be:
@@ -136,7 +134,7 @@ hostBuilder.Services.AddAkka("MyActorSystem"%2C builder =>
         <TestSdkVersion>17.5.0</TestSdkVersion>
         <CoverletVersion>3.2.0</CoverletVersion>
 	    <XunitRunneVisualstudio>2.4.5</XunitRunneVisualstudio>
-        <AkkaVersion>1.5.0-beta2</AkkaVersion>
+        <AkkaVersion>1.5.0-beta3</AkkaVersion>
         <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
     </PropertyGroup>
 
