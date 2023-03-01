@@ -1,8 +1,8 @@
-## [1.5.0-beta3] / 27 February 2023
+## [1.5.0-beta4] / 28 February 2023
 
-Version 1.5.0-beta3 integrates Akka.NET v1.5 into Akka.Hosting
+Version 1.5.0-beta4 integrates Akka.NET v1.5 into Akka.Hosting
 
-* [Update Akka.NET to 1.5.0-beta3](https://github.com/akkadotnet/akka.net/releases/tag/1.5.0-beta3)
+* [Update Akka.NET to 1.5.0-beta4](https://github.com/akkadotnet/akka.net/releases/tag/1.5.0-beta4)
 
 #### Upgrading From v1.4 To v1.5
 As noted in [the upgrade advisories](https://github.com/akkadotnet/akka.net/blob/c9ccc25207b5a4cfa963a5a23f96c0676fbbef10/docs/community/whats-new/akkadotnet-v1.5-upgrade-advisories.md), there was a major change in Akka.Cluster.Sharding state storage. These notes contains the same documentation, but tailored for `Akka.Hosting` users
