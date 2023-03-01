@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Akka.Configuration;
 using Akka.Dispatch;
@@ -17,6 +18,7 @@ namespace Akka.Hosting
     public sealed class LoggerConfigBuilder
     {
         private readonly List<Type> _loggers = new List<Type> { typeof(DefaultLogger) };
+        private Type _logMessageFormatter = typeof(DefaultLogMessageFormatter);
         internal AkkaConfigurationBuilder Builder { get; }
 
         internal LoggerConfigBuilder(AkkaConfigurationBuilder builder)
@@ -44,6 +46,22 @@ namespace Akka.Hosting
         public DeadLetterOptions? DeadLetterOptions { get; set; }
 
         public DebugOptions? DebugOptions { get; set; }
+
+        public Type LogMessageFormatter
+        {
+            get => _logMessageFormatter;
+            set
+            {
+                if (!typeof(ILogMessageFormatter).IsAssignableFrom(value))
+                    throw new ConfigurationException($"{nameof(LogMessageFormatter)} must implement {nameof(ILogMessageFormatter)}");
+
+                var ctor = value.GetConstructor(new Type[]{});
+                if (ctor is null)
+                    throw new ConfigurationException($"{nameof(LogMessageFormatter)} Type must have an empty constructor");
+                        
+                _logMessageFormatter = value;
+            }
+        }
 
         /// <summary>
         /// Clear all loggers currently registered.
@@ -83,7 +101,9 @@ namespace Akka.Hosting
             var sb = new StringBuilder()
                 .Append("akka.loglevel=").AppendLine(ParseLogLevel(LogLevel))
                 .Append("akka.loggers=[").Append(string.Join(",", _loggers.Select(t => $"\"{t.AssemblyQualifiedName}\""))).AppendLine("]")
-                .Append("akka.log-config-on-start=").AppendLine(LogConfigOnStart ? "true" : "false");
+                .Append("akka.log-config-on-start=").AppendLine(LogConfigOnStart ? "true" : "false")
+                .Append("akka.logger-formatter=").AppendLine(_logMessageFormatter.AssemblyQualifiedName.ToHocon());
+                
             if (DebugOptions is { })
                 sb.AppendLine(DebugOptions.ToString());
             if (DeadLetterOptions is { })

@@ -131,6 +131,7 @@ namespace Akka.Hosting
         public Akka.Hosting.DebugOptions? DebugOptions { get; set; }
         public bool LogConfigOnStart { get; set; }
         public Akka.Event.LogLevel LogLevel { get; set; }
+        public System.Type LogMessageFormatter { get; set; }
         public Akka.Hosting.LoggerConfigBuilder AddLogger<T>()
             where T : Akka.Dispatch.IRequiresMessageQueue<Akka.Event.ILoggerMessageQueueSemantics> { }
         public Akka.Hosting.LoggerConfigBuilder ClearLoggers() { }
