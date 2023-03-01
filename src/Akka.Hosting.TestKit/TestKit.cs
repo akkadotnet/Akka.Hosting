@@ -177,24 +177,38 @@ namespace Akka.Hosting.TestKit
         /// </summary>
         protected virtual Task AfterAllAsync()
         {
-            Shutdown();
             return Task.CompletedTask;
         }
 
         public async Task DisposeAsync()
         {
-            await AfterAllAsync();
-            if(_host != null)
+            Exception? exception = null;
+            try
             {
-                await _host.StopAsync();
-                if (_host is IAsyncDisposable asyncDisposable)
+                await AfterAllAsync();
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+            finally
+            {
+                Shutdown();
+                if(_host != null)
                 {
-                    await asyncDisposable.DisposeAsync();
+                    await _host.StopAsync();
+                    if (_host is IAsyncDisposable asyncDisposable)
+                    {
+                        await asyncDisposable.DisposeAsync();
+                    }
+                    else
+                    {
+                        _host.Dispose();
+                    }
                 }
-                else
-                {
-                    _host.Dispose();
-                }
+                
+                if (exception is { })
+                    throw exception;
             }
         }
 
