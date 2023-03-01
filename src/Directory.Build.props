@@ -2,9 +2,9 @@
     <PropertyGroup>
         <Copyright>Copyright © 2013-2023 Akka.NET Team</Copyright>
         <Authors>Akka.NET Team</Authors>
-        <VersionPrefix>1.5.0-beta3</VersionPrefix>
-        <PackageReleaseNotes><![CDATA[Version 1.5.0-beta3 integrates Akka.NET v1.5 into Akka.Hosting
-• [Update Akka.NET to 1.5.0-beta3](https://github.com/akkadotnet/akka.net/releases/tag/1.5.0-beta3)
+        <VersionPrefix>1.5.0-beta4</VersionPrefix>
+        <PackageReleaseNotes><![CDATA[Version 1.5.0-beta4 integrates Akka.NET v1.5 into Akka.Hosting
+• [Update Akka.NET to 1.5.0-beta4](https://github.com/akkadotnet/akka.net/releases/tag/1.5.0-beta4)
 #### Upgrading From v1.4 To v1.5
 As noted in [the upgrade advisories](https://github.com/akkadotnet/akka.net/blob/c9ccc25207b5a4cfa963a5a23f96c0676fbbef10/docs/community/whats-new/akkadotnet-v1.5-upgrade-advisories.md)%2C there was a major change in Akka.Cluster.Sharding state storage. These notes contains the same documentation%2C but tailored for Akka.Hosting users
 The recommended settings for maximum ease-of-use for Akka.Cluster.Sharding in new applications going forward will be:
