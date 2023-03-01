@@ -1,3 +1,7 @@
+## [1.5.0-beta6] / 28 February 2023
+
+* [Update Akka.NET to 1.5.0-beta6](https://github.com/akkadotnet/akka.net/releases/tag/1.5.0-beta6)
+
 ## [1.5.0-beta4] / 28 February 2023
 
 Version 1.5.0-beta4 integrates Akka.NET v1.5 into Akka.Hosting
