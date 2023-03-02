@@ -11,4 +11,4 @@ Full changes
 
 #### Upgrading From v1.4 To v1.5
 
-As noted in [the upgrade advisories](https://github.com/akkadotnet/akka.net/blob/22b772552d648dd1ef3f23e4026e5959f98aab28/docs/community/whats-new/akkadotnet-v1.5-upgrade-advisories.md), there was some major changes inside Akka.NET that directly affects Akka.Hosting. To upgrade from v1.4 to v1.5, please watch our video [here](https://www.youtube.com/watch?v=-UPestlIw4k) covering this process.
+As noted in [the upgrade advisories](https://getakka.net/community/whats-new/akkadotnet-v1.5-upgrade-advisories.html), there was some major changes inside Akka.NET that directly affects Akka.Hosting. To upgrade from v1.4 to v1.5, please watch our video [here](https://www.youtube.com/watch?v=-UPestlIw4k) covering this process.
