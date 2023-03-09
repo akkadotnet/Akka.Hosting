@@ -51,13 +51,17 @@ partial class Build : NukeBuild
     [Parameter] string SymbolsPublishUrl;
 
     //usage:
-    //.build.cmd createnuget --NugetPrerelease {suffix}
+    //./build.cmd createnuget --NugetPrerelease {suffix}
     [Parameter] string NugetPrerelease;
 
     // Metadata used when signing packages and DLLs
     [Parameter] string SigningName = "My Library";
     [Parameter] string SigningDescription = "My REALLY COOL Library";
     [Parameter] string SigningUrl = "https://signing.is.cool/";
+
+    //usage:
+    //./build.cmd runtests --test-timeout 300s
+    [Parameter] string TestTimeout = "5m";
 
     [Parameter][Secret] string SignClientSecret;
     [Parameter][Secret] string SignClientUser;
@@ -251,6 +255,8 @@ partial class Build : NukeBuild
                            .SetResultsDirectory(OutputTests)
                            .SetProcessWorkingDirectory(Directory.GetParent(project).FullName)
                            .SetLoggers("trx")
+                           .SetBlameHang(true)
+                           .SetBlameHangTimeout(TestTimeout)
                            .SetVerbosity(verbosity: DotNetVerbosity.Normal)
                            .EnableNoBuild());
                 }
