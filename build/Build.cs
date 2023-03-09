@@ -255,6 +255,7 @@ partial class Build : NukeBuild
                            .SetResultsDirectory(OutputTests)
                            .SetProcessWorkingDirectory(Directory.GetParent(project).FullName)
                            .SetLoggers("trx")
+                           .SetBlameCrash(true)
                            .SetBlameHang(true)
                            .SetBlameHangTimeout(TestTimeout)
                            .SetVerbosity(verbosity: DotNetVerbosity.Normal)
