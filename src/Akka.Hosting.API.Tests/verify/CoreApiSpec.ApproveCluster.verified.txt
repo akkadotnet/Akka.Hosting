@@ -42,9 +42,33 @@ namespace Akka.Cluster.Hosting
         public string? Role { get; set; }
         public object? TerminationMessage { get; set; }
     }
+    public class DDataOptions
+    {
+        public DDataOptions() { }
+        public Akka.Cluster.Hosting.DurableOptions Durable { get; }
+        public string? Name { get; set; }
+        public bool? PreferOldest { get; set; }
+        public bool? RecreateOnFailure { get; set; }
+        public string? Role { get; set; }
+        public bool? VerboseDebugLogging { get; set; }
+    }
+    public class DurableOptions
+    {
+        public DurableOptions() { }
+        public string[]? Keys { get; set; }
+        public Akka.Cluster.Hosting.LmdbOptions Lmdb { get; }
+    }
+    public class LmdbOptions
+    {
+        public LmdbOptions() { }
+        public string? Directory { get; set; }
+        public long? MapSize { get; set; }
+        public System.TimeSpan? WriteBehindInterval { get; set; }
+    }
     public sealed class ShardOptions
     {
         public ShardOptions() { }
+        public Akka.Cluster.Hosting.ShardingDDataOptions DistributedData { get; }
         public bool? FailOnInvalidEntityStateTransition { get; set; }
         public object? HandOffStopMessage { get; set; }
         public Akka.Persistence.Hosting.JournalOptions? JournalOptions { get; set; }
@@ -57,6 +81,12 @@ namespace Akka.Cluster.Hosting
         public Akka.Persistence.Hosting.SnapshotOptions? SnapshotOptions { get; set; }
         public string? SnapshotPluginId { get; set; }
         public Akka.Cluster.Sharding.StateStoreMode? StateStoreMode { get; set; }
+    }
+    public sealed class ShardingDDataOptions : Akka.Cluster.Hosting.DDataOptions
+    {
+        public ShardingDDataOptions() { }
+        public int? MajorityMinimumCapacity { get; set; }
+        public int? MaxDeltaElements { get; set; }
     }
 }
 namespace Akka.Cluster.Hosting.SBR
