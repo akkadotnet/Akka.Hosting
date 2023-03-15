@@ -36,18 +36,7 @@ namespace Akka.Hosting
         /// <returns>A Task that will return the <see cref="IActorRef"/> using the given key.</returns>
         Task<IActorRef> GetAsync(CancellationToken cancellationToken = default);
     }
-
-    /// <summary>
-    /// INTERNAL API
-    /// </summary>
-    internal static class RequiredActorDefaults
-    {
-        /// <summary>
-        /// Used to timeout sync-over-async operations used when retrieving actors from the registry.
-        /// </summary>
-        public static readonly TimeSpan ActorFetchTimeout = TimeSpan.FromSeconds(5);
-    }
-
+    
     /// <summary>
     /// INTERNAL API
     /// </summary>
