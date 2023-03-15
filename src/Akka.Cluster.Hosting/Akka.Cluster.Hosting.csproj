@@ -12,5 +12,6 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Cluster.Sharding" Version="$(AkkaVersion)" />
+    <PackageReference Include="Akka.DistributedData" Version="$(AkkaVersion)" />
   </ItemGroup>
 </Project>

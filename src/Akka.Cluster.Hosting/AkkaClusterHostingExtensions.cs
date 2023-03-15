@@ -265,9 +265,24 @@ namespace Akka.Cluster.Hosting
         /// crashing the shard.
         /// </summary>
         public bool? FailOnInvalidEntityStateTransition { get; set; }
+
+        /// <summary>
+        ///     <para>
+        ///         Settings for the Distributed Data replicator.
+        ///         The <see cref="DistributedData.Role"/> property is not used. The distributed-data
+        ///         role will be the same as <see cref="ShardOptions.Role"/>.
+        ///         Note that there is one Replicator per role and it's not possible
+        ///         to have different distributed-data settings for different sharding entity types.
+        ///     </para>
+        ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
+        ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.DData"/>
+        /// </summary>
+        public ShardingDDataOptions DistributedData { get; } = new();
         
         internal void Apply(AkkaConfigurationBuilder builder)
         {
+            DistributedData.Apply(builder);
+            
             var sb = new StringBuilder();
 
             if (Role is { })
@@ -309,6 +324,169 @@ namespace Akka.Cluster.Hosting
         }
     }
 
+    public sealed class ShardingDDataOptions : DDataOptions
+    {
+        public int? MajorityMinimumCapacity { get; set; }
+        public int? MaxDeltaElements { get; set; }
+
+        internal void Apply(AkkaConfigurationBuilder builder)
+        {
+            base.Apply(builder, "akka.cluster.sharding");
+
+            var sb = new StringBuilder();
+            if (MajorityMinimumCapacity is { })
+                sb.AppendLine($"majority-min-cap = {MajorityMinimumCapacity}");
+            if (MaxDeltaElements is { })
+                sb.AppendLine($"max-delta-elements = {MaxDeltaElements}");
+            
+            if(sb.Length == 0)
+                return;
+            
+            sb.Insert(0, "akka.cluster.sharding.distributed-data {");
+            sb.AppendLine("}");
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        }
+    }
+    
+    public class DDataOptions
+    {
+        /// <summary>
+        ///     <para>
+        ///         Actor name of the Replicator actor.
+        ///     </para>
+        ///     <b>Default</b>: "ddataReplicator"
+        /// </summary>
+        public string? Name { get; set; }
+        
+        /// <summary>
+        /// Replicas are running on members tagged with this role.
+        /// All members are used if null or empty.
+        /// </summary>
+        public string? Role { get; set; }
+        
+        /// <summary>
+        /// When set to <c>true</c>, this flag will attach a backoff supervisor to the replicator;
+        /// any failing replicator to be restarted
+        /// </summary>
+        public bool? RecreateOnFailure { get; set; }
+        
+        /// <summary>
+        /// When set to <c>true</c>, Update and Get operations are sent to oldest nodes first.
+        /// This is useful together with Cluster Singleton, which is running on oldest nodes.
+        /// </summary>
+        public bool? PreferOldest { get; set; }
+        
+        /// <summary>
+        /// When set to <c>true</c>, provide a higher level of details in the debug logs, including gossip status.
+        /// Be careful about enabling in production systems.
+        /// </summary>
+        public bool? VerboseDebugLogging { get; set; }
+
+        public DurableOptions Durable { get; set; } = new();
+
+        internal virtual void Apply(AkkaConfigurationBuilder builder, string prefix = "akka.cluster")
+        {
+            var sb = new StringBuilder();
+
+            if (Name is { })
+                sb.AppendLine($"name = {Name.ToHocon()}");
+            if (Role is { })
+                sb.AppendLine($"role = {Role.ToHocon()}");
+            if (RecreateOnFailure is { })
+                sb.AppendLine($"recreate-on-failure = {RecreateOnFailure.ToHocon()}");
+            if (PreferOldest is { })
+                sb.AppendLine($"prefer-oldest = {PreferOldest.ToHocon()}");
+            if (VerboseDebugLogging is { })
+                sb.AppendLine($"verbose-debug-logging = {VerboseDebugLogging.ToHocon()}");
+
+            var durableSb = new StringBuilder();
+            if (Durable.Keys is { })
+                durableSb.AppendLine($"keys = [{string.Join(",", Durable.Keys.Select(s => s.ToHocon()))}]");
+            
+            var lmdbSb = new StringBuilder();
+            var lmdb = Durable.Lmdb;
+            if (lmdb.Directory is { })
+                lmdbSb.AppendLine($"dir = {lmdb.Directory.ToHocon()}");
+            if (lmdb.MapSize is { })
+                lmdbSb.AppendLine($"map-size = {lmdb.MapSize}");
+            if (lmdb.WriteBehindInterval is { })
+                lmdbSb.AppendLine($"write-behind-interval = {lmdb.WriteBehindInterval.ToHocon()}");
+
+            if (lmdbSb.Length > 0)
+            {
+                durableSb
+                    .AppendLine("lmdb {")
+                    .AppendLine(lmdbSb.ToString())
+                    .AppendLine("}");
+            }
+
+            if (durableSb.Length > 0)
+            {
+                sb.AppendLine("durable {")
+                    .AppendLine(durableSb.ToString())
+                    .AppendLine("}");
+            }
+            
+            if(sb.Length == 0)
+                return;
+
+            sb.Insert(0, $"{prefix}.distributed-data {{");
+            sb.AppendLine("}");
+
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        }
+    }
+
+    public class DurableOptions
+    {
+        /// <summary>
+        /// List of keys that are durable. Prefix matching is supported by using * at the
+        /// end of a key.
+        /// </summary>
+        public string[]? Keys { get; set; }
+
+        public LmdbOptions Lmdb { get; set; } = new();
+    }
+
+    public class LmdbOptions
+    {
+        /// <summary>
+        ///     Directory of LMDB file. There are two options:
+        ///     <list type="number">
+        ///         <item>
+        ///             A relative or absolute path to a directory that ends with 'ddata'
+        ///             the full name of the directory will contain name of the ActorSystem
+        ///             and its remote port.
+        ///         </item>
+        ///         <item>
+        ///             Otherwise the path is used as is, as a relative or absolute path to
+        ///             a directory.
+        ///         </item>
+        ///     </list>
+        ///     When running in production you may want to configure this to a specific
+        ///     path (alt 2), since the default directory contains the remote port of the
+        ///     actor system to make the name unique. If using a dynamically assigned
+        ///     port (0) it will be different each time and the previously stored data
+        ///     will not be loaded. 
+        /// </summary>
+        public string? Directory { get; set; }
+        
+        /// <summary>
+        ///     Size in bytes of the memory mapped file.
+        /// </summary>
+        public long? MapSize { get; set; }
+        
+        /// <summary>
+        ///     Accumulate changes before storing improves performance with the
+        ///     risk of losing the last writes if the process crashes.
+        ///     The interval is by default set to 0 to write each update immediately.
+        ///     Enabling write behind by specifying a duration, e.g. 200ms, is especially
+        ///     efficient when performing many writes to the same key, because it is only
+        ///     the last value for each key that will be serialized and stored.
+        /// </summary>
+        public TimeSpan? WriteBehindInterval { get; set; }
+    }
+
     public static class AkkaClusterHostingExtensions
     {
         internal static AkkaConfigurationBuilder BuildClusterHocon(
@@ -319,7 +497,8 @@ namespace Akka.Cluster.Hosting
                 return builder.AddHocon(ClusterSharding.DefaultConfig()
                     .WithFallback(ClusterSingletonManager.DefaultConfig())
                     .WithFallback(DistributedPubSub.DefaultConfig())
-                    .WithFallback(ClusterClientReceptionist.DefaultConfig()), HoconAddMode.Append);;
+                    .WithFallback(ClusterClientReceptionist.DefaultConfig())
+                    .WithFallback(DistributedData.DistributedData.DefaultConfig()), HoconAddMode.Append);;
 
             var sb = new StringBuilder()
                 .AppendLine("akka.cluster {");
@@ -432,6 +611,24 @@ namespace Akka.Cluster.Hosting
             return ExtractShardId;
         }
 
+        public static AkkaConfigurationBuilder WithDistributedData(
+            this AkkaConfigurationBuilder builder,
+            Action<DDataOptions> configurator)
+        {
+            var options = new DDataOptions();
+            configurator(options);
+            return builder.WithDistributedData(options);
+        }
+        
+        public static AkkaConfigurationBuilder WithDistributedData(
+            this AkkaConfigurationBuilder builder,
+            DDataOptions options)
+        {
+            options.Apply(builder);
+            builder.AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
+            return builder;
+        }
+        
         /// <summary>
         ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
         ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
@@ -679,7 +876,9 @@ namespace Akka.Cluster.Hosting
             ShardOptions shardOptions)
         {
             shardOptions.Apply(builder);
-            builder.AddHocon(ClusterSharding.DefaultConfig(), HoconAddMode.Append);
+            builder.AddHocon(
+                ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
+                HoconAddMode.Append);
             
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
