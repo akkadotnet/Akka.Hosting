@@ -329,9 +329,9 @@ namespace Akka.Cluster.Hosting
         public int? MajorityMinimumCapacity { get; set; }
         public int? MaxDeltaElements { get; set; }
 
-        internal override void Apply(AkkaConfigurationBuilder builder)
+        internal void Apply(AkkaConfigurationBuilder builder)
         {
-            base.Apply(builder);
+            base.Apply(builder, "akka.cluster.sharding");
 
             var sb = new StringBuilder();
             if (MajorityMinimumCapacity is { })
@@ -382,9 +382,9 @@ namespace Akka.Cluster.Hosting
         /// </summary>
         public bool? VerboseDebugLogging { get; set; }
 
-        public DurableOptions Durable { get; } = new();
+        public DurableOptions Durable { get; set; } = new();
 
-        internal virtual void Apply(AkkaConfigurationBuilder builder)
+        internal virtual void Apply(AkkaConfigurationBuilder builder, string prefix = "akka.cluster")
         {
             var sb = new StringBuilder();
 
@@ -430,7 +430,7 @@ namespace Akka.Cluster.Hosting
             if(sb.Length == 0)
                 return;
 
-            sb.Insert(0, "akka.cluster.distributed-data {");
+            sb.Insert(0, $"{prefix}.distributed-data {{");
             sb.AppendLine("}");
 
             builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
@@ -445,7 +445,7 @@ namespace Akka.Cluster.Hosting
         /// </summary>
         public string[]? Keys { get; set; }
 
-        public LmdbOptions Lmdb { get; } = new();
+        public LmdbOptions Lmdb { get; set; } = new();
     }
 
     public class LmdbOptions
@@ -497,7 +497,8 @@ namespace Akka.Cluster.Hosting
                 return builder.AddHocon(ClusterSharding.DefaultConfig()
                     .WithFallback(ClusterSingletonManager.DefaultConfig())
                     .WithFallback(DistributedPubSub.DefaultConfig())
-                    .WithFallback(ClusterClientReceptionist.DefaultConfig()), HoconAddMode.Append);;
+                    .WithFallback(ClusterClientReceptionist.DefaultConfig())
+                    .WithFallback(DistributedData.DistributedData.DefaultConfig()), HoconAddMode.Append);;
 
             var sb = new StringBuilder()
                 .AppendLine("akka.cluster {");
@@ -610,6 +611,24 @@ namespace Akka.Cluster.Hosting
             return ExtractShardId;
         }
 
+        public static AkkaConfigurationBuilder WithDistributedData(
+            this AkkaConfigurationBuilder builder,
+            Action<DDataOptions> configurator)
+        {
+            var options = new DDataOptions();
+            configurator(options);
+            return builder.WithDistributedData(options);
+        }
+        
+        public static AkkaConfigurationBuilder WithDistributedData(
+            this AkkaConfigurationBuilder builder,
+            DDataOptions options)
+        {
+            options.Apply(builder);
+            builder.AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
+            return builder;
+        }
+        
         /// <summary>
         ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
         ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
@@ -857,7 +876,9 @@ namespace Akka.Cluster.Hosting
             ShardOptions shardOptions)
         {
             shardOptions.Apply(builder);
-            builder.AddHocon(ClusterSharding.DefaultConfig(), HoconAddMode.Append);
+            builder.AddHocon(
+                ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
+                HoconAddMode.Append);
             
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
