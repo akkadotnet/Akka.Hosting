@@ -28,16 +28,59 @@ namespace Akka.Hosting
     /// <summary>
     /// INTERNAL API
     /// </summary>
+    internal static class RequiredActorDefaults
+    {
+        /// <summary>
+        /// Used to timeout sync-over-async operations used when retrieving actors from the registry.
+        /// </summary>
+        public static readonly TimeSpan ActorFetchTimeout = TimeSpan.FromSeconds(5);
+    }
+
+    /// <summary>
+    /// INTERNAL API
+    /// </summary>
     /// <typeparam name="TActor">The type key of the actor - corresponds to a matching entry inside the <see cref="IActorRegistry"/>.</typeparam>
     public sealed class RequiredActor<TActor> : IRequiredActor<TActor>
     {
+        private readonly IReadOnlyActorRegistry _registry;
+
         public RequiredActor(IReadOnlyActorRegistry registry)
         {
-            ActorRef = registry.Get<TActor>();
+            _registry = registry;
         }
 
+        private IActorRef? _internalRef = null;
+
         /// <inheritdoc cref="IRequiredActor{TActor}.ActorRef"/>
-        public IActorRef ActorRef { get; }
+        public IActorRef ActorRef
+        {
+            get
+            {
+                // attempt 1 - used cached value
+                if (_internalRef != null)
+                    return _internalRef;
+                
+                // attempt 2 - synchronously check the registry (fast path)
+                if (_registry.TryGet<TActor>(out _internalRef))
+                {
+                    return _internalRef;
+                }
+                
+                // attempt 3 - last resort - sync-over-async wait for someone
+                // to populate entry into registry. This is the fix for https://github.com/akkadotnet/Akka.Hosting/issues/208
+                try
+                {
+                    using var cts = new CancellationTokenSource(RequiredActorDefaults.ActorFetchTimeout);
+                    var fetchTask = _registry.GetAsync<TActor>(cts.Token);
+                    _internalRef = fetchTask.Result; // sync, wait for result
+                    return _internalRef;
+                }
+                catch (Exception ex)
+                {
+                    throw new MissingActorRegistryEntryException($"Unable to resolve actor type [{typeof(TActor)})] from the registry within [{RequiredActorDefaults.ActorFetchTimeout}]", ex);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -176,8 +219,7 @@ namespace Akka.Hosting
         /// <remarks>
         /// Have to store a collection of <see cref="WaitForActorRegistration"/>s here so each waiter gets its own cancellation token.
         /// </remarks>
-        private readonly ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>> _actorWaiters =
-            new ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>>();
+        private readonly ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>> _actorWaiters = new();
 
         /// <summary>
         /// Attempts to register an actor with the registry.
