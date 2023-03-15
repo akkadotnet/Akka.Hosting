@@ -13,7 +13,7 @@ using static Akka.Hosting.Tests.TestHelpers;
 
 namespace Akka.Hosting.Tests.Logging;
 
-public class LoggerConfigEnd2EndSpecs : TestKit.Xunit2.TestKit
+public class LoggerConfigEnd2EndSpecs : Akka.TestKit.Xunit2.TestKit
 {
     private class CustomLoggingProvider : ILoggerProvider
     {
