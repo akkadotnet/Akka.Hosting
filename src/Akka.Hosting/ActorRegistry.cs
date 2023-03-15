@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util;
+using Microsoft.Extensions.Hosting;
 
 namespace Akka.Hosting
 {
@@ -23,21 +24,72 @@ namespace Akka.Hosting
         /// The underlying actor resolved via <see cref="ActorRegistry"/> using the given <see cref="TActor"/> key.
         /// </summary>
         IActorRef ActorRef { get; }
-    }
 
+        /// <summary>
+        /// When calling from inside another <see cref="IHostedService"/>, actor registrations may not be
+        /// available at startup (due to Akka.NET itself being started asynchronously in another hosted service).
+        ///
+        /// Instead - you should call the GetAsync method to wait for that actor to be populated into the <see cref="ActorRegistry"/>
+        /// by the AkkaService at startup.
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>A Task that will return the <see cref="IActorRef"/> using the given key.</returns>
+        Task<IActorRef> GetAsync(CancellationToken cancellationToken = default);
+    }
+    
     /// <summary>
     /// INTERNAL API
     /// </summary>
     /// <typeparam name="TActor">The type key of the actor - corresponds to a matching entry inside the <see cref="IActorRegistry"/>.</typeparam>
     public sealed class RequiredActor<TActor> : IRequiredActor<TActor>
     {
+        private readonly IReadOnlyActorRegistry _registry;
+
         public RequiredActor(IReadOnlyActorRegistry registry)
         {
-            ActorRef = registry.Get<TActor>();
+            _registry = registry;
         }
 
+        private IActorRef? _internalRef = null;
+
         /// <inheritdoc cref="IRequiredActor{TActor}.ActorRef"/>
-        public IActorRef ActorRef { get; }
+        public IActorRef ActorRef
+        {
+            get
+            {
+                // attempt 1 - used cached value
+                if (_internalRef != null)
+                    return _internalRef;
+
+                // attempt 2 - synchronously check the registry (fast path)
+                if (_registry.TryGet<TActor>(out _internalRef))
+                {
+                    return _internalRef;
+                }
+
+
+                throw new MissingActorRegistryEntryException(
+                    $"Unable to resolve actor type [{typeof(TActor)})] - if you're using IRequiredActor<T> inside the constructor" +
+                    $"of an IHostedService, consider using the GetAsync method instead so you can wait for the actor to be populated by the AkkaService (which runs in parallel.)");
+            }
+        }
+        
+        /// <inheritdoc cref="IRequiredActor{TActor}.GetAsync"/>
+        public async Task<IActorRef> GetAsync(CancellationToken cancellationToken = default)
+        {
+            // attempt 1 - used cached value
+            if (_internalRef != null)
+                return _internalRef;
+
+            // attempt 2 - synchronously check the registry (fast path)
+            if (_registry.TryGet<TActor>(out _internalRef))
+            {
+                return _internalRef;
+            }
+
+            // attempt 3 - wait for the actor to be registered
+            return await _registry.GetAsync<TActor>(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -176,8 +228,7 @@ namespace Akka.Hosting
         /// <remarks>
         /// Have to store a collection of <see cref="WaitForActorRegistration"/>s here so each waiter gets its own cancellation token.
         /// </remarks>
-        private readonly ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>> _actorWaiters =
-            new ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>>();
+        private readonly ConcurrentDictionary<Type, ImmutableHashSet<WaitForActorRegistration>> _actorWaiters = new();
 
         /// <summary>
         /// Attempts to register an actor with the registry.
@@ -245,7 +296,7 @@ namespace Akka.Hosting
         /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync{TKey}"/>
         public async Task<IActorRef> GetAsync<TKey>(CancellationToken ct = default)
         {
-            return await GetAsync(typeof(TKey), ct);
+            return await GetAsync(typeof(TKey), ct).ConfigureAwait(false);
         }
 
         /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync"/>

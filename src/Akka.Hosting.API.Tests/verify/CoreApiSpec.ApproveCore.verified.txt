@@ -124,6 +124,7 @@ namespace Akka.Hosting
     public interface IRequiredActor<TActor>
     {
         Akka.Actor.IActorRef ActorRef { get; }
+        System.Threading.Tasks.Task<Akka.Actor.IActorRef> GetAsync(System.Threading.CancellationToken cancellationToken = default);
     }
     public sealed class LoggerConfigBuilder
     {
@@ -152,6 +153,7 @@ namespace Akka.Hosting
     {
         public RequiredActor(Akka.Hosting.IReadOnlyActorRegistry registry) { }
         public Akka.Actor.IActorRef ActorRef { get; }
+        public System.Threading.Tasks.Task<Akka.Actor.IActorRef> GetAsync(System.Threading.CancellationToken cancellationToken = default) { }
     }
     public delegate System.Threading.Tasks.Task StartupTask(Akka.Actor.ActorSystem system, Akka.Hosting.IActorRegistry registry);
     public enum TriStateValue

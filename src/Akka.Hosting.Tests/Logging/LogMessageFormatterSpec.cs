@@ -40,7 +40,7 @@ public class LogMessageFormatterSpec
         try
         {
             var sys = host.Services.GetRequiredService<ActorSystem>();
-            var testKit = new TestKit.Xunit2.TestKit(sys);
+            var testKit = new Akka.TestKit.Xunit2.TestKit(sys);
 
             var probe = testKit.CreateTestProbe();
             sys.EventStream.Subscribe(probe, typeof(Error));
