@@ -8,6 +8,8 @@ namespace Akka.Cluster.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<Akka.Actor.Address> initialContactAddresses, string receptionistActorName = "receptionist") { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientReceptionist(this Akka.Hosting.AkkaConfigurationBuilder builder, string name = "receptionist", string? role = null) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClustering(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ClusterOptions? options = null) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedData(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.DDataOptions options) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedData(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Cluster.Hosting.DDataOptions> configurator) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedPubSub(this Akka.Hosting.AkkaConfigurationBuilder builder, string role) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<string, Akka.Actor.Props> entityPropsFactory, Akka.Cluster.Sharding.IMessageExtractor messageExtractor, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegion<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, System.Func<string, Akka.Actor.Props>> entityPropsFactory, Akka.Cluster.Sharding.IMessageExtractor messageExtractor, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
@@ -45,7 +47,7 @@ namespace Akka.Cluster.Hosting
     public class DDataOptions
     {
         public DDataOptions() { }
-        public Akka.Cluster.Hosting.DurableOptions Durable { get; }
+        public Akka.Cluster.Hosting.DurableOptions Durable { get; set; }
         public string? Name { get; set; }
         public bool? PreferOldest { get; set; }
         public bool? RecreateOnFailure { get; set; }
@@ -56,7 +58,7 @@ namespace Akka.Cluster.Hosting
     {
         public DurableOptions() { }
         public string[]? Keys { get; set; }
-        public Akka.Cluster.Hosting.LmdbOptions Lmdb { get; }
+        public Akka.Cluster.Hosting.LmdbOptions Lmdb { get; set; }
     }
     public class LmdbOptions
     {
