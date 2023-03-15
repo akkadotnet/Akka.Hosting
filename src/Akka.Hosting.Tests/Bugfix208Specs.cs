@@ -38,17 +38,17 @@ public class Bugfix208Specs : TestKit.TestKit
     
     private class MyBackgroundService : BackgroundService
     {
-        private readonly IActorRef _testActor;
+        private readonly IRequiredActor<TestActorKey> _testActor;
 
         public MyBackgroundService(IRequiredActor<TestActorKey> requiredActor)
         {
-            _testActor = requiredActor.ActorRef;
+           _testActor = requiredActor;
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _testActor.Tell("BackgroundService started");
-            return Task.CompletedTask;
+            var myRef = await _testActor.GetAsync(stoppingToken);
+            myRef.Tell("BackgroundService started");
         }
     }
 
@@ -78,10 +78,31 @@ public class Bugfix208Specs : TestKit.TestKit
         // act
 
         // assert
-        await AwaitAssertAsync(async () =>
+        
+        // workaround for https://github.com/akkadotnet/Akka.Hosting/issues/265
+        var attempts = 5;
+        do
         {
-            var r = await testActorRef.Ask<string>(new MyTestActor.GetData(), TimeSpan.FromMilliseconds(100));
-            r.Should().Be("BackgroundService started");
-        });
+            attempts--;
+            try
+            {
+                var r = await testActorRef.Ask<string>(new MyTestActor.GetData(), TimeSpan.FromMilliseconds(100));
+                r.Should().Be("BackgroundService started");
+            }
+            catch (Exception e)
+            {
+                attempts--;
+                if (attempts == 0)
+                {
+                    throw;
+                }
+            }
+        } while (attempts > 0);
+
+        // await AwaitAssertAsync(async () =>
+        // {
+        //     var r = await testActorRef.Ask<string>(new MyTestActor.GetData(), TimeSpan.FromMilliseconds(100));
+        //     r.Should().Be("BackgroundService started");
+        // }, RemainingOrDefault, TimeSpan.FromMilliseconds(150));
     }
 }

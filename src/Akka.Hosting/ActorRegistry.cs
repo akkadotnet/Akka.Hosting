@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util;
+using Microsoft.Extensions.Hosting;
 
 namespace Akka.Hosting
 {
@@ -23,6 +24,17 @@ namespace Akka.Hosting
         /// The underlying actor resolved via <see cref="ActorRegistry"/> using the given <see cref="TActor"/> key.
         /// </summary>
         IActorRef ActorRef { get; }
+
+        /// <summary>
+        /// When calling from inside another <see cref="IHostedService"/>, actor registrations may not be
+        /// available at startup (due to Akka.NET itself being started asynchronously in another hosted service).
+        ///
+        /// Instead - you should call the GetAsync method to wait for that actor to be populated into the <see cref="ActorRegistry"/>
+        /// by the AkkaService at startup.
+        /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>A Task that will return the <see cref="IActorRef"/> using the given key.</returns>
+        Task<IActorRef> GetAsync(CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -59,27 +71,35 @@ namespace Akka.Hosting
                 // attempt 1 - used cached value
                 if (_internalRef != null)
                     return _internalRef;
-                
+
                 // attempt 2 - synchronously check the registry (fast path)
                 if (_registry.TryGet<TActor>(out _internalRef))
                 {
                     return _internalRef;
                 }
-                
-                // attempt 3 - last resort - sync-over-async wait for someone
-                // to populate entry into registry. This is the fix for https://github.com/akkadotnet/Akka.Hosting/issues/208
-                try
-                {
-                    using var cts = new CancellationTokenSource(RequiredActorDefaults.ActorFetchTimeout);
-                    var fetchTask = _registry.GetAsync<TActor>(cts.Token);
-                    _internalRef = fetchTask.Result; // sync, wait for result
-                    return _internalRef;
-                }
-                catch (Exception ex)
-                {
-                    throw new MissingActorRegistryEntryException($"Unable to resolve actor type [{typeof(TActor)})] from the registry within [{RequiredActorDefaults.ActorFetchTimeout}]", ex);
-                }
+
+
+                throw new MissingActorRegistryEntryException(
+                    $"Unable to resolve actor type [{typeof(TActor)})] - if you're using IRequiredActor<T> inside the constructor" +
+                    $"of an IHostedService, consider using the GetAsync method instead so you can wait for the actor to be populated by the AkkaService (which runs in parallel.)");
             }
+        }
+        
+        /// <inheritdoc cref="IRequiredActor{TActor}.GetAsync"/>
+        public async Task<IActorRef> GetAsync(CancellationToken cancellationToken = default)
+        {
+            // attempt 1 - used cached value
+            if (_internalRef != null)
+                return _internalRef;
+
+            // attempt 2 - synchronously check the registry (fast path)
+            if (_registry.TryGet<TActor>(out _internalRef))
+            {
+                return _internalRef;
+            }
+
+            // attempt 3 - wait for the actor to be registered
+            return await _registry.GetAsync<TActor>(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -287,7 +307,7 @@ namespace Akka.Hosting
         /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync{TKey}"/>
         public async Task<IActorRef> GetAsync<TKey>(CancellationToken ct = default)
         {
-            return await GetAsync(typeof(TKey), ct);
+            return await GetAsync(typeof(TKey), ct).ConfigureAwait(false);
         }
 
         /// <inheritdoc cref="IReadOnlyActorRegistry.GetAsync"/>
