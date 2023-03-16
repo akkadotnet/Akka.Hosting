@@ -12,6 +12,6 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Persistence.Query.Sql" Version="$(AkkaVersion)" />
-    <PackageReference Include="Akka.Persistence.PostgreSql" Version="1.5.0" />
+    <PackageReference Include="Akka.Persistence.PostgreSql" Version="$(AkkaVersion)" />
   </ItemGroup>
 </Project>
