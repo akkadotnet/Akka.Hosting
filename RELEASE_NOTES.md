@@ -3,6 +3,8 @@
 * [Update Akka.NET to 1.5.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.1)
 * [Bump Akka.Persistence.PostgreSql to 1.5.1](https://github.com/akkadotnet/Akka.Hosting/pull/268)
 * [Bump Akka.Persistence.SqlServer to 1.5.1](https://github.com/akkadotnet/Akka.Hosting/pull/268)
+* [Add GetAsync method to `IRequiredActor` to resolve IActorRef in background services](https://github.com/akkadotnet/Akka.Hosting/pull/264)
+* [Add cluster Distributed Data options support for Akka.Cluster.Hosting extensions](https://github.com/akkadotnet/Akka.Hosting/pull/263)
 
 ## [1.5.0] / 2 March 2023
 
