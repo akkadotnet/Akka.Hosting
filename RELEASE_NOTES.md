@@ -1,3 +1,7 @@
+## [1.5.1.1] / 4 April 2023
+
+* [Fix missing default DData configuration in cluster hosting extension](https://github.com/akkadotnet/Akka.Hosting/pull/272)
+
 ## [1.5.1] / 16 March 2023
 
 * [Update Akka.NET to 1.5.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.1)
