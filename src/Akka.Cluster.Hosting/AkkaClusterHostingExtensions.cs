@@ -498,7 +498,7 @@ namespace Akka.Cluster.Hosting
                     .WithFallback(ClusterSingletonManager.DefaultConfig())
                     .WithFallback(DistributedPubSub.DefaultConfig())
                     .WithFallback(ClusterClientReceptionist.DefaultConfig())
-                    .WithFallback(DistributedData.DistributedData.DefaultConfig()), HoconAddMode.Append);;
+                    .WithFallback(DistributedData.DistributedData.DefaultConfig()), HoconAddMode.Append);
 
             var sb = new StringBuilder()
                 .AppendLine("akka.cluster {");
@@ -555,7 +555,8 @@ namespace Akka.Cluster.Hosting
             return builder.AddHocon(ClusterSharding.DefaultConfig()
                 .WithFallback(ClusterSingletonManager.DefaultConfig())
                 .WithFallback(DistributedPubSub.DefaultConfig())
-                .WithFallback(ClusterClientReceptionist.DefaultConfig()), HoconAddMode.Append);
+                .WithFallback(ClusterClientReceptionist.DefaultConfig())
+                .WithFallback(DistributedData.DistributedData.DefaultConfig()), HoconAddMode.Append);
         }
 
         /// <summary>
