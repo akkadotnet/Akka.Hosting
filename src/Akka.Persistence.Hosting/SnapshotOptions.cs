@@ -44,9 +44,9 @@ namespace Akka.Persistence.Hosting
         ///         Default serializer used as manifest serializer when applicable and payload serializer when no
         ///         specific binding overrides are specified
         ///     </para>
-        ///     <b>Default</b>: <c>"json"</c>
+        ///     <b>Default</b>: <c>null</c>
         /// </summary>
-        public string Serializer { get; set; } = "json";
+        public string? Serializer { get; set; }
         
         /// <summary>
         ///     <para>
