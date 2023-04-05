@@ -32,7 +32,7 @@ namespace Akka.Persistence.Hosting
         protected abstract Akka.Configuration.Config InternalDefaultConfig { get; }
         public bool IsDefaultPlugin { get; set; }
         public string PluginId { get; }
-        public string Serializer { get; set; }
+        public string? Serializer { get; set; }
         public abstract string Identifier { get; set; }
         protected virtual System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
         public Akka.Configuration.Config ToConfig() { }
@@ -52,7 +52,7 @@ namespace Akka.Persistence.Hosting
         protected abstract Akka.Configuration.Config InternalDefaultConfig { get; }
         public bool IsDefaultPlugin { get; set; }
         public string PluginId { get; }
-        public string Serializer { get; set; }
+        public string? Serializer { get; set; }
         public abstract string Identifier { get; set; }
         protected virtual System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
         public Akka.Configuration.Config ToConfig() { }
