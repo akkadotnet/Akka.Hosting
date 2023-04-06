@@ -41,7 +41,7 @@ public class ClusterOptionsSpec
         settings.MinNrOfMembers.Should().Be(1);
         settings.LogInfo.Should().BeTrue();
         settings.LogInfoVerbose.Should().BeFalse();
-        settings.DowningProviderType.Should().Be(typeof(NoDowning));
+        settings.DowningProviderType.Should().Be(typeof(SplitBrainResolverProvider));
     }
     
     [Fact(DisplayName = "ClusterOptions should generate proper HOCON values")]
