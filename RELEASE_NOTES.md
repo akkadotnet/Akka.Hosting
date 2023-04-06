@@ -1,3 +1,17 @@
+## [1.5.2] / 6 April 2023
+
+* [Update Akka.NET to 1.5.2](https://github.com/akkadotnet/akka.net/releases/tag/1.5.2)
+* [Bump Akka.Persistence.PostgreSql to 1.5.2](https://github.com/akkadotnet/Akka.Hosting/pull/276)
+* [Bump Akka.Persistence.SqlServer to 1.5.2](https://github.com/akkadotnet/Akka.Hosting/pull/276)
+* [Persistence: Change persistence default serializer from json to null](https://github.com/akkadotnet/Akka.Hosting/pull/274)
+
+**Major Changes**
+* Persistence.Hosting default value for default serializer has been changed from `json` to `null`. This only affects persistence write and not reads. All objects with no serializer mapping will now be serialized using Akka default object serializer. If you have old persistence data where they do not have their serializer ID column populated, you will need to change this setting.
+
+**Inherited Changes From Akka.NET Core**
+* Persistence will now ignore the `serializer` setting inside journal settings when writing new events. This setting will only be used when data retrieved from the database does not have the serializer id column unpopulated.
+* Cluster.Hosting, by default, will have `SplitBrainResolver` enabled.
+
 ## [1.5.1.1] / 4 April 2023
 
 * [Fix missing default DData configuration in cluster hosting extension](https://github.com/akkadotnet/Akka.Hosting/pull/272)
