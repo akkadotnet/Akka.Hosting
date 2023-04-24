@@ -313,6 +313,8 @@ public class SqlServerOptionsSpec
         AssertString(underTest, reference, "metadata-table-name");
         AssertBoolean(underTest, reference, "sequential-access");
         AssertBoolean(underTest, reference, "use-constant-parameter-size");
+        AssertString(underTest, reference, "read-isolation-level");
+        AssertString(underTest, reference, "write-isolation-level");
     }
 
     private static void AssertSnapshotConfig(Config underTest, Config reference)
@@ -326,6 +328,8 @@ public class SqlServerOptionsSpec
         AssertBoolean(underTest, reference, "auto-initialize");
         AssertBoolean(underTest, reference, "sequential-access");
         AssertBoolean(underTest, reference, "use-constant-parameter-size");
+        AssertString(underTest, reference, "read-isolation-level");
+        AssertString(underTest, reference, "write-isolation-level");
     }
     
     private static void AssertString(Config underTest, Config reference, string hoconPath)

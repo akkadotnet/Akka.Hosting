@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Data;
 using System.Text;
 using Akka.Configuration;
 using Akka.Persistence.Hosting;
@@ -94,6 +95,12 @@ namespace Akka.Persistence.PostgreSql.Hosting
         ///     <b>Default</b>: <c>false</c>
         /// </summary>
         public bool UseBigIntIdentityForOrderingColumn { get; set; } = false;
+
+        /// <inheritdoc/>
+        public override IsolationLevel ReadIsolationLevel { get; set; } = IsolationLevel.Unspecified;
+
+        /// <inheritdoc/>
+        public override IsolationLevel WriteIsolationLevel { get; set; } = IsolationLevel.Unspecified;
 
         protected override Config InternalDefaultConfig => Default;
 

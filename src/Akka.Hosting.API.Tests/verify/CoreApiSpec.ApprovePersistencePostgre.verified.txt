@@ -16,9 +16,11 @@ namespace Akka.Persistence.PostgreSql.Hosting
         public bool UseBigIntIdentityForOrderingColumn { get; set; }
         public override string Identifier { get; set; }
         public override string MetadataTableName { get; set; }
+        public override System.Data.IsolationLevel ReadIsolationLevel { get; set; }
         public override string SchemaName { get; set; }
         public override bool SequentialAccess { get; set; }
         public override string TableName { get; set; }
+        public override System.Data.IsolationLevel WriteIsolationLevel { get; set; }
         protected override System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
     }
     public sealed class PostgreSqlSnapshotOptions : Akka.Persistence.Hosting.SqlSnapshotOptions
@@ -28,9 +30,11 @@ namespace Akka.Persistence.PostgreSql.Hosting
         protected override Akka.Configuration.Config InternalDefaultConfig { get; }
         public Akka.Persistence.PostgreSql.StoredAsType StoredAs { get; set; }
         public override string Identifier { get; set; }
+        public override System.Data.IsolationLevel ReadIsolationLevel { get; set; }
         public override string SchemaName { get; set; }
         public override bool SequentialAccess { get; set; }
         public override string TableName { get; set; }
+        public override System.Data.IsolationLevel WriteIsolationLevel { get; set; }
         protected override System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
     }
     public static class StoredAsExtensions { }
