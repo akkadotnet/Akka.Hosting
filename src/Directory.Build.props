@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
     <PropertyGroup>
         <Copyright>Copyright © 2013-2023 Akka.NET Team</Copyright>
         <Authors>Akka.NET Team</Authors>
@@ -134,7 +134,7 @@ hostBuilder.Services.AddAkka("MyActorSystem"%2C builder =>
         <TestSdkVersion>17.5.0</TestSdkVersion>
         <CoverletVersion>3.2.0</CoverletVersion>
 	    <XunitRunneVisualstudio>2.4.5</XunitRunneVisualstudio>
-        <AkkaVersion>1.5.2</AkkaVersion>
+        <AkkaVersion>1.5.3</AkkaVersion>
         <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
     </PropertyGroup>
 
