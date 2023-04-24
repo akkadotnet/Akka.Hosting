@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Data;
 using System.Text;
 using Akka.Configuration;
 using Akka.Hosting;
@@ -104,6 +105,12 @@ namespace Akka.Persistence.SqlServer.Hosting
         /// </summary>
         public TimeSpan QueryRefreshInterval { get; set; } = TimeSpan.FromSeconds(3);
 
+        /// <inheritdoc/>
+        public override IsolationLevel ReadIsolationLevel { get; set; } = IsolationLevel.Unspecified;
+
+        /// <inheritdoc/>
+        public override IsolationLevel WriteIsolationLevel { get; set; } = IsolationLevel.Unspecified;
+
         protected override Config InternalDefaultConfig => Default;
 
         protected override StringBuilder Build(StringBuilder sb)
@@ -186,6 +193,12 @@ namespace Akka.Persistence.SqlServer.Hosting
         ///     <b>Default</b>: <c>false</c>
         /// </summary>
         public bool UseConstantParameterSize { get; set; } = false;
+
+        /// <inheritdoc/>
+        public override IsolationLevel ReadIsolationLevel { get; set; } = IsolationLevel.Unspecified;
+
+        /// <inheritdoc/>
+        public override IsolationLevel WriteIsolationLevel { get; set; } = IsolationLevel.Unspecified;
 
         protected override Config InternalDefaultConfig => Default;
 

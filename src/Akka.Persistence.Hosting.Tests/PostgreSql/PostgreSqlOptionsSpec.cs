@@ -307,6 +307,8 @@ public class PostgreSqlOptionsSpec
         AssertBoolean(underTest, reference, "sequential-access");
         AssertString(underTest, reference, "stored-as");
         AssertBoolean(underTest, reference, "use-bigint-identity-for-ordering-column");
+        AssertString(underTest, reference, "read-isolation-level");
+        AssertString(underTest, reference, "write-isolation-level");
     }
 
     private static void AssertSnapshotConfig(Config underTest, Config reference)
@@ -320,6 +322,8 @@ public class PostgreSqlOptionsSpec
         AssertBoolean(underTest, reference, "auto-initialize");
         AssertBoolean(underTest, reference, "sequential-access");
         AssertBoolean(underTest, reference, "use-constant-parameter-size");
+        AssertString(underTest, reference, "read-isolation-level");
+        AssertString(underTest, reference, "write-isolation-level");
     }
 
     private static void AssertString(Config underTest, Config reference, string hoconPath)

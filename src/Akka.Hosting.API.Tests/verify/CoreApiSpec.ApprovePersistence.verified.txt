@@ -23,6 +23,11 @@ namespace Akka.Persistence.Hosting
         public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder AddWriteEventAdapter<TAdapter>(string eventAdapterName, System.Collections.Generic.IEnumerable<System.Type> boundTypes)
             where TAdapter : Akka.Persistence.Journal.IWriteEventAdapter { }
     }
+    public static class Extensions
+    {
+        public static string ToHocon(this System.Data.IsolationLevel level) { }
+        public static string ToHocon(this System.Data.IsolationLevel? level) { }
+    }
     public abstract class JournalOptions
     {
         protected JournalOptions(bool isDefault) { }
@@ -64,9 +69,11 @@ namespace Akka.Persistence.Hosting
         public string ConnectionString { get; set; }
         public System.TimeSpan ConnectionTimeout { get; set; }
         public abstract string MetadataTableName { get; set; }
+        public abstract System.Data.IsolationLevel ReadIsolationLevel { get; set; }
         public abstract string SchemaName { get; set; }
         public abstract bool SequentialAccess { get; set; }
         public abstract string TableName { get; set; }
+        public abstract System.Data.IsolationLevel WriteIsolationLevel { get; set; }
         protected override System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
     }
     public abstract class SqlSnapshotOptions : Akka.Persistence.Hosting.SnapshotOptions
@@ -74,9 +81,11 @@ namespace Akka.Persistence.Hosting
         protected SqlSnapshotOptions(bool isDefault) { }
         public string ConnectionString { get; set; }
         public System.TimeSpan ConnectionTimeout { get; set; }
+        public abstract System.Data.IsolationLevel ReadIsolationLevel { get; set; }
         public abstract string SchemaName { get; set; }
         public abstract bool SequentialAccess { get; set; }
         public abstract string TableName { get; set; }
+        public abstract System.Data.IsolationLevel WriteIsolationLevel { get; set; }
         protected override System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
     }
 }

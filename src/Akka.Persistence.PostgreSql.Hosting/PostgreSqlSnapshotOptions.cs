@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Data;
 using System.Text;
 using Akka.Configuration;
 using Akka.Persistence.Hosting;
@@ -77,6 +78,12 @@ namespace Akka.Persistence.PostgreSql.Hosting
         ///     <b>Default</b>: <see cref="StoredAsType.ByteA"/>
         /// </summary>
         public StoredAsType StoredAs { get; set; } = StoredAsType.ByteA;
+
+        /// <inheritdoc/>
+        public override IsolationLevel ReadIsolationLevel { get; set; } = IsolationLevel.Unspecified;
+
+        /// <inheritdoc/>
+        public override IsolationLevel WriteIsolationLevel { get; set; } = IsolationLevel.Unspecified;
 
         protected override Config InternalDefaultConfig => Default;
 

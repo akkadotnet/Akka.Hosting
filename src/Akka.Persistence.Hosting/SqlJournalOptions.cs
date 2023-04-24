@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Data;
 using System.Text;
 using Akka.Hosting;
 
@@ -70,6 +71,32 @@ namespace Akka.Persistence.Hosting
         /// </summary>
         public abstract bool SequentialAccess { get; set; }
 
+        /// <summary>
+        ///     <para>
+        ///         The <see cref="IsolationLevel"/> of all database read query.
+        ///     </para>
+        ///     <para>
+        ///         <see cref="IsolationLevel"/> documentation can be read
+        ///         <a href="https://learn.microsoft.com/en-us/dotnet/api/system.data.isolationlevel?#fields">here</a> 
+        ///     </para>
+        ///     <b>NOTE</b>: This is used primarily for backward compatibility,
+        ///     you leave this empty for greenfield projects.
+        /// </summary>
+        public abstract IsolationLevel ReadIsolationLevel { get; set; }
+        
+        /// <summary>
+        ///     <para>
+        ///         The <see cref="IsolationLevel"/> of all database write query.
+        ///     </para>
+        ///     <para>
+        ///         <see cref="IsolationLevel"/> documentation can be read
+        ///         <a href="https://learn.microsoft.com/en-us/dotnet/api/system.data.isolationlevel?#fields">here</a> 
+        ///     </para>
+        ///     <b>NOTE</b>: This is used primarily for backward compatibility,
+        ///     you leave this empty for greenfield projects.
+        /// </summary>
+        public abstract IsolationLevel WriteIsolationLevel { get; set; }
+        
         protected override StringBuilder Build(StringBuilder sb)
         {
             sb.AppendLine($"connection-string = {ConnectionString.ToHocon()}");
@@ -78,6 +105,9 @@ namespace Akka.Persistence.Hosting
             sb.AppendLine($"table-name = {TableName.ToHocon()}");
             sb.AppendLine($"metadata-table-name = {MetadataTableName.ToHocon()}");
             sb.AppendLine($"sequential-access = {SequentialAccess.ToHocon()}");
+            
+            sb.AppendLine($"read-isolation-level = {ReadIsolationLevel.ToHocon()}");
+            sb.AppendLine($"write-isolation-level = {WriteIsolationLevel.ToHocon()}");
 
             return base.Build(sb);
         }
