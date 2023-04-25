@@ -1,3 +1,9 @@
+## [1.5.4] / 24 April 2023
+
+* [Update Akka.NET to 1.5.4](https://github.com/akkadotnet/akka.net/releases/tag/1.5.4)
+* Update Akka.Persistence.SqlServer to 1.5.4
+* Update Akka.Persistence.PostgreSql to 1.5.4
+
 ## [1.5.3] / 24 April 2023
 
 * [Update Akka.NET to 1.5.3](https://github.com/akkadotnet/akka.net/releases/tag/1.5.3)
