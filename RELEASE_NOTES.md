@@ -1,3 +1,14 @@
+## [1.5.3] / 24 April 2023
+
+* [Update Akka.NET to 1.5.3](https://github.com/akkadotnet/akka.net/releases/tag/1.5.3)
+* [Add SQL transaction isolation level support](https://github.com/akkadotnet/Akka.Hosting/pull/284)
+
+**SQL Transaction Isolation Level Setting**
+
+In 1.5.3, we're introducing fine-grained control over transaction isolation level inside the `Akka.Persistence.Hosting`, `Akka.Persistence.SqlServer.Hosting`, and `Akka.Persistence.PostgreSql.Hosting` plugins.
+
+you can go to the [official Microsoft documentation](https://learn.microsoft.com/en-us/dotnet/api/system.data.isolationlevel?#fields) to read more about these isolation level settings.
+
 ## [1.5.2] / 6 April 2023
 
 * [Update Akka.NET to 1.5.2](https://github.com/akkadotnet/akka.net/releases/tag/1.5.2)
