@@ -278,12 +278,21 @@ namespace Akka.Cluster.Hosting
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.DData"/>
         /// </summary>
         public ShardingDDataOptions DistributedData { get; } = new();
+
+        /// <summary>
+        /// Set this to a time duration to have sharding passivate entities when they have not
+        /// received any message in this length of time. Set to <c>null</c> to disable.
+        /// It is always disabled if <see cref="RememberEntities"/> is enabled.
+        /// </summary>
+        // Had to do it this way because this property is a tri-state
+        public TimeSpan? PassivateIdleEntityAfter { get; set; } = TimeSpan.FromMinutes(2);
         
         internal void Apply(AkkaConfigurationBuilder builder)
         {
             DistributedData.Apply(builder);
             
             var sb = new StringBuilder();
+            sb.AppendLine("akka.cluster.sharding {");
 
             if (Role is { })
                 sb.AppendLine($"role = {Role.ToHocon()}");
@@ -315,10 +324,10 @@ namespace Akka.Cluster.Hosting
                 sb.AppendLine(
                     $"fail-on-invalid-entity-state-transition = {FailOnInvalidEntityStateTransition.ToHocon()}");
             
-            if(sb.Length == 0)
-                return;
+            // Had to do it this way because this property is a tri-state
+            sb.AppendLine(
+                $"passivate-idle-entity-after = {(PassivateIdleEntityAfter is null ? "off" : PassivateIdleEntityAfter.ToHocon())}");
 
-            sb.Insert(0, "akka.cluster.sharding {");
             sb.AppendLine("}");
             builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
         }
