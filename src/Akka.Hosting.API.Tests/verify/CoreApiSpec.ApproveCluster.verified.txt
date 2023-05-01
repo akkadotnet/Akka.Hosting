@@ -77,6 +77,7 @@ namespace Akka.Cluster.Hosting
         public string? JournalPluginId { get; set; }
         public Akka.Hosting.Coordination.LeaseOptionBase? LeaseImplementation { get; set; }
         public System.TimeSpan? LeaseRetryInterval { get; set; }
+        public System.TimeSpan? PassivateIdleEntityAfter { get; set; }
         public bool? RememberEntities { get; set; }
         public Akka.Cluster.Sharding.RememberEntitiesStore? RememberEntitiesStore { get; set; }
         public string? Role { get; set; }
