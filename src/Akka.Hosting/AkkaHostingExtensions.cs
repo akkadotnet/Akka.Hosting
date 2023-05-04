@@ -9,6 +9,7 @@ using Akka.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
 {
@@ -63,8 +64,23 @@ namespace Akka.Hosting
             // registers the hosted services and begins execution
             b.Bind();
             
-            // start the IHostedService which will run Akka.NET
-            services.AddHostedService<AkkaHostedService>();
+            if (Util.IsRunningInMaui)
+            {
+                services.AddSingleton<AkkaHostedService>(provider =>
+                {
+                    var configBuilder = provider.GetRequiredService<AkkaConfigurationBuilder>();
+                    var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+                    var logger = loggerFactory.CreateLogger<AkkaHostedService>();
+                    var akka = new AkkaHostedService(configBuilder, provider, logger, null);
+                    
+                    return akka;
+                });
+            }
+            else
+            {
+                // start the IHostedService which will run Akka.NET
+                services.AddHostedService<AkkaHostedService>();
+            }
 
             return services;
         }

@@ -17,11 +17,11 @@ namespace Akka.Hosting
         private CoordinatedShutdown? _coordinatedShutdown; // grab a reference to CoordinatedShutdown early
         private readonly IServiceProvider _serviceProvider;
         private readonly AkkaConfigurationBuilder _configurationBuilder;
-        private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly IHostApplicationLifetime? _hostApplicationLifetime;
         private readonly ILogger<AkkaHostedService> _logger;
 
         public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, IServiceProvider serviceProvider,
-            ILogger<AkkaHostedService> logger, IHostApplicationLifetime applicationLifetime)
+            ILogger<AkkaHostedService> logger, IHostApplicationLifetime? applicationLifetime)
         {
             _configurationBuilder = configurationBuilder;
             _hostApplicationLifetime = applicationLifetime;
@@ -40,7 +40,7 @@ namespace Akka.Hosting
                 async Task TerminationHook()
                 {
                     await _actorSystem.WhenTerminated.ConfigureAwait(false);
-                    _hostApplicationLifetime.StopApplication();
+                    _hostApplicationLifetime?.StopApplication();
                 }
 
                 // terminate the application if the Sys is terminated first
@@ -52,7 +52,7 @@ namespace Akka.Hosting
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.Critical, ex, "Unable to start AkkaHostedService - shutting down application");
-                _hostApplicationLifetime.StopApplication();
+                _hostApplicationLifetime?.StopApplication();
             }
         }
 
