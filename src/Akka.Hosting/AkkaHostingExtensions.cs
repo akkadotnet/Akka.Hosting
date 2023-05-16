@@ -93,7 +93,9 @@ namespace Akka.Hosting
 
                     // run this task synchronously in the foreground since MAUI doesn't support IHostedService
                     // see https://github.com/akkadotnet/Akka.Hosting/issues/289
-                    akka.StartAsync(CancellationToken.None).Wait();
+#pragma warning disable CS4014
+                    akka.StartAsync(CancellationToken.None);
+#pragma warning restore CS4014
                     
                     return akka;
                 });
