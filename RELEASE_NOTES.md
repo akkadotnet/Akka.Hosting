@@ -1,3 +1,7 @@
+## [1.5.6] / 10 May 2023
+
+* [Update Akka.NET to 1.5.6](https://github.com/akkadotnet/akka.net/releases/tag/1.5.6)
+
 ## [1.5.5] / 4 May 2023
 
 * [Update Akka.NET to 1.5.5](https://github.com/akkadotnet/akka.net/releases/tag/1.5.5)
