@@ -24,7 +24,6 @@ namespace Akka.Hosting.Maui
                         registry.Register<ClickActor>(echo);
                     });
                 })
-                .AddTransient<IMauiInitializeService, AkkaInitializer>()
                 .AddTransient<MainPage>();
 
 #if DEBUG
@@ -32,14 +31,6 @@ namespace Akka.Hosting.Maui
 #endif
             var app = builder.Build();
             return app;
-        }
-    }
-    
-    public class AkkaInitializer: IMauiInitializeService
-    {
-        public void Initialize(IServiceProvider services)
-        {
-            AkkaMauiSupport.StartAkka(services).GetAwaiter().GetResult();
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
@@ -18,6 +20,22 @@ namespace Akka.Hosting
     /// </summary>
     public static class AkkaHostingExtensions
     {
+        /// <summary>
+        /// Work-around for MAUI support.
+        /// </summary>
+        private class MauiApplicationLifetime : IHostApplicationLifetime
+        {
+            public void StopApplication()
+            {
+                // trigger the process to exit, if it hasn't started already
+                Environment.Exit(0);
+            }
+
+            public CancellationToken ApplicationStarted => throw new NotImplementedException();
+            public CancellationToken ApplicationStopping  => throw new NotImplementedException();
+            public CancellationToken ApplicationStopped  => throw new NotImplementedException();
+        }
+        
         /// <summary>
         /// Registers an <see cref="ActorSystem"/> to this instance and creates a
         /// <see cref="AkkaConfigurationBuilder"/> that can be used to configure its
@@ -71,7 +89,11 @@ namespace Akka.Hosting
                     var configBuilder = provider.GetRequiredService<AkkaConfigurationBuilder>();
                     var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
                     var logger = loggerFactory.CreateLogger<AkkaHostedService>();
-                    var akka = new AkkaHostedService(configBuilder, provider, logger, null);
+                    var akka = new AkkaHostedService(configBuilder, provider, logger, new MauiApplicationLifetime());
+
+                    // run this task synchronously in the foreground since MAUI doesn't support IHostedService
+                    // see https://github.com/akkadotnet/Akka.Hosting/issues/289
+                    akka.StartAsync(CancellationToken.None).Wait();
                     
                     return akka;
                 });
