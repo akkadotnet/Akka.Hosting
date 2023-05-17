@@ -52,30 +52,7 @@ namespace Akka.Hosting
         /// </remarks>
         public static IServiceCollection AddAkka(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder, IServiceProvider> builder)
         {
-            var b = new AkkaConfigurationBuilder(services, actorSystemName);
-            services.AddSingleton<AkkaConfigurationBuilder>(sp =>
-            {
-                builder(b, sp);
-                return b;
-            });
-            
-            // registers the hosted services and begins execution
-            b.Bind();
-            
-            if (Util.IsRunningInMaui)
-            {
-                // blow up Maui users who are about to footgun
-                throw new PlatformNotSupportedException(
-                    "Due to https://github.com/dotnet/maui/issues/2244, normal Akka.Hosting.AddAkka method will not work." +
-                    "Instead, you need to install Akka.Hosting.Maui and use the AddAkkaMaui extension method instead.");
-            }
-            else
-            {
-                // start the IHostedService which will run Akka.NET
-                services.AddHostedService<AkkaHostedService>();
-            }
-
-            return services;
+            return AddAkka<AkkaHostedService>(services, actorSystemName, builder);
         }
         
         public static IServiceCollection AddAkka<T>(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder, IServiceProvider> builder) where T:AkkaHostedService
