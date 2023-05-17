@@ -1,4 +1,5 @@
-﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Akka.Hosting.Tests")]
+﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Akka.Hosting.Maui")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Akka.Hosting.Tests")]
 namespace Akka.Hosting
 {
     public class ActorRegistry : Akka.Actor.IExtension, Akka.Hosting.IActorRegistry, Akka.Hosting.IReadOnlyActorRegistry, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.Type, Akka.Actor.IActorRef>>, System.Collections.IEnumerable
