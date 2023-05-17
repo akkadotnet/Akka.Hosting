@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-using Akka.Hosting;
+using Akka.Hosting.Maui;
 
-namespace Akka.Hosting.Maui
+namespace Akka.Hosting.MauiSample
 {
     public static class MauiProgram
     {
@@ -17,7 +17,7 @@ namespace Akka.Hosting.Maui
                 });
 
             builder.Services
-                .AddAkka("TestSys", config =>
+                .AddAkkaMaui("TestSys", config =>
                 {
                     config.WithActors((system, registry) =>
                     {

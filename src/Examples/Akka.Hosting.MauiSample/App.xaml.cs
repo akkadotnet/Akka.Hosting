@@ -1,4 +1,4 @@
-﻿namespace Akka.Hosting.Maui
+﻿namespace Akka.Hosting.MauiSample
 {
     public partial class App : Application
     {

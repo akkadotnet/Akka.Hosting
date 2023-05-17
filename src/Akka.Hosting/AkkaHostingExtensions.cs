@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
 using Akka.Hosting.Configuration;
-using Akka.Hosting.Maui;
-using Akka.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
 {
@@ -69,15 +64,10 @@ namespace Akka.Hosting
             
             if (Util.IsRunningInMaui)
             {
-                if (MauiShimHolder.Shim != null)
-                {
-                    // Must be populated by the MAUI assembly
-                    MauiShimHolder.Shim.BindAkkaService(services);
-                }
-                else
-                {
-                    // TODO: throw exception
-                }
+                // blow up Maui users who are about to footgun
+                throw new PlatformNotSupportedException(
+                    "Due to https://github.com/dotnet/maui/issues/2244, normal Akka.Hosting.AddAkka method will not work." +
+                    "Instead, you need to install Akka.Hosting.Maui and use the AddAkkaMaui extension method instead.");
             }
             else
             {

@@ -1,6 +1,6 @@
 ﻿using Akka.Actor;
 
-namespace Akka.Hosting.Maui
+namespace Akka.Hosting.MauiSample
 {
     public partial class MainPage : ContentPage
     {

@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Util.Internal;
 
-namespace Akka.Hosting.Maui
+namespace Akka.Hosting.MauiSample
 {
     public class ClickActor: ReceiveActor
     {

@@ -5,27 +5,16 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
+using Akka.Actor;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting.Maui;
 
 /// <summary>
-///  INTERNAL API
+/// Extension methods for configuring Akka.Hosting on Maui
 /// </summary>
-internal static class HostingShimSetter
-{
-    static HostingShimSetter()
-    {
-        // need this in order to make shim available for binding
-        MauiShimHolder.Shim = new MauiHostingShim();
-    }
-}
-
-/// <summary>
-/// INTERNAL API
-/// </summary>
-internal sealed class MauiHostingShim : IMauiShim
+public static class MauiAkkaHostingExtensions
 {
     /// <summary>
     /// Work-around for MAUI support.
@@ -42,9 +31,51 @@ internal sealed class MauiHostingShim : IMauiShim
         public CancellationToken ApplicationStopping => throw new NotImplementedException();
         public CancellationToken ApplicationStopped => throw new NotImplementedException();
     }
-
-    public void BindAkkaService(IServiceCollection services)
+    
+    /// <summary>
+    /// Registers an <see cref="ActorSystem"/> to this instance and creates a
+    /// <see cref="AkkaConfigurationBuilder"/> that can be used to configure its
+    /// behavior and Sys spawning.
+    /// </summary>
+    /// <param name="services">The service collection to which we are binding Akka.NET.</param>
+    /// <param name="actorSystemName">The name of the <see cref="ActorSystem"/> that will be instantiated.</param>
+    /// <param name="builder">A configuration delegate.</param>
+    /// <returns>The <see cref="IServiceCollection"/> instance.</returns>
+    /// <remarks>
+    /// Akka.Hosting would work normally for Maui were it not for https://github.com/dotnet/maui/issues/2244. 
+    /// </remarks>
+    public static IServiceCollection AddAkkaMaui(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder> builder)
     {
+        return AddAkkaMaui(services, actorSystemName, (configurationBuilder, provider) =>
+        {
+            builder(configurationBuilder);
+        });
+    }
+    
+    /// <summary>
+    /// Registers an <see cref="ActorSystem"/> to this instance and creates a
+    /// <see cref="AkkaConfigurationBuilder"/> that can be used to configure its
+    /// behavior and Sys spawning.
+    /// </summary>
+    /// <param name="services">The service collection to which we are binding Akka.NET.</param>
+    /// <param name="actorSystemName">The name of the <see cref="ActorSystem"/> that will be instantiated.</param>
+    /// <param name="builder">A configuration delegate that accepts an <see cref="IServiceProvider"/>.</param>
+    /// <returns>The <see cref="IServiceCollection"/> instance.</returns>
+    /// <remarks>
+    /// Akka.Hosting would work normally for Maui were it not for https://github.com/dotnet/maui/issues/2244. 
+    /// </remarks>
+    public static IServiceCollection AddAkkaMaui(this IServiceCollection services, string actorSystemName,
+        Action<AkkaConfigurationBuilder, IServiceProvider> builder)
+    {
+        var b = new AkkaConfigurationBuilder(services, actorSystemName);
+        services.AddSingleton<AkkaConfigurationBuilder>(sp =>
+        {
+            builder(b, sp);
+            return b;
+        });
+        
+        b.Bind();
+        
         services.AddSingleton<AkkaHostedService>(provider =>
             {
                 var configBuilder = provider.GetRequiredService<AkkaConfigurationBuilder>();
@@ -55,5 +86,7 @@ internal sealed class MauiHostingShim : IMauiShim
                 return akka;
             })
             .AddTransient<IMauiInitializeService, MauiAkkaService>();
+
+        return services;
     }
 }
