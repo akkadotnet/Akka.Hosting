@@ -52,6 +52,11 @@ namespace Akka.Hosting
         /// </remarks>
         public static IServiceCollection AddAkka(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder, IServiceProvider> builder)
         {
+            return AddAkka<AkkaHostedService>(services, actorSystemName, builder);
+        }
+        
+        public static IServiceCollection AddAkka<T>(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder, IServiceProvider> builder) where T:AkkaHostedService
+        {
             var b = new AkkaConfigurationBuilder(services, actorSystemName);
             services.AddSingleton<AkkaConfigurationBuilder>(sp =>
             {
@@ -72,7 +77,7 @@ namespace Akka.Hosting
             else
             {
                 // start the IHostedService which will run Akka.NET
-                services.AddHostedService<AkkaHostedService>();
+                services.AddHostedService<T>();
             }
 
             return services;

@@ -46,10 +46,25 @@ namespace Akka.Hosting
             where T : Akka.Actor.IExtensionId { }
         public Akka.Hosting.AkkaConfigurationBuilder WithExtensions(params System.Type[] extensions) { }
     }
+    [Akka.Annotations.InternalApi]
+    public class AkkaHostedService : Microsoft.Extensions.Hosting.IHostedService
+    {
+        protected Akka.Actor.ActorSystem? ActorSystem;
+        protected readonly Akka.Hosting.AkkaConfigurationBuilder ConfigurationBuilder;
+        protected Akka.Actor.CoordinatedShutdown? CoordinatedShutdown;
+        protected readonly Microsoft.Extensions.Hosting.IHostApplicationLifetime? HostApplicationLifetime;
+        protected readonly Microsoft.Extensions.Logging.ILogger<Akka.Hosting.AkkaHostedService> Logger;
+        protected readonly System.IServiceProvider ServiceProvider;
+        public AkkaHostedService(Akka.Hosting.AkkaConfigurationBuilder configurationBuilder, System.IServiceProvider serviceProvider, Microsoft.Extensions.Logging.ILogger<Akka.Hosting.AkkaHostedService> logger, Microsoft.Extensions.Hosting.IHostApplicationLifetime? applicationLifetime) { }
+        public virtual System.Threading.Tasks.Task StartAsync(System.Threading.CancellationToken cancellationToken) { }
+        public virtual System.Threading.Tasks.Task StopAsync(System.Threading.CancellationToken cancellationToken) { }
+    }
     public static class AkkaHostingExtensions
     {
         public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddAkka(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string actorSystemName, System.Action<Akka.Hosting.AkkaConfigurationBuilder> builder) { }
         public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddAkka(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string actorSystemName, System.Action<Akka.Hosting.AkkaConfigurationBuilder, System.IServiceProvider> builder) { }
+        public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddAkka<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string actorSystemName, System.Action<Akka.Hosting.AkkaConfigurationBuilder, System.IServiceProvider> builder)
+            where T : Akka.Hosting.AkkaHostedService { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddHocon(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Configuration.Config hocon, Akka.Hosting.HoconAddMode addMode) { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddHocon(this Akka.Hosting.AkkaConfigurationBuilder builder, Microsoft.Extensions.Configuration.IConfiguration configuration, Akka.Hosting.HoconAddMode addMode) { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddHoconFile(this Akka.Hosting.AkkaConfigurationBuilder builder, string hoconFilePath, Akka.Hosting.HoconAddMode addMode) { }

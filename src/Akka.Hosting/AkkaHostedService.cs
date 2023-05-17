@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,36 +12,42 @@ namespace Akka.Hosting
     /// <summary>
     /// INTERNAL API
     /// </summary>
-    internal sealed class AkkaHostedService : IHostedService
+    /// <remarks>
+    /// Open for modification in cases where users need fine-grained control over <see cref="Actor.ActorSystem"/> startup and
+    /// DI - however, extend at your own risk. Look at the Akka.Hosting source code for ideas on how to extend this.
+    /// </remarks>
+    [InternalApi]
+    // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
+    public class AkkaHostedService : IHostedService
     {
-        private ActorSystem? _actorSystem;
-        private CoordinatedShutdown? _coordinatedShutdown; // grab a reference to CoordinatedShutdown early
-        private readonly IServiceProvider _serviceProvider;
-        private readonly AkkaConfigurationBuilder _configurationBuilder;
-        private readonly IHostApplicationLifetime? _hostApplicationLifetime;
-        private readonly ILogger<AkkaHostedService> _logger;
+        protected ActorSystem? ActorSystem;
+        protected CoordinatedShutdown? CoordinatedShutdown; // grab a reference to CoordinatedShutdown early
+        protected readonly IServiceProvider ServiceProvider;
+        protected readonly AkkaConfigurationBuilder ConfigurationBuilder;
+        protected readonly IHostApplicationLifetime? HostApplicationLifetime;
+        protected readonly ILogger<AkkaHostedService> Logger;
 
         public AkkaHostedService(AkkaConfigurationBuilder configurationBuilder, IServiceProvider serviceProvider,
             ILogger<AkkaHostedService> logger, IHostApplicationLifetime? applicationLifetime)
         {
-            _configurationBuilder = configurationBuilder;
-            _hostApplicationLifetime = applicationLifetime;
-            _serviceProvider = serviceProvider;
-            _logger = logger;
+            ConfigurationBuilder = configurationBuilder;
+            HostApplicationLifetime = applicationLifetime;
+            ServiceProvider = serviceProvider;
+            Logger = logger;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public virtual async Task StartAsync(CancellationToken cancellationToken)
         {
             try
             {
-                _actorSystem = _serviceProvider.GetRequiredService<ActorSystem>();
-                _coordinatedShutdown = CoordinatedShutdown.Get(_actorSystem);
-                await _configurationBuilder.StartAsync(_actorSystem);
+                ActorSystem = ServiceProvider.GetRequiredService<ActorSystem>();
+                CoordinatedShutdown = CoordinatedShutdown.Get(ActorSystem);
+                await ConfigurationBuilder.StartAsync(ActorSystem);
 
                 async Task TerminationHook()
                 {
-                    await _actorSystem.WhenTerminated.ConfigureAwait(false);
-                    _hostApplicationLifetime?.StopApplication();
+                    await ActorSystem.WhenTerminated.ConfigureAwait(false);
+                    HostApplicationLifetime?.StopApplication();
                 }
 
                 // terminate the application if the Sys is terminated first
@@ -51,22 +58,22 @@ namespace Akka.Hosting
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.Critical, ex, "Unable to start AkkaHostedService - shutting down application");
-                _hostApplicationLifetime?.StopApplication();
+                Logger.Log(LogLevel.Critical, ex, "Unable to start AkkaHostedService - shutting down application");
+                HostApplicationLifetime?.StopApplication();
             }
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public virtual async Task StopAsync(CancellationToken cancellationToken)
         {
             // ActorSystem may have failed to start - skip shutdown sequence if that's the case
             // so error message doesn't get conflated.
-            if (_coordinatedShutdown == null)
+            if (CoordinatedShutdown == null)
             {
                 return;
             }
-            
+
             // run full CoordinatedShutdown on the Sys
-            await _coordinatedShutdown.Run(CoordinatedShutdown.ClrExitReason.Instance)
+            await CoordinatedShutdown.Run(CoordinatedShutdown.ClrExitReason.Instance)
                 .ConfigureAwait(false);
         }
     }
