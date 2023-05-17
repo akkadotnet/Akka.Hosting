@@ -127,7 +127,7 @@ partial class Build : NukeBuild
           var releaseNotes = MdHelper.GetNuGetReleaseNotes(ChangelogFile, GitRepository);
           var versionSuffix = VersionSuffix;
           var projects = SourceDirectory.GlobFiles("**/*.csproj")
-          .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj", "**/*Demo.csproj"));
+          .Except(SourceDirectory.GlobFiles("**/*Tests.csproj", "**/*Tests*.csproj", "**/*Demo.csproj",  "**/*Sample.csproj"));
           foreach (var project in projects)
           {
               DotNetPack(s => s

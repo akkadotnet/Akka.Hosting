@@ -40,10 +40,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit.Tests"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.API.Tests", "src\Akka.Hosting.API.Tests\Akka.Hosting.API.Tests.csproj", "{410065E0-6636-4F34-85AE-4C4BA413ADB4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.MauiSample", "src\Examples\Akka.Hosting.MauiSample\Akka.Hosting.MauiSample.csproj", "{69F27FA7-2C59-4C66-BA67-DD16041432B2}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.Maui", "src\Akka.Hosting.Maui\Akka.Hosting.Maui.csproj", "{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{11062839-0674-4DF9-AB8B-B7901A564ADC}"
 EndProject
 Global
@@ -106,15 +102,6 @@ Global
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.Build.0 = Debug|x64
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.Deploy.0 = Debug|x64
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -126,7 +113,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
