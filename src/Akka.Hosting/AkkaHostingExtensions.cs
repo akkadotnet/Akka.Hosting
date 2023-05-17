@@ -7,6 +7,7 @@ using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
 using Akka.Hosting.Configuration;
+using Akka.Hosting.Maui;
 using Akka.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,22 +21,6 @@ namespace Akka.Hosting
     /// </summary>
     public static class AkkaHostingExtensions
     {
-        /// <summary>
-        /// Work-around for MAUI support.
-        /// </summary>
-        private class MauiApplicationLifetime : IHostApplicationLifetime
-        {
-            public void StopApplication()
-            {
-                // trigger the process to exit, if it hasn't started already
-                Environment.Exit(0);
-            }
-
-            public CancellationToken ApplicationStarted => throw new NotImplementedException();
-            public CancellationToken ApplicationStopping  => throw new NotImplementedException();
-            public CancellationToken ApplicationStopped  => throw new NotImplementedException();
-        }
-        
         /// <summary>
         /// Registers an <see cref="ActorSystem"/> to this instance and creates a
         /// <see cref="AkkaConfigurationBuilder"/> that can be used to configure its
@@ -84,21 +69,15 @@ namespace Akka.Hosting
             
             if (Util.IsRunningInMaui)
             {
-                services.AddSingleton<AkkaHostedService>(provider =>
+                if (MauiShimHolder.Shim != null)
                 {
-                    var configBuilder = provider.GetRequiredService<AkkaConfigurationBuilder>();
-                    var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-                    var logger = loggerFactory.CreateLogger<AkkaHostedService>();
-                    var akka = new AkkaHostedService(configBuilder, provider, logger, new MauiApplicationLifetime());
-
-                    // run this task synchronously in the foreground since MAUI doesn't support IHostedService
-                    // see https://github.com/akkadotnet/Akka.Hosting/issues/289
-#pragma warning disable CS4014
-                    akka.StartAsync(CancellationToken.None);
-#pragma warning restore CS4014
-                    
-                    return akka;
-                });
+                    // Must be populated by the MAUI assembly
+                    MauiShimHolder.Shim.BindAkkaService(services);
+                }
+                else
+                {
+                    // TODO: throw exception
+                }
             }
             else
             {
