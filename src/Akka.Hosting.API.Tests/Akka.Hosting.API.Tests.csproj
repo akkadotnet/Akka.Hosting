@@ -18,7 +18,7 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="PublicApiGenerator" Version="11.0.0" />
-        <PackageReference Include="Verify.Xunit" Version="19.14.0" />
+        <PackageReference Include="Verify.Xunit" Version="19.14.1" />
         <PackageReference Include="Verify.DiffPlex" Version="2.2.1" />
     </ItemGroup>
 
@@ -27,8 +27,6 @@
       <ProjectReference Include="..\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj" />
       <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
       <ProjectReference Include="..\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj" />
-      <ProjectReference Include="..\Akka.Persistence.PostgreSql.Hosting\Akka.Persistence.PostgreSql.Hosting.csproj" />
-      <ProjectReference Include="..\Akka.Persistence.SqlServer.Hosting\Akka.Persistence.SqlServer.Hosting.csproj" />
       <ProjectReference Include="..\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj" />
     </ItemGroup>
 

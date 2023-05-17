@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using Akka.Cluster.Hosting.SBR;
 using Akka.Persistence.Hosting;
-using Akka.Persistence.PostgreSql.Hosting;
-using Akka.Persistence.SqlServer.Hosting;
 using Akka.Remote.Hosting;
 using VerifyTests;
 using VerifyXunit;
@@ -57,17 +55,5 @@ public class CoreApiSpec
     public Task ApprovePersistence()
     {
         return VerifyAssembly<JournalOptions>();
-    }
-
-    [Fact]
-    public Task ApprovePersistencePostgre()
-    {
-        return VerifyAssembly<PostgreSqlJournalOptions>();
-    }
-
-    [Fact]
-    public Task ApprovePersistenceSqlServer()
-    {
-        return VerifyAssembly<SqlServerJournalOptions>();
     }
 }

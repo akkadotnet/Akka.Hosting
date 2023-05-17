@@ -24,10 +24,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Remote.Hosting", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Cluster.Hosting", "src\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj", "{24436A00-7BAC-4965-9E86-EA8D40AE6AE2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.SqlServer.Hosting", "src\Akka.Persistence.SqlServer.Hosting\Akka.Persistence.SqlServer.Hosting.csproj", "{3E1405FC-EED8-406E-BF39-D68730913492}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.PostgreSql.Hosting", "src\Akka.Persistence.PostgreSql.Hosting\Akka.Persistence.PostgreSql.Hosting.csproj", "{3E1405FC-EED8-406E-BF39-D68730913490}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{EFA970FF-6BCC-4C38-84D8-324D40F2BF03}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.SqlSharding", "src\Examples\Akka.Hosting.SqlSharding\Akka.Hosting.SqlSharding.csproj", "{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}"
@@ -35,6 +31,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Cluster.Hosting.Tests", "src\Akka.Cluster.Hosting.Tests\Akka.Cluster.Hosting.Tests.csproj", "{EEFCC5A9-94BB-41DA-A9D3-12ACB889FE42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Hosting", "src\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj", "{424A63E4-2B7A-45B9-9E69-185277EBE507}"
 EndProject
@@ -86,18 +84,6 @@ Global
 		{24436A00-7BAC-4965-9E86-EA8D40AE6AE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24436A00-7BAC-4965-9E86-EA8D40AE6AE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24436A00-7BAC-4965-9E86-EA8D40AE6AE2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913492}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913492}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913492}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913490}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913490}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913490}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3E1405FC-EED8-406E-BF39-D68730913490}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -126,10 +112,6 @@ Global
 		{3883AD08-B981-4943-8153-1E7FFD2C3127}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3883AD08-B981-4943-8153-1E7FFD2C3127}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3883AD08-B981-4943-8153-1E7FFD2C3127}.Release|Any CPU.Build.0 = Release|Any CPU
-		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{89865EC9-B8BF-414C-B69D-B84CAA00025D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -149,7 +131,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
-		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{89865EC9-B8BF-414C-B69D-B84CAA00025D} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{69F27FA7-2C59-4C66-BA67-DD16041432B2} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
