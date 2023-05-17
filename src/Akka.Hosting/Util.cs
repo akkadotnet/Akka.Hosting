@@ -5,6 +5,7 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
+using System;
 using System.Linq;
 using Akka.Configuration;
 using Akka.Configuration.Hocon;
@@ -14,6 +15,17 @@ namespace Akka.Hosting
 {
     public static class Util
     {
+        // HACK: MAUI runtime detection
+        private static bool? _runningInMaui;
+        internal static bool IsRunningInMaui
+        {
+            get
+            {
+                _runningInMaui ??= AppDomain.CurrentDomain.GetAssemblies().Any(asm => asm.GetName().Name.StartsWith("Microsoft.Maui"));
+                return _runningInMaui.Value;
+            }
+        }
+
         public static Config MoveTo(this Config config, string path)
         {
             var rootObj = new HoconObject();

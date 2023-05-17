@@ -5,7 +5,6 @@ using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
 using Akka.Hosting.Configuration;
-using Akka.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -63,8 +62,18 @@ namespace Akka.Hosting
             // registers the hosted services and begins execution
             b.Bind();
             
-            // start the IHostedService which will run Akka.NET
-            services.AddHostedService<AkkaHostedService>();
+            if (Util.IsRunningInMaui)
+            {
+                // blow up Maui users who are about to footgun
+                throw new PlatformNotSupportedException(
+                    "Due to https://github.com/dotnet/maui/issues/2244, normal Akka.Hosting.AddAkka method will not work." +
+                    "Instead, you need to install Akka.Hosting.Maui and use the AddAkkaMaui extension method instead.");
+            }
+            else
+            {
+                // start the IHostedService which will run Akka.NET
+                services.AddHostedService<AkkaHostedService>();
+            }
 
             return services;
         }
