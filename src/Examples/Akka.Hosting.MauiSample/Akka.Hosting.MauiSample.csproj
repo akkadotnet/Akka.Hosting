@@ -19,6 +19,13 @@
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		
+		<!-- Make debugging work seamlessly -->
+		
+		<Platforms>x86;x64;arm64</Platforms>
+		<UseWinUI>true</UseWinUI>
+		<EnableMsixTooling>true</EnableMsixTooling>
+		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -53,5 +60,11 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Akka.Hosting.Maui\Akka.Hosting.Maui.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Properties\" />
+	</ItemGroup>
+
+	<ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
 
 </Project>

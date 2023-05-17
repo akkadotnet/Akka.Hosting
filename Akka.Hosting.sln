@@ -13,46 +13,46 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.cspr
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2B9D74C1-4148-46EF-B3FE-7357839FAF40}"
 	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
-		src\Directory.Build.props = src\Directory.Build.props
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.SimpleDemo", "src\Examples\Akka.Hosting.SimpleDemo\Akka.Hosting.SimpleDemo.csproj", "{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.SimpleDemo", "src\Examples\Akka.Hosting.SimpleDemo\Akka.Hosting.SimpleDemo.csproj", "{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting", "src\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj", "{AB312E80-5604-44DC-85CD-DF084E5342AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Remote.Hosting", "src\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj", "{AB312E80-5604-44DC-85CD-DF084E5342AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Cluster.Hosting", "src\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj", "{24436A00-7BAC-4965-9E86-EA8D40AE6AE2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Cluster.Hosting", "src\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj", "{24436A00-7BAC-4965-9E86-EA8D40AE6AE2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.SqlServer.Hosting", "src\Akka.Persistence.SqlServer.Hosting\Akka.Persistence.SqlServer.Hosting.csproj", "{3E1405FC-EED8-406E-BF39-D68730913492}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.SqlServer.Hosting", "src\Akka.Persistence.SqlServer.Hosting\Akka.Persistence.SqlServer.Hosting.csproj", "{3E1405FC-EED8-406E-BF39-D68730913492}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.PostgreSql.Hosting", "src\Akka.Persistence.PostgreSql.Hosting\Akka.Persistence.PostgreSql.Hosting.csproj", "{3E1405FC-EED8-406E-BF39-D68730913490}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.PostgreSql.Hosting", "src\Akka.Persistence.PostgreSql.Hosting\Akka.Persistence.PostgreSql.Hosting.csproj", "{3E1405FC-EED8-406E-BF39-D68730913490}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{EFA970FF-6BCC-4C38-84D8-324D40F2BF03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.SqlSharding", "src\Examples\Akka.Hosting.SqlSharding\Akka.Hosting.SqlSharding.csproj", "{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.SqlSharding", "src\Examples\Akka.Hosting.SqlSharding\Akka.Hosting.SqlSharding.csproj", "{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{4D748F16-AC22-4E8B-94D7-3DAF6B7CBD00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Cluster.Hosting.Tests", "src\Akka.Cluster.Hosting.Tests\Akka.Cluster.Hosting.Tests.csproj", "{EEFCC5A9-94BB-41DA-A9D3-12ACB889FE42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Cluster.Hosting.Tests", "src\Akka.Cluster.Hosting.Tests\Akka.Cluster.Hosting.Tests.csproj", "{EEFCC5A9-94BB-41DA-A9D3-12ACB889FE42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.Hosting", "src\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj", "{424A63E4-2B7A-45B9-9E69-185277EBE507}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Hosting", "src\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj", "{424A63E4-2B7A-45B9-9E69-185277EBE507}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.Hosting.Tests", "src\Akka.Persistence.Hosting.Tests\Akka.Persistence.Hosting.Tests.csproj", "{876DE0B6-5FA8-4F79-876E-92EF5E9E7011}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Hosting.Tests", "src\Akka.Persistence.Hosting.Tests\Akka.Persistence.Hosting.Tests.csproj", "{876DE0B6-5FA8-4F79-876E-92EF5E9E7011}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit", "src\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj", "{E28D4F3C-6C34-497B-BDC8-F2B3EA8BA309}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit", "src\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj", "{E28D4F3C-6C34-497B-BDC8-F2B3EA8BA309}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit.Tests", "src\Akka.Hosting.TestKit.Tests\Akka.Hosting.TestKit.Tests.csproj", "{3883AD08-B981-4943-8153-1E7FFD2C3127}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit.Tests", "src\Akka.Hosting.TestKit.Tests\Akka.Hosting.TestKit.Tests.csproj", "{3883AD08-B981-4943-8153-1E7FFD2C3127}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.CustomJournalIdDemo", "src\Examples\Akka.Hosting.CustomJournalIdDemo\Akka.Hosting.CustomJournalIdDemo.csproj", "{89865EC9-B8BF-414C-B69D-B84CAA00025D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.CustomJournalIdDemo", "src\Examples\Akka.Hosting.CustomJournalIdDemo\Akka.Hosting.CustomJournalIdDemo.csproj", "{89865EC9-B8BF-414C-B69D-B84CAA00025D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.API.Tests", "src\Akka.Hosting.API.Tests\Akka.Hosting.API.Tests.csproj", "{410065E0-6636-4F34-85AE-4C4BA413ADB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.API.Tests", "src\Akka.Hosting.API.Tests\Akka.Hosting.API.Tests.csproj", "{410065E0-6636-4F34-85AE-4C4BA413ADB4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.MauiSample", "src\Examples\Akka.Hosting.MauiSample\Akka.Hosting.MauiSample.csproj", "{69F27FA7-2C59-4C66-BA67-DD16041432B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.Maui", "src\Akka.Hosting.Maui\Akka.Hosting.Maui.csproj", "{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.Maui", "src\Akka.Hosting.Maui\Akka.Hosting.Maui.csproj", "{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -134,8 +134,9 @@ Global
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{410065E0-6636-4F34-85AE-4C4BA413ADB4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.Build.0 = Debug|x64
+		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Debug|Any CPU.Deploy.0 = Debug|x64
 		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69F27FA7-2C59-4C66-BA67-DD16041432B2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{85CD6199-7E35-4FB6-947A-CAE4BD1333C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -146,14 +147,14 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
-	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{2C2C2DE2-5A79-4689-9D1A-D70CCF17545B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{89865EC9-B8BF-414C-B69D-B84CAA00025D} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{69F27FA7-2C59-4C66-BA67-DD16041432B2} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
 	EndGlobalSection
 EndGlobal
