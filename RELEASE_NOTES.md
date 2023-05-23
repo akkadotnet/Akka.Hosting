@@ -1,3 +1,7 @@
+## [1.5.7] / 23 May 2023
+
+* [Update Akka.NET to 1.5.7](https://github.com/akkadotnet/akka.net/releases/tag/1.5.7)
+
 ## [1.5.6.1] / 17 May 2023
 
 * [Akka.Hosting now throws `PlatformNotSupportedException`](https://github.com/akkadotnet/Akka.Hosting/pull/293) when attempting to run on Maui, due to https://github.com/dotnet/maui/issues/2244. Maui support will be added in https://github.com/akkadotnet/Akka.Hosting.Maui
