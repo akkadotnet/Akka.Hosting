@@ -1,35 +1,99 @@
+<a id="akkahosting"></a>
 # Akka.Hosting
 
 > This package is now stable.
 
 HOCON-less configuration, application lifecycle management, `ActorSystem` startup, and actor instantiation for [Akka.NET](https://getakka.net/).
 
+See the ["Introduction to Akka.Hosting - HOCON-less, "Pit of Success" Akka.NET Runtime and Configuration" video](https://www.youtube.com/watch?v=Mnb9W9ClnB0) for a walkthrough of the library and how it can save you a tremendous amount of time and trouble.
+
+# Table Of Content
+
+- [Supported Packages](#supported-packages)
+    * [Akka.NET Core Packages](#akkanet-core-packages)
+    * [Akka Persistence Plugins](#akka-persistence-plugins)
+    * [Akka.HealthCheck](#akkahealthcheck)
+    * [Akka.Management Plugins](#akkamanagement-plugins)
+        + [Akka.Management Core Package](#akkamanagement-core-package)
+        + [Akka.Discovery Plugins](#akkadiscovery-plugins)
+        + [Akka.Coordination Plugins](#akkacoordination-plugins)
+- [Summary](#summary)
+- [Dependency Injection Outside and Inside Akka.NET](#dependency-injection-outside-and-inside-akkanet)
+    * [Registering Actors with the `ActorRegistry`](#registering-actors-with-the-actorregistry)
+    * [Injecting Actors with `IRequiredActor<TKey>`](#injecting-actors-with-irequiredactortkey)
+    * [Resolving `IRequiredActor<TKey>` within Akka.NET](#resolving-irequiredactortkey-within-akkanet)
+- [Microsoft.Extensions.Configuration Integration](#microsoftextensionsconfiguration-integration)
+    * [IConfiguration To HOCON Adapter](#iconfiguration-to-hocon-adapter)
+- [Microsoft.Extensions.Logging Integration](#microsoftextensionslogging-integration)
+    * [Logger Configuration Support](#logger-configuration-support)
+    * [Microsoft.Extensions.Logging.ILoggerFactory Logging Support](#microsoftextensionsloggingiloggerfactory-logging-support)
+    * [Microsoft.Extensions.Logging Log Event Filtering](#microsoftextensionslogging-log-event-filtering)
+
+<a id="supported-packages"></a>
 # Supported Packages
 
-Consists of the following packages:
+<a id="akkanet-core-packages"></a>
+## Akka.NET Core Packages
 
-1. `Akka.Hosting` - the core `Akka.Hosting` package, needed for everything
-2. [`Akka.Remote.Hosting`](src/Akka.Remote.Hosting) - enables Akka.Remote configuration. Documentation can be read [here](src/Akka.Remote.Hosting/README.md)
-3. [`Akka.Cluster.Hosting`](src/Akka.Cluster.Hosting) - used for Akka.Cluster, Akka.Cluster.Sharding, and Akka.Cluster.Tools. Documentation can be read [here](src/Akka.Cluster.Hosting/README.md)
-4. [`Akka.Persistence.Hosting`](src/Akka.Persistence.Hosting/README.md) - used for adding persistence functionality to perform local database-less testing. Documentation can be read [here](src/Akka.Persistence.Hosting/README.md)
-5. [`Akka.Persistence.SqlServer.Hosting`](src/Akka.Persistence.SqlServer.Hosting) - used for Akka.Persistence.SqlServer support. Documentation can be read [here](src/Akka.Persistence.SqlServer.Hosting/README.md)
-6. [`Akka.Persistence.PostgreSql.Hosting`](src/Akka.Persistence.PostgreSql.Hosting) - used for Akka.Persistence.PostgreSql support. Documentation can be read [here](src/Akka.Persistence.PostgreSql.Hosting/README.md)
-7. [`Akka.Persistence.Azure.Hosting`](https://github.com/petabridge/Akka.Persistence.Azure) - used for Akka.Persistence.Azure support. Documentation can be read [here](https://github.com/petabridge/Akka.Persistence.Azure/blob/master/README.md)
-8. [`Akka.HealthCheck`](https://github.com/petabridge/akkadotnet-healthcheck) - Embed health check functionality for environments such as Kubernetes, ASP.NET, AWS, Azure, Pivotal Cloud Foundry, and more. Documentation can be read [here](https://github.com/petabridge/akkadotnet-healthcheck/blob/dev/README.md)
-9. [The `Akka.Management` Project Repository](https://github.com/akkadotnet/Akka.Management) - useful tools for managing Akka.NET clusters running inside containerized or cloud based environment. `Akka.Hosting` is embedded in each of its packages: 
-    * [`Akka.Management`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/management/Akka.Management) - core module of the management utilities which provides a central HTTP endpoint for Akka management extensions. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/tree/dev/src/management/Akka.Management#akka-management)
-    * `Akka.Management.Cluster.Bootstrap` - used to bootstrap a cluster formation inside dynamic deployment environments. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/tree/dev/src/management/Akka.Management#akkamanagementclusterbootstrap)
-      > **NOTE**
-      >
-      > As of version 1.0.0, cluster bootstrap came bundled with the core `Akka.Management` NuGet package and are part of the default HTTP endpoint for `Akka.Management`. All `Akka.Management.Cluster.Bootstrap` NuGet package versions below 1.0.0 should now be considered deprecated.
-    * [`Akka.Discovery.AwsApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/aws/Akka.Discovery.AwsApi) - provides dynamic node discovery service for AWS EC2 environment. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/aws/Akka.Discovery.AwsApi/README.md)
-    * [`Akka.Discovery.Azure`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/azure/Akka.Discovery.Azure) - provides a dynamic node discovery service for Azure PaaS ecosystem. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/azure/Akka.Discovery.Azure/README.md)
-    * [`Akka.Discovery.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi) - provides a dynamic node discovery service for Kubernetes clusters. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi/README.md)
-    * [`Akka.Coordination.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi) - provides a lease-based distributed lock mechanism backed by [Kubernetes CRD](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) for [Akka.NET Split Brain Resolver](https://getakka.net/articles/clustering/split-brain-resolver.html), [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html), and [Akka.Cluster.Singleton](https://getakka.net/articles/clustering/cluster-singleton.html). Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi/README.md)
-    * [`Akka.Coordination.Azure`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/azure/Akka.Coordination.Azure) - provides a lease-based distributed lock mechanism backed by [Microsoft Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview) for [Akka.NET Split Brain Resolver](https://getakka.net/articles/clustering/split-brain-resolver.html), [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html), and [Akka.Cluster.Singleton](https://getakka.net/articles/clustering/cluster-singleton.html). Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/coordination/azure/Akka.Coordination.Azure/README.md)
+* `Akka.Hosting` - the core `Akka.Hosting` package, needed for everything
+* [`Akka.Remote.Hosting`](src/Akka.Remote.Hosting) - enables Akka.Remote configuration. Documentation can be read [here](src/Akka.Remote.Hosting/README.md)
+* [`Akka.Cluster.Hosting`](src/Akka.Cluster.Hosting) - used for Akka.Cluster, Akka.Cluster.Sharding, and Akka.Cluster.Tools. Documentation can be read [here](src/Akka.Cluster.Hosting/README.md)
+* [`Akka.Persistence.Hosting`](src/Akka.Persistence.Hosting/README.md) - used for adding persistence functionality to perform local database-less testing. Documentation can be read [here](src/Akka.Persistence.Hosting/README.md)
 
-See the ["Introduction to Akka.Hosting - HOCONless, "Pit of Success" Akka.NET Runtime and Configuration" video](https://www.youtube.com/watch?v=Mnb9W9ClnB0) for a walkthrough of the library and how it can save you a tremendous amount of time and trouble.
+[Back to top](#akkahosting)
 
+<a id="akka-persistence-plugins"></a>
+## Akka Persistence Plugins
+
+* [`Akka.Persistence.SqlServer.Hosting`](https://github.com/akkadotnet/Akka.Persistence.SqlServer/tree/dev/src/Akka.Persistence.SqlServer.Hosting) - used for Akka.Persistence.SqlServer support. Documentation can be read [here](https://github.com/akkadotnet/Akka.Persistence.SqlServer/blob/dev/src/Akka.Persistence.SqlServer.Hosting/README.md)
+* [`Akka.Persistence.PostgreSql.Hosting`](https://github.com/akkadotnet/Akka.Persistence.PostgreSql/tree/dev/src/Akka.Persistence.PostgreSql.Hosting) - used for Akka.Persistence.PostgreSql support. Documentation can be read [here](https://github.com/akkadotnet/Akka.Persistence.PostgreSql/blob/dev/src/Akka.Persistence.PostgreSql.Hosting/README.md)
+* [`Akka.Persistence.Azure.Hosting`](https://github.com/petabridge/Akka.Persistence.Azure) - used for Akka.Persistence.Azure support. Documentation can be read [here](https://github.com/petabridge/Akka.Persistence.Azure/blob/master/README.md)
+
+[Back to top](#akkahosting)
+
+<a id="akkahealthcheck"></a>
+## [Akka.HealthCheck](https://github.com/petabridge/akkadotnet-healthcheck)
+
+Embed health check functionality for environments such as Kubernetes, ASP.NET, AWS, Azure, Pivotal Cloud Foundry, and more. Documentation can be read [here](https://github.com/petabridge/akkadotnet-healthcheck/blob/dev/README.md)
+
+[Back to top](#akkahosting)
+
+<a id="akkamanagement-plugins"></a>
+## [Akka.Management Plugins](https://github.com/akkadotnet/Akka.Management)
+
+Useful tools for managing Akka.NET clusters running inside containerized or cloud based environment. `Akka.Hosting` is embedded in each of its packages.
+
+[Back to top](#akkahosting)
+
+<a id="akkamanagement-core-package"></a>
+### Akka.Management Core Package
+
+* [`Akka.Management`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/management/Akka.Management) - core module of the management utilities which provides a central HTTP endpoint for Akka management extensions. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/tree/dev/src/management/Akka.Management#akka-management)
+* `Akka.Management.Cluster.Bootstrap` - used to bootstrap a cluster formation inside dynamic deployment environments. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/tree/dev/src/management/Akka.Management#akkamanagementclusterbootstrap)
+  > **NOTE**
+  >
+  > As of version 1.0.0, cluster bootstrap came bundled inside the core `Akka.Management` NuGet package and are part of the default HTTP endpoint for `Akka.Management`. All `Akka.Management.Cluster.Bootstrap` NuGet package versions below 1.0.0 should now be considered deprecated.
+
+[Back to top](#akkahosting)
+
+<a id="akkadiscovery-plugins"></a>
+### Akka.Discovery Plugins
+
+* [`Akka.Discovery.AwsApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/aws/Akka.Discovery.AwsApi) - provides dynamic node discovery service for AWS EC2 environment. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/aws/Akka.Discovery.AwsApi/README.md)
+* [`Akka.Discovery.Azure`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/azure/Akka.Discovery.Azure) - provides a dynamic node discovery service for Azure PaaS ecosystem. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/azure/Akka.Discovery.Azure/README.md)
+* [`Akka.Discovery.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi) - provides a dynamic node discovery service for Kubernetes clusters. Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi/README.md)
+
+[Back to top](#akkahosting)
+
+<a id="akkacoordination-plugins"></a>
+### Akka.Coordination Plugins
+
+* [`Akka.Coordination.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi) - provides a lease-based distributed lock mechanism backed by [Kubernetes CRD](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) for [Akka.NET Split Brain Resolver](https://getakka.net/articles/clustering/split-brain-resolver.html), [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html), and [Akka.Cluster.Singleton](https://getakka.net/articles/clustering/cluster-singleton.html). Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi/README.md)
+* [`Akka.Coordination.Azure`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/azure/Akka.Coordination.Azure) - provides a lease-based distributed lock mechanism backed by [Microsoft Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview) for [Akka.NET Split Brain Resolver](https://getakka.net/articles/clustering/split-brain-resolver.html), [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html), and [Akka.Cluster.Singleton](https://getakka.net/articles/clustering/cluster-singleton.html). Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/coordination/azure/Akka.Coordination.Azure/README.md)
+
+[Back to top](#akkahosting)
+
+<a id="summary"></a>
 # Summary
 
 We want to make Akka.NET something that can be instantiated more typically per the patterns often used with the Microsoft.Extensions.Hosting APIs that are common throughout .NET.
@@ -101,15 +165,21 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 })
 ```
 
+[Back to top](#akkahosting)
+
+<a id="dependency-injection-outside-and-inside-akkanet"></a>
 # Dependency Injection Outside and Inside Akka.NET
 
 One of the other design goals of Akka.Hosting is to make the dependency injection experience with Akka.NET as seamless as any other .NET technology. We accomplish this through two new APIs:
 
 * The `ActorRegistry`, a DI container that is designed to be populated with `Type`s for keys and `IActorRef`s for values, just like the `IServiceCollection` does for ASP.NET services.
-* The `IRequiredActor<TKey>` - you can place this type the constructor of any DI'd resource and it will automatically resolve a reference to the actor stored inside the `ActorRegistry` with `TKey`. This is how we inject actors into ASP.NET, SignalR, gRPC, and other Akka.NET actors!
+* The `IRequiredActor<TKey>` - you can place this type the constructor of any dependency injected resource and it will automatically resolve a reference to the actor stored inside the `ActorRegistry` with `TKey`. This is how we inject actors into ASP.NET, SignalR, gRPC, and other Akka.NET actors!
 
 > **N.B.** The `ActorRegistry` and the `ActorSystem` are automatically registered with the `IServiceCollection` / `IServiceProvider` associated with your application.
 
+[Back to top](#akkahosting)
+
+<a id="registering-actors-with-the-actorregistry"></a>
 ## Registering Actors with the `ActorRegistry`
 
 As part of Akka.Hosting, we need to provide a means of making it easy to pass around top-level `IActorRef`s via dependency injection both within the `ActorSystem` and outside of it.
@@ -140,6 +210,9 @@ var registry = ActorRegistry.For(myActorSystem);
 registry.Get<Index>(); // use in DI
 ```
 
+[Back to top](#akkahosting)
+
+<a id="injecting-actors-with-irequiredactortkey"></a>
 ## Injecting Actors with `IRequiredActor<TKey>`
 
 Suppose we have a class that depends on having a reference to a top-level actor, a router, a `ShardRegion`, or perhaps a `ClusterSingleton` (common types of actors that often interface with non-Akka.NET parts of a .NET application):
@@ -197,7 +270,10 @@ using var host = new HostBuilder()
 
 Adding your actor and your type key into the `ActorRegistry` is sufficient - no additional DI registration is required to access the `IRequiredActor<TActor>` for that type.
 
-### Resolving `IRequiredActor<TKey>` within Akka.NET
+[Back to top](#akkahosting)
+
+<a id="resolving-irequiredactortkey-within-akkanet"></a>
+## Resolving `IRequiredActor<TKey>` within Akka.NET
 
 Akka.NET does not use dependency injection to start actors by default primarily because actor lifetime is unbounded by default - this means reasoning about the scope of injected dependencies isn't trivial. ASP.NET, by contrast, is trivial: all HTTP requests are request-scoped and all web socket connections are connection-scoped - these are objects have _bounded_ and typically short lifetimes.
 
@@ -225,10 +301,14 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 });
 ```
 
-The `dependencyResolver.Props<MySingletonDiActor>()` call will leverage the `ActorSystem`'s built-in `IDependencyResolver` to instantiate the `MySingletonDiActor` and inject it with all of the necessary dependences, including `IRequiredActor<TKey>`.
+The `dependencyResolver.Props<MySingletonDiActor>()` call will leverage the `ActorSystem`'s built-in `IDependencyResolver` to instantiate the `MySingletonDiActor` and inject it with all of the necessary dependencies, including `IRequiredActor<TKey>`.
 
+[Back to top](#akkahosting)
+
+<a id="microsoftextensionsconfiguration-integration"></a>
 # Microsoft.Extensions.Configuration Integration
 
+<a id="iconfiguration-to-hocon-adapter"></a>
 ## IConfiguration To HOCON Adapter
 
 The `AddHocon` extension method can convert `Microsoft.Extensions.Configuration` `IConfiguration` into HOCON `Config` instance and adds it to the ActorSystem being configured.
@@ -312,8 +392,12 @@ var host = new HostBuilder()
     });
 ```
 
+[Back to top](#akkahosting)
+
+<a id="microsoftextensionslogging-integration"></a>
 # Microsoft.Extensions.Logging Integration
 
+<a id="logger-configuration-support"></a>
 ## Logger Configuration Support
 
 You can use `AkkaConfigurationBuilder` extension method called `ConfigureLoggers(Action<LoggerConfigBuilder>)` to configure how Akka.NET logger behave.
@@ -371,10 +455,16 @@ Currently supported logger methods:
 - `AddDefaultLogger()`: Add the default Akka.NET console logger.
 - `AddLoggerFactory()`: Add the new `ILoggerFactory` logger.
 
+[Back to top](#akkahosting)
+
+<a id="microsoftextensionsloggingiloggerfactory-logging-support"></a>
 ## Microsoft.Extensions.Logging.ILoggerFactory Logging Support
 
 You can now use `ILoggerFactory` from Microsoft.Extensions.Logging as one of the sinks for Akka.NET logger. This logger will use the `ILoggerFactory` service set up inside the dependency injection `ServiceProvider` as its sink.
 
+[Back to top](#akkahosting)
+
+<a id="microsoftextensionslogging-log-event-filtering"></a>
 ## Microsoft.Extensions.Logging Log Event Filtering
 
 There will be two log event filters acting on the final log input, the Akka.NET `akka.loglevel` setting and the `Microsoft.Extensions.Logging` settings, make sure that both are set correctly or some log messages will be missing.
@@ -393,3 +483,5 @@ To set up the `Microsoft.Extensions.Logging` log filtering, you will need to edi
   }
 }
 ```
+
+[Back to top](#akkahosting)
