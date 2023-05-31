@@ -280,19 +280,24 @@ namespace Akka.Cluster.Hosting
         public ShardingDDataOptions DistributedData { get; } = new();
 
         /// <summary>
-        /// Set this to a time duration to have sharding passivate entities when they have not
-        /// received any message in this length of time. Set to <c>null</c> to disable.
-        /// It is always disabled if <see cref="RememberEntities"/> is enabled.
+        /// Set this to false to disable idle entity passivation. When set to <c>false</c>,
+        /// will always override <see cref="PassivateIdleEntityAfter"/>
         /// </summary>
-        // Had to do it this way because this property is a tri-state
-        public TimeSpan? PassivateIdleEntityAfter { get; set; } = TimeSpan.FromMinutes(2);
+        public bool? ShouldPassivateIdleEntities { get; set; }
+        
+        /// <summary>
+        /// Set this to a time duration to have sharding passivate entities when they have not
+        /// received any message in this length of time.
+        /// It is always disabled if <see cref="RememberEntities"/> is enabled
+        /// or <see cref="ShouldPassivateIdleEntities"/> is set to false.
+        /// </summary>
+        public TimeSpan? PassivateIdleEntityAfter { get; set; }
         
         internal void Apply(AkkaConfigurationBuilder builder)
         {
             DistributedData.Apply(builder);
             
             var sb = new StringBuilder();
-            sb.AppendLine("akka.cluster.sharding {");
 
             if (Role is { })
                 sb.AppendLine($"role = {Role.ToHocon()}");
@@ -324,12 +329,17 @@ namespace Akka.Cluster.Hosting
                 sb.AppendLine(
                     $"fail-on-invalid-entity-state-transition = {FailOnInvalidEntityStateTransition.ToHocon()}");
             
-            // Had to do it this way because this property is a tri-state
-            sb.AppendLine(
-                $"passivate-idle-entity-after = {(PassivateIdleEntityAfter is null ? "off" : PassivateIdleEntityAfter.ToHocon())}");
+            if(ShouldPassivateIdleEntities is false)
+                sb.AppendLine("passivate-idle-entity-after = off");
+            else if(PassivateIdleEntityAfter is { })
+                sb.AppendLine($"passivate-idle-entity-after = {PassivateIdleEntityAfter.ToHocon()}");
 
-            sb.AppendLine("}");
-            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+            if (sb.Length > 0)
+            {
+                sb.Insert(0, "akka.cluster.sharding {\n");
+                sb.AppendLine("}");
+                builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+            }
         }
     }
 
