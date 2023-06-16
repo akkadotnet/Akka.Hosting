@@ -47,6 +47,19 @@ namespace Akka.Hosting
                 async Task TerminationHook()
                 {
                     await ActorSystem.WhenTerminated.ConfigureAwait(false);
+                    
+                    /*
+                     * Set a non-zero exit code in the event that we get a known, confirmed unclean shutdown
+                     * from the ActorSystem / CoordinatedShutdown
+                     */
+                    switch (CoordinatedShutdown.ShutdownReason)
+                    {
+                        case CoordinatedShutdown.ClusterDowningReason _:
+                        case CoordinatedShutdown.ClusterLeavingReason _:
+                            Environment.ExitCode = -1;
+                            break;
+                    }
+
                     HostApplicationLifetime?.StopApplication();
                 }
 
