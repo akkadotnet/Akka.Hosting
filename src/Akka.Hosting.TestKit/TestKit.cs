@@ -185,7 +185,10 @@ namespace Akka.Hosting.TestKit
             Exception? exception = null;
             try
             {
-                await AfterAllAsync();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await Task.WhenAny(Task.Delay(Timeout.Infinite, cts.Token), AfterAllAsync());
+                if (cts.IsCancellationRequested)
+                    throw new TimeoutException($"{nameof(AfterAllAsync)} took more than 5 seconds to execute, aborting.");
             }
             catch (Exception e)
             {
@@ -193,18 +196,22 @@ namespace Akka.Hosting.TestKit
             }
             finally
             {
-                Shutdown();
-                if(_host != null)
+                try
                 {
-                    await _host.StopAsync();
-                    if (_host is IAsyncDisposable asyncDisposable)
+                    Shutdown();
+                    if (_host != null)
                     {
-                        await asyncDisposable.DisposeAsync();
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        await _host.StopAsync(cts.Token);
                     }
-                    else
-                    {
-                        _host.Dispose();
-                    }
+                }
+                catch
+                {
+                    // no-op
+                }
+                finally
+                {
+                    _host?.Dispose();
                 }
                 
                 if (exception is { })
