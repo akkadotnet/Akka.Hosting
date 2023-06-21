@@ -1,3 +1,9 @@
+## [1.5.8] / 21 June 2023
+
+* [Update Akka.NET to 1.5.8](https://github.com/akkadotnet/akka.net/releases/tag/1.5.8)
+* [[Akka.Cluster.Hosting] PassivateEntityAfter should not override HOCON settings](https://github.com/akkadotnet/Akka.Hosting/pull/318)
+* [[Akka.Hosting] Set application exit code to -1 if CoordinatedShutdown was caused by cluster down or leave](https://github.com/akkadotnet/Akka.Hosting/pull/329)
+
 ## [1.5.7] / 23 May 2023
 
 * [Update Akka.NET to 1.5.7](https://github.com/akkadotnet/akka.net/releases/tag/1.5.7)
