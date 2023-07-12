@@ -1302,12 +1302,14 @@ namespace Akka.Cluster.Hosting
             if (initialContacts.Count < 1)
                 throw new ArgumentException("Must specify at least one initial contact", nameof(initialContacts));
 
-            return builder.WithActors((system, registry) =>
-            {
-                var clusterClient = system.ActorOf(ClusterClient.Props(
-                    CreateClusterClientSettings(system.Settings.Config, initialContacts)));
-                registry.TryRegister<TKey>(clusterClient);
-            });
+            return builder
+                .AddHocon(ClusterClientReceptionist.DefaultConfig(), HoconAddMode.Append)
+                .WithActors((system, registry) =>
+                {
+                    var clusterClient = system.ActorOf(ClusterClient.Props(
+                        CreateClusterClientSettings(system.Settings.Config, initialContacts)));
+                    registry.TryRegister<TKey>(clusterClient);
+                });
         }
 
         /// <summary>
