@@ -1,3 +1,7 @@
+## [1.5.8.1] / 12 July 2023
+
+* [[Akka.Cluster.Hosting] Fix missing ClusterClient default HOCON configuration](https://github.com/akkadotnet/Akka.Hosting/pull/337)
+
 ## [1.5.8] / 21 June 2023
 
 * [Update Akka.NET to 1.5.8](https://github.com/akkadotnet/akka.net/releases/tag/1.5.8)
