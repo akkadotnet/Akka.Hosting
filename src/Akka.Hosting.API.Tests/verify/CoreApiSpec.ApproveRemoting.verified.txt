@@ -6,13 +6,66 @@
         public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Remote.Hosting.RemoteOptions> configure) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, string? hostname = null, int? port = default, string? publicHostname = null, int? publicPort = default) { }
     }
-    public sealed class RemoteOptions
+    public sealed class DotNettyTcpTransportOptions : Akka.Remote.Hosting.DotNettyTransportOptions
     {
-        public RemoteOptions() { }
+        public DotNettyTcpTransportOptions() { }
+    }
+    public abstract class DotNettyTransportOptions : Akka.Remote.Hosting.RemoteTransportOptions, Akka.Remote.Hosting.IWithHostNameAndPort, Akka.Remote.Hosting.IWithPublicHostNameAndPort
+    {
+        protected DotNettyTransportOptions() { }
+        public bool? EnableSsl { get; set; }
         public string? HostName { get; set; }
         public int? Port { get; set; }
         public string? PublicHostName { get; set; }
         public int? PublicPort { get; set; }
-        public override string ToString() { }
+        public Akka.Remote.Hosting.SslOptions Ssl { get; set; }
+        public override string TransportId { get; }
+        protected override void Build(System.Text.StringBuilder builder) { }
+    }
+    public sealed class DotNettyUdpTransportOptions : Akka.Remote.Hosting.DotNettyTransportOptions
+    {
+        public DotNettyUdpTransportOptions() { }
+    }
+    public interface IWithHostNameAndPort
+    {
+        string? HostName { get; set; }
+        int? Port { get; set; }
+    }
+    public interface IWithPublicHostNameAndPort : Akka.Remote.Hosting.IWithHostNameAndPort
+    {
+        string? PublicHostName { get; set; }
+        int? PublicPort { get; set; }
+    }
+    public class RemoteOptions
+    {
+        public RemoteOptions() { }
+        public System.Collections.Generic.List<Akka.Remote.Hosting.RemoteTransportOptions> EnabledTransports { get; set; }
+        public string? HostName { get; set; }
+        public int? Port { get; set; }
+        public string? PublicHostName { get; set; }
+        public int? PublicPort { get; set; }
+    }
+    public abstract class RemoteTransportOptions
+    {
+        protected RemoteTransportOptions() { }
+        public abstract string TransportId { get; }
+        protected abstract void Build(System.Text.StringBuilder builder);
+    }
+    public sealed class SslCertificateOptions
+    {
+        public SslCertificateOptions() { }
+        public string? Password { get; set; }
+        public string? Path { get; set; }
+        public string? StoreLocation { get; set; }
+        public string? StoreName { get; set; }
+        public string? Thumbprint { get; set; }
+        public bool? UseThumbprintOverFile { get; set; }
+    }
+    public sealed class SslOptions
+    {
+        public SslOptions() { }
+        public Akka.Remote.Hosting.SslCertificateOptions CertificateOptions { get; set; }
+        public bool? SuppressValidation { get; set; }
+        public System.Security.Cryptography.X509Certificates.X509Certificate2? X509Certificate { get; set; }
     }
 }
