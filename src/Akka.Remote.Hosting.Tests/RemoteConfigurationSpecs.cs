@@ -1,9 +1,13 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Hosting;
+using Akka.Remote.Transport.DotNetty;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +45,37 @@ public class RemoteConfigurationSpecs
         tcpConfig.GetInt("port").Should().Be(2552);
         tcpConfig.GetString("public-hostname").Should().BeEmpty();
         tcpConfig.GetInt("public-port").Should().Be(0);
+        tcpConfig.GetBoolean("enable-ssl").Should().BeFalse();
+    }
+    
+    [Fact(DisplayName = "Empty WithRemoting should return default remoting settings")]
+    public async Task WithRemotingWithEmptyOptionsConfigTest()
+    {
+        // arrange
+        using var host = new HostBuilder().ConfigureServices(services =>
+        {
+            services.AddAkka("RemoteSys", (builder, provider) =>
+            {
+                builder.WithRemoting(new RemoteOptions());
+            });
+        }).Build();
+
+        // act
+        await host.StartAsync();
+        var actorSystem = (ExtendedActorSystem)host.Services.GetRequiredService<ActorSystem>();
+        var config = actorSystem.Settings.Config;
+        var adapters = config.GetStringList("akka.remote.enabled-transports");
+        var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
+        
+        // assert
+        adapters.Count.Should().Be(1);
+        adapters[0].Should().Be("akka.remote.dot-netty.tcp");
+        
+        tcpConfig.GetString("hostname").Should().BeEmpty();
+        tcpConfig.GetInt("port").Should().Be(2552);
+        tcpConfig.GetString("public-hostname").Should().BeEmpty();
+        tcpConfig.GetInt("public-port").Should().Be(0);
+        tcpConfig.GetBoolean("enable-ssl").Should().BeFalse();
     }
     
     [Fact(DisplayName = "WithRemoting should override remote settings")]
@@ -134,6 +169,176 @@ public class RemoteConfigurationSpecs
         tcpConfig.GetInt("port").Should().Be(2552);
         tcpConfig.GetString("public-hostname").Should().Be("localhost");
         tcpConfig.GetInt("public-port").Should().Be(12345);
+    }
+    
+    [Fact(DisplayName = "RemoteOptions should override remote settings that are overriden")]
+    public void WithRemotingOptionsOverrideTest()
+    {
+        // arrange
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(new RemoteOptions
+        {
+            EnabledTransports = new List<RemoteTransportOptions>
+            {
+                new DotNettyTcpTransportOptions
+                {
+                    HostName = "a",
+                    PublicHostName = "b",
+                    Port = 123,
+                    PublicPort = 456,
+                    EnableSsl = true,
+                    Ssl = new SslOptions
+                    {
+                        SuppressValidation = true,
+                        CertificateOptions = new SslCertificateOptions
+                        {
+                            Path = "c",
+                            Password = "d",
+                            UseThumbprintOverFile = true,
+                            Thumbprint = "e",
+                            StoreName = "f",
+                            StoreLocation = "g",
+                        }
+                    }
+                },
+                new DotNettyUdpTransportOptions()
+            }
+        });
+        
+        // act
+        var config = builder.Configuration.Value;
+        var adapters = config.GetStringList("akka.remote.enabled-transports");
+        var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
+        
+        // assert
+        adapters.Count.Should().Be(2);
+        adapters[0].Should().Be("akka.remote.dot-netty.tcp");
+        adapters[1].Should().Be("akka.remote.dot-netty.udp");
+        
+        tcpConfig.GetString("hostname").Should().Be("a");
+        tcpConfig.GetInt("port").Should().Be(123);
+        tcpConfig.GetString("public-hostname").Should().Be("b");
+        tcpConfig.GetInt("public-port").Should().Be(456);
+        
+        var sslConfig = tcpConfig.GetConfig("ssl");
+        sslConfig.GetBoolean("suppress-validation").Should().BeTrue();
+        
+        var certConfig = sslConfig.GetConfig("certificate");
+        certConfig.GetString("path").Should().Be("c");
+        certConfig.GetString("password").Should().Be("d");
+        certConfig.GetBoolean("use-thumbprint-over-file").Should().BeTrue();
+        certConfig.GetString("thumbprint").Should().Be("e");
+        certConfig.GetString("store-name").Should().Be("f");
+        certConfig.GetString("store-location").Should().Be("g");
+    }
+    
+    [Fact(DisplayName = "RemoteOptions using configurator should override remote settings that are overriden")]
+    public void WithRemotingOptionsConfiguratorOverrideTest()
+    {
+        // arrange
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(opt =>
+        {
+            opt.EnabledTransports.Add(new DotNettyUdpTransportOptions());
+            var tcpOption = (DotNettyTcpTransportOptions) opt.EnabledTransports[0];
+            tcpOption.HostName = "a";
+            tcpOption.PublicHostName = "b";
+            tcpOption.Port = 123;
+            tcpOption.PublicPort = 456;
+            tcpOption.EnableSsl = true;
+            tcpOption.Ssl.SuppressValidation = true;
+            tcpOption.Ssl.CertificateOptions.Path = "c";
+            tcpOption.Ssl.CertificateOptions.Password = "d";
+            tcpOption.Ssl.CertificateOptions.UseThumbprintOverFile = true;
+            tcpOption.Ssl.CertificateOptions.Thumbprint = "e";
+            tcpOption.Ssl.CertificateOptions.StoreName = "f";
+            tcpOption.Ssl.CertificateOptions.StoreLocation = "g";
+        });
+        
+        // act
+        var config = builder.Configuration.Value;
+        var adapters = config.GetStringList("akka.remote.enabled-transports");
+        var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
+        
+        // assert
+        adapters.Count.Should().Be(2);
+        adapters[0].Should().Be("akka.remote.dot-netty.tcp");
+        adapters[1].Should().Be("akka.remote.dot-netty.udp");
+        
+        tcpConfig.GetString("hostname").Should().Be("a");
+        tcpConfig.GetInt("port").Should().Be(123);
+        tcpConfig.GetString("public-hostname").Should().Be("b");
+        tcpConfig.GetInt("public-port").Should().Be(456);
+        
+        var sslConfig = tcpConfig.GetConfig("ssl");
+        sslConfig.GetBoolean("suppress-validation").Should().BeTrue();
+        
+        var certConfig = sslConfig.GetConfig("certificate");
+        certConfig.GetString("path").Should().Be("c");
+        certConfig.GetString("password").Should().Be("d");
+        certConfig.GetBoolean("use-thumbprint-over-file").Should().BeTrue();
+        certConfig.GetString("thumbprint").Should().Be("e");
+        certConfig.GetString("store-name").Should().Be("f");
+        certConfig.GetString("store-location").Should().Be("g");
+    }
+    
+    [Fact(DisplayName = "RemoteOptions with explicit certificate and ssl enabled should use provided certificate")]
+    public void WithRemotingOptionsSslEnabledCertificateTest()
+    {
+        // arrange
+        var certificate = new X509Certificate2("./Resources/akka-validcert.pfx", "password");
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(new RemoteOptions
+        {
+            EnabledTransports = new List<RemoteTransportOptions>
+            {
+                new DotNettyTcpTransportOptions
+                {
+                    EnableSsl = true,
+                    Ssl = new SslOptions
+                    {
+                        SuppressValidation = true, 
+                        X509Certificate = certificate
+                    }
+                },
+            }
+        });
+        
+        // act
+        var setup = (DotNettySslSetup) builder.Setups.First(s => s is DotNettySslSetup);
+
+        // assert
+        setup.SuppressValidation.Should().BeTrue();
+        setup.Certificate.Should().Be(certificate);
+    }
+    
+    [Fact(DisplayName = "RemoteOptions with explicit certificate and ssl disabled should ignore provided certificate")]
+    public void WithRemotingOptionsSslDisabledCertificateTest()
+    {
+        // arrange
+        var certificate = new X509Certificate2("./Resources/akka-validcert.pfx", "password");
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(new RemoteOptions
+        {
+            EnabledTransports = new List<RemoteTransportOptions>
+            {
+                new DotNettyTcpTransportOptions
+                {
+                    EnableSsl = false,
+                    Ssl = new SslOptions
+                    {
+                        SuppressValidation = true, 
+                        X509Certificate = certificate
+                    }
+                },
+            }
+        });
+        
+        // act
+        var setup = builder.Setups.FirstOrDefault(s => s is DotNettySslSetup);
+
+        // assert
+        setup.Should().BeNull();
     }
     
     [Fact]

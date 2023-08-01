@@ -3,7 +3,7 @@
     <TargetFramework>$(LibraryFramework)</TargetFramework>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Akka.Remote Microsoft.Extensions.Hosting support.</Description>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
