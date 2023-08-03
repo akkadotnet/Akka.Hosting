@@ -6,50 +6,15 @@
         public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Remote.Hosting.RemoteOptions> configure) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, string? hostname = null, int? port = default, string? publicHostname = null, int? publicPort = default) { }
     }
-    public sealed class DotNettyTcpTransportOptions : Akka.Remote.Hosting.DotNettyTransportOptions
+    public class RemoteOptions
     {
-        public DotNettyTcpTransportOptions() { }
-    }
-    public abstract class DotNettyTransportOptions : Akka.Remote.Hosting.RemoteTransportOptions, Akka.Remote.Hosting.IWithHostNameAndPort, Akka.Remote.Hosting.IWithPublicHostNameAndPort
-    {
-        protected DotNettyTransportOptions() { }
+        public RemoteOptions() { }
         public bool? EnableSsl { get; set; }
         public string? HostName { get; set; }
         public int? Port { get; set; }
         public string? PublicHostName { get; set; }
         public int? PublicPort { get; set; }
         public Akka.Remote.Hosting.SslOptions Ssl { get; set; }
-        public override string TransportId { get; }
-        protected override void Build(System.Text.StringBuilder builder) { }
-    }
-    public sealed class DotNettyUdpTransportOptions : Akka.Remote.Hosting.DotNettyTransportOptions
-    {
-        public DotNettyUdpTransportOptions() { }
-    }
-    public interface IWithHostNameAndPort
-    {
-        string? HostName { get; set; }
-        int? Port { get; set; }
-    }
-    public interface IWithPublicHostNameAndPort : Akka.Remote.Hosting.IWithHostNameAndPort
-    {
-        string? PublicHostName { get; set; }
-        int? PublicPort { get; set; }
-    }
-    public class RemoteOptions
-    {
-        public RemoteOptions() { }
-        public System.Collections.Generic.List<Akka.Remote.Hosting.RemoteTransportOptions> EnabledTransports { get; set; }
-        public string? HostName { get; set; }
-        public int? Port { get; set; }
-        public string? PublicHostName { get; set; }
-        public int? PublicPort { get; set; }
-    }
-    public abstract class RemoteTransportOptions
-    {
-        protected RemoteTransportOptions() { }
-        public abstract string TransportId { get; }
-        protected abstract void Build(System.Text.StringBuilder builder);
     }
     public sealed class SslCertificateOptions
     {

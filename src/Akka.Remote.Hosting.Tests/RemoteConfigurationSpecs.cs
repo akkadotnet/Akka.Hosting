@@ -178,43 +178,31 @@ public class RemoteConfigurationSpecs
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
         builder.WithRemoting(new RemoteOptions
         {
-            EnabledTransports = new List<RemoteTransportOptions>
+            HostName = "a",
+            PublicHostName = "b",
+            Port = 123,
+            PublicPort = 456,
+            EnableSsl = true,
+            Ssl = new SslOptions
             {
-                new DotNettyTcpTransportOptions
+                SuppressValidation = true,
+                CertificateOptions = new SslCertificateOptions
                 {
-                    HostName = "a",
-                    PublicHostName = "b",
-                    Port = 123,
-                    PublicPort = 456,
-                    EnableSsl = true,
-                    Ssl = new SslOptions
-                    {
-                        SuppressValidation = true,
-                        CertificateOptions = new SslCertificateOptions
-                        {
-                            Path = "c",
-                            Password = "d",
-                            UseThumbprintOverFile = true,
-                            Thumbprint = "e",
-                            StoreName = "f",
-                            StoreLocation = "g",
-                        }
-                    }
-                },
-                new DotNettyUdpTransportOptions()
+                    Path = "c",
+                    Password = "d",
+                    UseThumbprintOverFile = true,
+                    Thumbprint = "e",
+                    StoreName = "f",
+                    StoreLocation = "g",
+                }
             }
         });
         
         // act
         var config = builder.Configuration.Value;
-        var adapters = config.GetStringList("akka.remote.enabled-transports");
         var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
         
         // assert
-        adapters.Count.Should().Be(2);
-        adapters[0].Should().Be("akka.remote.dot-netty.tcp");
-        adapters[1].Should().Be("akka.remote.dot-netty.udp");
-        
         tcpConfig.GetString("hostname").Should().Be("a");
         tcpConfig.GetInt("port").Should().Be(123);
         tcpConfig.GetString("public-hostname").Should().Be("b");
@@ -239,32 +227,25 @@ public class RemoteConfigurationSpecs
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
         builder.WithRemoting(opt =>
         {
-            opt.EnabledTransports.Add(new DotNettyUdpTransportOptions());
-            var tcpOption = (DotNettyTcpTransportOptions) opt.EnabledTransports[0];
-            tcpOption.HostName = "a";
-            tcpOption.PublicHostName = "b";
-            tcpOption.Port = 123;
-            tcpOption.PublicPort = 456;
-            tcpOption.EnableSsl = true;
-            tcpOption.Ssl.SuppressValidation = true;
-            tcpOption.Ssl.CertificateOptions.Path = "c";
-            tcpOption.Ssl.CertificateOptions.Password = "d";
-            tcpOption.Ssl.CertificateOptions.UseThumbprintOverFile = true;
-            tcpOption.Ssl.CertificateOptions.Thumbprint = "e";
-            tcpOption.Ssl.CertificateOptions.StoreName = "f";
-            tcpOption.Ssl.CertificateOptions.StoreLocation = "g";
+            opt.HostName = "a";
+            opt.PublicHostName = "b";
+            opt.Port = 123;
+            opt.PublicPort = 456;
+            opt.EnableSsl = true;
+            opt.Ssl.SuppressValidation = true;
+            opt.Ssl.CertificateOptions.Path = "c";
+            opt.Ssl.CertificateOptions.Password = "d";
+            opt.Ssl.CertificateOptions.UseThumbprintOverFile = true;
+            opt.Ssl.CertificateOptions.Thumbprint = "e";
+            opt.Ssl.CertificateOptions.StoreName = "f";
+            opt.Ssl.CertificateOptions.StoreLocation = "g";
         });
         
         // act
         var config = builder.Configuration.Value;
-        var adapters = config.GetStringList("akka.remote.enabled-transports");
         var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
         
         // assert
-        adapters.Count.Should().Be(2);
-        adapters[0].Should().Be("akka.remote.dot-netty.tcp");
-        adapters[1].Should().Be("akka.remote.dot-netty.udp");
-        
         tcpConfig.GetString("hostname").Should().Be("a");
         tcpConfig.GetInt("port").Should().Be(123);
         tcpConfig.GetString("public-hostname").Should().Be("b");
@@ -290,17 +271,11 @@ public class RemoteConfigurationSpecs
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
         builder.WithRemoting(new RemoteOptions
         {
-            EnabledTransports = new List<RemoteTransportOptions>
+            EnableSsl = true,
+            Ssl = new SslOptions
             {
-                new DotNettyTcpTransportOptions
-                {
-                    EnableSsl = true,
-                    Ssl = new SslOptions
-                    {
-                        SuppressValidation = true, 
-                        X509Certificate = certificate
-                    }
-                },
+                SuppressValidation = true, 
+                X509Certificate = certificate
             }
         });
         
@@ -320,17 +295,11 @@ public class RemoteConfigurationSpecs
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
         builder.WithRemoting(new RemoteOptions
         {
-            EnabledTransports = new List<RemoteTransportOptions>
+            EnableSsl = false,
+            Ssl = new SslOptions
             {
-                new DotNettyTcpTransportOptions
-                {
-                    EnableSsl = false,
-                    Ssl = new SslOptions
-                    {
-                        SuppressValidation = true, 
-                        X509Certificate = certificate
-                    }
-                },
+                SuppressValidation = true, 
+                X509Certificate = certificate
             }
         });
         
