@@ -16,4 +16,10 @@
     <ItemGroup>
       <ProjectReference Include="..\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Resources\akka-validcert.pfx">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 </Project>

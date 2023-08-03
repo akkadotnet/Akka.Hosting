@@ -60,11 +60,7 @@ namespace Akka.Remote.Hosting
             this AkkaConfigurationBuilder builder,
             RemoteOptions options)
         {
-            var config = options.ToString();
-            
-            // prepend the remoting configuration to the front
-            if(!string.IsNullOrEmpty(config))
-                builder.AddHocon(config, HoconAddMode.Prepend);
+            options.Build(builder);
 
             if (builder.ActorRefProvider.HasValue)
             {
