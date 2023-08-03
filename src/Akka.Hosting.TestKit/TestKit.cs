@@ -8,6 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Actor.Internal;
 using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
@@ -53,7 +54,7 @@ namespace Akka.Hosting.TestKit
         public ITestOutputHelper? Output { get; }
         public LogLevel LogLevel { get; }
 
-        private TaskCompletionSource<Done> _initialized = new TaskCompletionSource<Done>();
+        private readonly TaskCompletionSource<Done> _initialized = new TaskCompletionSource<Done>();
 
         protected TestKit(string? actorSystemName = null, ITestOutputHelper? output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
         : base(Assertions)
@@ -102,8 +103,15 @@ namespace Akka.Hosting.TestKit
 
                 builder.AddStartup((system, _) =>
                 {
-                    base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
-                    _initialized.SetResult(Done.Instance);
+                    try
+                    {
+                        base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
+                        _initialized.SetResult(Done.Instance);
+                    }
+                    catch (Exception e)
+                    {
+                        _initialized.SetException(e);
+                    }
                 });
             });
         }
@@ -154,6 +162,10 @@ namespace Akka.Hosting.TestKit
             }
 
             await _initialized.Task;
+            
+            if (this is not INoImplicitSender && InternalCurrentActorCellKeeper.Current is null)
+                InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
+            
             await BeforeTestStart();
         }
 
