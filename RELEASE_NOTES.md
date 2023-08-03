@@ -2,6 +2,7 @@
 
 * [Update Akka.NET to 1.5.12](https://github.com/akkadotnet/akka.net/releases/tag/1.5.12)
 * [TestKit: Fix missing actor context on test start](https://github.com/akkadotnet/Akka.Hosting/pull/346)
+* [Remote: Add SSL settings into RemoteOptions](https://github.com/akkadotnet/Akka.Hosting/pull/345)
 
 ## [1.5.8.1] / 12 July 2023
 
