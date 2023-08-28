@@ -312,8 +312,9 @@ The `dependencyResolver.Props<MySingletonDiActor>()` call will leverage the `Act
 ## IConfiguration To HOCON Adapter
 
 The `AddHocon` extension method can convert `Microsoft.Extensions.Configuration` `IConfiguration` into HOCON `Config` instance and adds it to the ActorSystem being configured.
-* All variable name are automatically converted to lower case.
-* All "." (period) in the `IConfiguration` key will be treated as a HOCON object key separator
+* Unlike `IConfiguration`, all HOCON key names are **case sensitive**.
+* **Unless enclosed inside double quotes**, all "." (period) in the `IConfiguration` key will be treated as a HOCON object key separator
+* `IConfiguration` **does not support object composition**, if you declare the same key multiple times inside multiple configuration providers (JSON/environment variables/etc), **only the last one declared will take effect**.
 * For environment variable configuration provider:
    * "__" (double underline) will be converted to "." (period).
    * "_" (single underline) will be converted to "-" (dash).
@@ -333,6 +334,7 @@ __Example:__
   },
   "AllowedHosts": "*",
   "akka": {
+    "\"Key.With.Dots\"": "Key Value",
     "cluster": {
       "roles": [ "front-end", "back-end" ],
       "min-nr-of-members": 3,
@@ -345,11 +347,32 @@ __Example:__
 Environment variables:
 
 ```powershell
-AKKA__ACTOR__TELEMETRY__ENABLED=true
-AKKA__CLUSTER__SEED_NODES__0=akka.tcp//mySystem@localhost:4055
-AKKA__CLUSTER__SEED_NODES__1=akka.tcp//mySystem@localhost:4056
-AKKA__CLUSTER__SEED_NODE_TIMEOUT=00:00:05
+PS C:/> [Environment]::SetEnvironmentVariable('akka__actor__telemetry__enabled', 'true')
+PS C:/> [Environment]::SetEnvironmentVariable('akka__actor__serialization_bindings__"System.Object"', 'hyperion')
+PS C:/> [Environment]::SetEnvironmentVariable('akka__cluster__seed_nodes__0', 'akka.tcp//mySystem@localhost:4055')
+PS C:/> [Environment]::SetEnvironmentVariable('akka__cluster__seed_nodes__1', 'akka.tcp//mySystem@localhost:4056')
+PS C:/> [Environment]::SetEnvironmentVariable('akka__cluster__seed_node_timeout', '00:00:05')
  ```
+
+Note the integer parseable key inside the seed-nodes configuration, seed-nodes will be parsed as an array. These environment variables will be parsed as HOCON settings:
+
+```hocon
+akka {
+  actor {
+    telemetry.enabled: on
+    serialization_bindings {
+      "System.Object": hyperion
+    }
+  }
+  cluster {
+    seed-nodes: [ 
+      "akka.tcp//mySystem@localhost:4055",
+      "akka.tcp//mySystem@localhost:4056" 
+    ]
+    seed-node-timeout: 5s
+  }
+}
+```
 
 Example code:
 
@@ -359,7 +382,13 @@ Both appsettings.json and environment variables are combined
 into HOCON configuration:
 
 akka {
-  actor.telemetry.enabled: on
+  "Key.With.Dots": Key value
+  actor {
+    telemetry.enabled: on
+    serialization_bindings {
+      "System.Object": hyperion
+    }
+  }
   cluster {
     roles: [ "front-end", "back-end" ]
     seed-nodes: [ 

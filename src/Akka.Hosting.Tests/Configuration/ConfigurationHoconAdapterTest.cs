@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Akka.Configuration;
 using Akka.Hosting.Configuration;
@@ -23,6 +24,9 @@ public class ConfigurationHoconAdapterTest
 {
     private const string ConfigSource = @"{
   ""akka"": {
+    ""actor.serialization_bindings"" : {
+        ""\""System.Int32\"""": ""json""
+    },
     ""cluster"": {
       ""roles"": [ ""front-end"", ""back-end"" ],
       ""role"" : {
@@ -48,12 +52,13 @@ public class ConfigurationHoconAdapterTest
 
     public ConfigurationHoconAdapterTest()
     {
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__A", "A VALUE");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__B", "B VALUE");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__C__D", "D");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__0", "ZERO");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__22", "TWO");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__1", "ONE");
+        Environment.SetEnvironmentVariable("akka__test_value_1__a", "A VALUE");
+        Environment.SetEnvironmentVariable("akka__test_value_1__b", "B VALUE");
+        Environment.SetEnvironmentVariable("akka__test_value_1__c__d", "D");
+        Environment.SetEnvironmentVariable("akka__test_value_2__0", "ZERO");
+        Environment.SetEnvironmentVariable("akka__test_value_2__22", "TWO");
+        Environment.SetEnvironmentVariable("akka__test_value_2__1", "ONE");
+        Environment.SetEnvironmentVariable("akka__actor__serialization_bindings2__\"System.Object\"", "hyperion");
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ConfigSource));
         var configuration = new ConfigurationBuilder()
@@ -75,6 +80,20 @@ public class ConfigurationHoconAdapterTest
         array[0].Should().Be("ZERO");
         array[1].Should().Be("ONE");
         array[2].Should().Be("TWO");
+
+        var bindings = _config.GetConfig("akka.actor.serialization-bindings2").AsEnumerable()
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        bindings.ContainsKey("System.Object").Should().BeTrue();
+        bindings["System.Object"].GetString().Should().Be("hyperion");
+    }
+
+    [Fact(DisplayName = "Adaptor should read quote enclosed key inside JSON settings correctly")]
+    public void JsonQuotedKeyTest()
+    {
+        var bindings = _config.GetConfig("akka.actor.serialization-bindings").AsEnumerable()
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        bindings.ContainsKey("System.Int32").Should().BeTrue();
+        bindings["System.Int32"].GetString().Should().Be("json");
     }
     
     [Fact(DisplayName = "Adaptor should expand keys")]

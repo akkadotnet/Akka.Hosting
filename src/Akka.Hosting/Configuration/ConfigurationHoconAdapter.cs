@@ -41,7 +41,7 @@ namespace Akka.Hosting.Configuration
         {
             // Sanitize configuration brought in from environment variables, 
             // "__" are already converted to ":" by the environment configuration provider.
-            var sanitized = config.Key.ToLowerInvariant().Replace("_", "-");
+            var sanitized = config.Key.Replace("_", "-");
             var keys = sanitized.SplitDottedPathHonouringQuotes().ToList();
 
             // No need to expand the chain
