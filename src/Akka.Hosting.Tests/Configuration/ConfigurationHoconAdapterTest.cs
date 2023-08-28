@@ -23,39 +23,38 @@ namespace Akka.Hosting.Tests.Configuration;
 public class ConfigurationHoconAdapterTest
 {
     private const string ConfigSource = 
-"""
+@"
 {
-  "akka": {
-    "actor": {
-      "serializers": {
-        "hyperion": "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+  ""akka"": {
+    ""actor"": {
+      ""serializers"": {
+        ""hyperion"": ""Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion""
       },
-      "serialization-bindings": {
-        "\"System.Object\"": "hyperion"
+      ""serialization-bindings"": {
+        ""\""System.Object\"""": ""hyperion""
       }
     },
-    "cluster": {
-      "roles": [ "front-end", "back-end" ],
-      "role" : {
-        "back-end" : 5
+    ""cluster"": {
+      ""roles"": [ ""front-end"", ""back-end"" ],
+      ""role"" : {
+        ""back-end"" : 5
       },
-      "app-version": "1.0.0",
-      "min-nr-of-members": 99,
-      "seed-nodes": [ "akka.tcp://system@somewhere.com:9999" ],
-      "log-info": false,
-      "log-info-verbose": true
+      ""app-version"": ""1.0.0"",
+      ""min-nr-of-members"": 99,
+      ""seed-nodes"": [ ""akka.tcp://system@somewhere.com:9999"" ],
+      ""log-info"": false,
+      ""log-info-verbose"": true
     }
   },
-  "test1": "test1 content",
-  "test2.a": "on",
-  "test2.b.c": "2s",
-  "test2.b.d": "test2.b.d content",
-  "test2.d": "test2.d content",
-  "test3": "3",
-  "test4": 4,
-  "\"Test5.Key\"": "Test5.Value"
-}
-""";
+  ""test1"": ""test1 content"",
+  ""test2.a"": ""on"",
+  ""test2.b.c"": ""2s"",
+  ""test2.b.d"": ""test2.b.d content"",
+  ""test2.d"": ""test2.d content"",
+  ""test3"": ""3"",
+  ""test4"": 4,
+  ""\""Test5.Key\"""": ""Test5.Value""
+}";
 
     private readonly IConfigurationRoot _root;
 
