@@ -312,16 +312,35 @@ The `dependencyResolver.Props<MySingletonDiActor>()` call will leverage the `Act
 ## IConfiguration To HOCON Adapter
 
 The `AddHocon` extension method can convert `Microsoft.Extensions.Configuration` `IConfiguration` into HOCON `Config` instance and adds it to the ActorSystem being configured.
-* All variable name are automatically converted to lower case.
-* All "." (period) in the `IConfiguration` key will be treated as a HOCON object key separator
+* Unless enclosed inside double quotes, all "." (period) in the `IConfiguration` key will be treated as a HOCON object key separator
 * For environment variable configuration provider:
-   * "__" (double underline) will be converted to "." (period).
-   * "_" (single underline) will be converted to "-" (dash).
-   * If all keys are composed of integer parseable keys, the whole object is treated as an array
+  * **All keys are automatically converted to lower case**
+  * "__" (double underline) will be converted to "." (period).
+  * "_" (single underline) will be converted to "-" (dash).
+  * If all keys of the same level are composed of integer parseable keys, the whole level is treated as an array in which its index order is the sorted value of the integer parseable key level.
 
-__Example:__
+### Environment Variables To Array Parsing Example
+In this example, the third level is composed of purely integer parseable keys:
 
-`appsettings.json`:
+```powershell
+TEST__STR_VALUES__0="a"
+TEST__STR_VALUES__22="d"
+TEST__STR_VALUES__5="c"
+TEST__STR_VALUES__2="b"
+``` 
+These environment variables will be converted into an array in which its index order is the sorted value of the second level keys:
+
+```hocon
+test {
+  str-values: [ "a", "b", "c", "d" ]
+}
+``` 
+
+### IConfiguration Transform Example
+
+#### JSON
+
+the file `appsettings.json`:
 
 ```json
 {
@@ -333,6 +352,14 @@ __Example:__
   },
   "AllowedHosts": "*",
   "akka": {
+    "actor": {
+      "serializers": {
+        "hyperion": "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+      },
+      "serialization-bindings": {
+        "\"System.Object\"": "hyperion"
+      }
+    },
     "cluster": {
       "roles": [ "front-end", "back-end" ],
       "min-nr-of-members": 3,
@@ -340,26 +367,131 @@ __Example:__
     }
   }    
 }
- ```
+```
+
+will be transformed to HOCON configuration:
+```hocon
+Logging {
+  LogLevel {
+    Default: Information
+    Microsoft {
+      AspNetCore: Warning
+    }
+  }
+}
+AllowedHosts: *
+akka {
+  actor {
+    serializers {
+      hyperion: "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+    },
+    serialization-bindings {
+      "System.Object": hyperion
+    }
+  }
+  cluster {
+    roles: [ "front-end", "back-end" ]
+    min-nr-of-members: 3
+    log-info: on
+  }
+}    
+
+```
+
+#### Environment variables
 
 Environment variables:
-
 ```powershell
 AKKA__ACTOR__TELEMETRY__ENABLED=true
 AKKA__CLUSTER__SEED_NODES__0=akka.tcp//mySystem@localhost:4055
 AKKA__CLUSTER__SEED_NODES__1=akka.tcp//mySystem@localhost:4056
 AKKA__CLUSTER__SEED_NODE_TIMEOUT=00:00:05
- ```
+```
 
-Example code:
+will be transformed to HOCON configuration:
+```hocon
+akka {
+  actor.telemetry.enabled = on
+  cluster {
+    seed-nodes = [
+      "akka.tcp//mySystem@localhost:4055", 
+      "akka.tcp//mySystem@localhost:4056"
+    ]
+    seed-node-timeout = 5s
+  } 
+}
+```
 
+### Loading Configuration In Code
+
+In these examples, we will be using the `appsettings.json` and environment variables in the [example section above](#iconfiguration-transform-example)
+
+#### Converting IConfiguration Directly
 ```csharp
 /*
 Both appsettings.json and environment variables are combined
 into HOCON configuration:
 
+Logging {
+  LogLevel {
+    Default: Information
+    Microsoft {
+      AspNetCore: Warning
+    }
+  }
+}
+AllowedHosts: *
 akka {
-  actor.telemetry.enabled: on
+  actor {
+    serializers {
+      hyperion: "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+    }
+    serialization-bindings {
+      "System.Object": hyperion
+    }
+    telemetry.enabled: on
+  }
+  cluster {
+    roles: [ "front-end", "back-end" ]
+    seed-nodes: [ 
+      "akka.tcp//mySystem@localhost:4055",
+      "akka.tcp//mySystem@localhost:4056" 
+    ]
+    min-nr-of-members: 3
+    seed-node-timeout: 5s
+    log-info: true
+  }
+}
+*/
+
+// Setup IConfiguration to load from appsettings.json and
+// environment variables
+var rootConfig = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .AddEnvironmentVariables()
+    .Build();
+
+// Convert IConfigurationRoot directly into HOCON configuration instance
+var hoconConfig = rootConfig.ToHocon();
+```
+
+#### Using IConfiguration Adapter Inside Akka.Hosting
+```csharp
+/*
+Since we're only using the "akka" configuration section, the rest of the
+IConfigurationSections are filtered out and we left out with this
+HOCON configuration:
+
+akka {
+  actor {
+    serializers {
+      hyperion: "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+    }
+    serialization-bindings {
+      "System.Object": hyperion
+    }
+    telemetry.enabled: on
+  }
   cluster {
     roles: [ "front-end", "back-end" ]
     seed-nodes: [ 

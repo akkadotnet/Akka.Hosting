@@ -1,6 +1,6 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="IConfigurationAdapter.cs" company="Akka.NET Project">
-//      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
+//      Copyright (C) 2013-2023 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
 
@@ -18,18 +18,36 @@ namespace Akka.Hosting.Configuration
         public static Config ToHocon(this IConfiguration config)
         {
             var rootObject = new HoconObject();
-            if (config is IConfigurationSection section)
+            switch (config)
             {
-                var value = section.ExpandKey(rootObject);
-                value.AppendValue(section.ToHoconElement());
-            }
-            else
-            {
-                foreach (var child in config.GetChildren())
+                case IConfigurationRoot root:
                 {
-                    var value = child.ExpandKey(rootObject);
-                    value.AppendValue(child.ToHoconElement());
+                    var hoconRoot = new HoconConfigurationRoot(root.Providers);
+                    foreach (var child in hoconRoot.GetHoconChildren())
+                    {
+                        var value = child.ExpandKey(rootObject);
+                        value.AppendValue(child.ToHoconElement());
+                    }
+                    break;
                 }
+                
+                case IConfigurationSection section:
+                {
+                    var hoconSection = HoconConfigurationSection.Create(section);
+                    var value = hoconSection.ExpandKey(rootObject);
+                    value.AppendValue(hoconSection.ToHoconElement());
+                    break;
+                }
+                
+                default:
+                    // We don't know what this is, just do the best we can to convert it to HOCON
+                    foreach (var child in config.GetChildren())
+                    {
+                        var hoconChild = HoconConfigurationSection.Create(child);
+                        var value = hoconChild.ExpandKey(rootObject);
+                        value.AppendValue(hoconChild.ToHoconElement());
+                    }
+                    break;
             }
             
             var rootValue = new HoconValue();
@@ -37,12 +55,9 @@ namespace Akka.Hosting.Configuration
             return new Config(new HoconRoot(rootValue));
         }
 
-        private static HoconValue ExpandKey(this IConfigurationSection config, HoconObject parent)
+        private static HoconValue ExpandKey(this HoconConfigurationSection config, HoconObject parent)
         {
-            // Sanitize configuration brought in from environment variables, 
-            // "__" are already converted to ":" by the environment configuration provider.
-            var sanitized = config.Key.ToLowerInvariant().Replace("_", "-");
-            var keys = sanitized.SplitDottedPathHonouringQuotes().ToList();
+            var keys = config.Key.SplitDottedPathHonouringQuotes().ToList();
 
             // No need to expand the chain
             if (keys.Count == 1)
@@ -69,7 +84,7 @@ namespace Akka.Hosting.Configuration
             return currentObj.GetOrCreateKey(keys[0]);
         }
         
-        private static IHoconElement ToHoconElement(this IConfigurationSection config)
+        private static IHoconElement ToHoconElement(this HoconConfigurationSection config)
         {
             if (config.IsArray())
             {
@@ -77,7 +92,8 @@ namespace Akka.Hosting.Configuration
                 foreach (var child in config.GetChildren().OrderBy(c => int.Parse(c.Key)))
                 {
                     var value = new HoconValue();
-                    var element = child.ToHoconElement();
+                    var hoconChild = HoconConfigurationSection.Create(child);
+                    var element = hoconChild.ToHoconElement();
                     value.AppendValue(element);
                     array.Add(value);
                 }
@@ -89,8 +105,9 @@ namespace Akka.Hosting.Configuration
                 var rootObject = new HoconObject();
                 foreach (var child in config.GetChildren())
                 {
-                    var value = child.ExpandKey(rootObject);
-                    value.AppendValue(child.ToHoconElement());
+                    var hoconChild = HoconConfigurationSection.Create(child);
+                    var value = hoconChild.ExpandKey(rootObject);
+                    value.AppendValue(hoconChild.ToHoconElement());
                 }
                 return rootObject;
             }
@@ -114,12 +131,12 @@ namespace Akka.Hosting.Configuration
             return first;
         }
 
-        private static bool IsObject(this IConfigurationSection config)
-            => config.GetChildren().Any() && config.Value == null;
+        private static bool IsObject(this HoconConfigurationSection config)
+            => config.GetHoconChildren().Any() && config.Value == null;
 
-        private static bool IsArray(this IConfiguration config)
+        private static bool IsArray(this HoconConfigurationSection config)
         {
-            var children = config.GetChildren().ToArray();
+            var children = config.GetHoconChildren().ToArray();
             return children.Length > 0 && children.All(c => int.TryParse(c.Key, out _));
         }
     }
