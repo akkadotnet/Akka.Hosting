@@ -27,6 +27,7 @@ namespace Akka.Cluster.Hosting
     {
         public ClusterOptions() { }
         public string? AppVersion { get; set; }
+        public Akka.Remote.Hosting.PhiAccrualFailureDetectorOptions? FailureDetector { get; set; }
         public bool? LogInfo { get; set; }
         public bool? LogInfoVerbose { get; set; }
         public int? MinimumNumberOfMembers { get; set; }
