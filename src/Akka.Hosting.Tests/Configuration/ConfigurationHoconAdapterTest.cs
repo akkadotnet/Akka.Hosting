@@ -24,7 +24,7 @@ public class ConfigurationHoconAdapterTest
 {
     private const string ConfigSource = @"{
   ""akka"": {
-    ""actor.serialization_bindings"" : {
+    ""actor.serialization-bindings"" : {
         ""\""System.Int32\"""": ""json""
     },
     ""cluster"": {
