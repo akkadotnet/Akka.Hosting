@@ -93,5 +93,53 @@ namespace Akka.Hosting
             
             return value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
         }
+
+        public static string ToHocon(this float? value)
+        {
+            if(value is null)
+                throw new ConfigurationException("Value can not be null");
+            return ToHocon(value.Value);
+        }
+        
+        public static string ToHocon(this float value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+        
+        public static string ToHocon(this double? value)
+        {
+            if(value is null)
+                throw new ConfigurationException("Value can not be null");
+            return ToHocon(value.Value);
+        }
+        
+        public static string ToHocon(this double value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+        
+        public static string ToHocon(this int? value)
+        {
+            if(value is null)
+                throw new ConfigurationException("Value can not be null");
+            return ToHocon(value.Value);
+        }
+        
+        public static string ToHocon(this int value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+        
+        public static string ToHocon(this long? value)
+        {
+            if(value is null)
+                throw new ConfigurationException("Value can not be null");
+            return ToHocon(value.Value);
+        }
+        
+        public static string ToHocon(this long value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
     }
 }

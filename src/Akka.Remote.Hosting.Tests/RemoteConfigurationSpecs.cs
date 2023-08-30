@@ -9,6 +9,7 @@ using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Remote.Transport.DotNetty;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,6 +35,8 @@ public class RemoteConfigurationSpecs
         await host.StartAsync();
         var actorSystem = (ExtendedActorSystem)host.Services.GetRequiredService<ActorSystem>();
         var config = actorSystem.Settings.Config;
+        var transportFailureDetector = config.GetConfig("akka.remote.transport-failure-detector");
+        var watchFailureDetector = config.GetConfig("akka.remote.watch-failure-detector");
         var adapters = config.GetStringList("akka.remote.enabled-transports");
         var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
         
@@ -45,7 +48,21 @@ public class RemoteConfigurationSpecs
         tcpConfig.GetInt("port").Should().Be(2552);
         tcpConfig.GetString("public-hostname").Should().BeEmpty();
         tcpConfig.GetInt("public-port").Should().Be(0);
+        tcpConfig.GetByteSize("send-buffer-size").Should().Be(256000);
+        tcpConfig.GetByteSize("receive-buffer-size").Should().Be(256000);
+        tcpConfig.GetByteSize("maximum-frame-size").Should().Be(128000);
         tcpConfig.GetBoolean("enable-ssl").Should().BeFalse();
+
+        transportFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(4.Seconds());
+        transportFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(120.Seconds());
+
+        watchFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.Seconds());
+        watchFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(10.Seconds());
+        watchFailureDetector.GetDouble("threshold").Should().Be(10.0);
+        watchFailureDetector.GetInt("max-sample-size").Should().Be(200);
+        watchFailureDetector.GetTimeSpan("min-std-deviation").Should().Be(100.Milliseconds());
+        watchFailureDetector.GetTimeSpan("unreachable-nodes-reaper-interval").Should().Be(1.Seconds());
+        watchFailureDetector.GetTimeSpan("expected-response-after").Should().Be(1.Seconds());
     }
     
     [Fact(DisplayName = "Empty WithRemoting should return default remoting settings")]
@@ -64,6 +81,8 @@ public class RemoteConfigurationSpecs
         await host.StartAsync();
         var actorSystem = (ExtendedActorSystem)host.Services.GetRequiredService<ActorSystem>();
         var config = actorSystem.Settings.Config;
+        var transportFailureDetector = config.GetConfig("akka.remote.transport-failure-detector");
+        var watchFailureDetector = config.GetConfig("akka.remote.watch-failure-detector");
         var adapters = config.GetStringList("akka.remote.enabled-transports");
         var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
         
@@ -75,7 +94,21 @@ public class RemoteConfigurationSpecs
         tcpConfig.GetInt("port").Should().Be(2552);
         tcpConfig.GetString("public-hostname").Should().BeEmpty();
         tcpConfig.GetInt("public-port").Should().Be(0);
+        tcpConfig.GetByteSize("send-buffer-size").Should().Be(256000);
+        tcpConfig.GetByteSize("receive-buffer-size").Should().Be(256000);
+        tcpConfig.GetByteSize("maximum-frame-size").Should().Be(128000);
         tcpConfig.GetBoolean("enable-ssl").Should().BeFalse();
+
+        transportFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(4.Seconds());
+        transportFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(120.Seconds());
+
+        watchFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.Seconds());
+        watchFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(10.Seconds());
+        watchFailureDetector.GetDouble("threshold").Should().Be(10.0);
+        watchFailureDetector.GetInt("max-sample-size").Should().Be(200);
+        watchFailureDetector.GetTimeSpan("min-std-deviation").Should().Be(100.Milliseconds());
+        watchFailureDetector.GetTimeSpan("unreachable-nodes-reaper-interval").Should().Be(1.Seconds());
+        watchFailureDetector.GetTimeSpan("expected-response-after").Should().Be(1.Seconds());
     }
     
     [Fact(DisplayName = "WithRemoting should override remote settings")]
@@ -120,7 +153,25 @@ public class RemoteConfigurationSpecs
                     HostName = "0.0.0.0", 
                     Port = 0, 
                     PublicHostName = "localhost",
-                    PublicPort = 12345
+                    PublicPort = 12345,
+                    SendBufferSize = 1024000,
+                    ReceiveBufferSize = 512000,
+                    MaxFrameSize = 256000,
+                    TransportFailureDetector = new DeadlineFailureDetectorOptions
+                    {
+                        HeartbeatInterval = 1.1.Seconds(),
+                        AcceptableHeartbeatPause = 1.2.Seconds(),
+                    },
+                    WatchFailureDetector = new PhiAccrualFailureDetectorOptions
+                    {
+                        HeartbeatInterval = 1.3.Seconds(),
+                        AcceptableHeartbeatPause = 1.4.Seconds(),
+                        Threshold = 1.5,
+                        MaxSampleSize = 1,
+                        MinStandardDeviation = 1.6.Seconds(),
+                        UnreachableNodesReaperInterval = 1.7.Seconds(),
+                        ExpectedResponseAfter = 1.8.Seconds()
+                    }
                 });
             });
         }).Build();
@@ -129,6 +180,8 @@ public class RemoteConfigurationSpecs
         await host.StartAsync();
         var actorSystem = (ExtendedActorSystem)host.Services.GetRequiredService<ActorSystem>();
         var config = actorSystem.Settings.Config;
+        var transportFailureDetector = config.GetConfig("akka.remote.transport-failure-detector");
+        var watchFailureDetector = config.GetConfig("akka.remote.watch-failure-detector");
         var adapters = config.GetStringList("akka.remote.enabled-transports");
         var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
         
@@ -140,6 +193,20 @@ public class RemoteConfigurationSpecs
         tcpConfig.GetInt("port").Should().Be(0);
         tcpConfig.GetString("public-hostname").Should().Be("localhost");
         tcpConfig.GetInt("public-port").Should().Be(12345);
+        tcpConfig.GetByteSize("send-buffer-size").Should().Be(1024000);
+        tcpConfig.GetByteSize("receive-buffer-size").Should().Be(512000);
+        tcpConfig.GetByteSize("maximum-frame-size").Should().Be(256000);
+        
+        transportFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.1.Seconds());
+        transportFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(1.2.Seconds());
+
+        watchFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.3.Seconds());
+        watchFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(1.4.Seconds());
+        watchFailureDetector.GetDouble("threshold").Should().Be(1.5);
+        watchFailureDetector.GetInt("max-sample-size").Should().Be(1);
+        watchFailureDetector.GetTimeSpan("min-std-deviation").Should().Be(1.6.Seconds());
+        watchFailureDetector.GetTimeSpan("unreachable-nodes-reaper-interval").Should().Be(1.7.Seconds());
+        watchFailureDetector.GetTimeSpan("expected-response-after").Should().Be(1.8.Seconds());
     }
     
     [Fact(DisplayName = "WithRemoting should override remote settings that are overriden")]
@@ -183,6 +250,9 @@ public class RemoteConfigurationSpecs
             Port = 123,
             PublicPort = 456,
             EnableSsl = true,
+            SendBufferSize = 256,
+            ReceiveBufferSize = 512,
+            MaxFrameSize = 128,
             Ssl = new SslOptions
             {
                 SuppressValidation = true,
@@ -195,11 +265,28 @@ public class RemoteConfigurationSpecs
                     StoreName = "f",
                     StoreLocation = "g",
                 }
+            },
+            TransportFailureDetector = new DeadlineFailureDetectorOptions
+            {
+                HeartbeatInterval = 1.1.Seconds(),
+                AcceptableHeartbeatPause = 1.2.Seconds(),
+            },
+            WatchFailureDetector = new PhiAccrualFailureDetectorOptions
+            {
+                HeartbeatInterval = 1.3.Seconds(),
+                AcceptableHeartbeatPause = 1.4.Seconds(),
+                Threshold = 1.5,
+                MaxSampleSize = 1,
+                MinStandardDeviation = 1.6.Seconds(),
+                UnreachableNodesReaperInterval = 1.7.Seconds(),
+                ExpectedResponseAfter = 1.8.Seconds()
             }
         });
         
         // act
         var config = builder.Configuration.Value;
+        var transportFailureDetector = config.GetConfig("akka.remote.transport-failure-detector");
+        var watchFailureDetector = config.GetConfig("akka.remote.watch-failure-detector");
         var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
         
         // assert
@@ -207,6 +294,9 @@ public class RemoteConfigurationSpecs
         tcpConfig.GetInt("port").Should().Be(123);
         tcpConfig.GetString("public-hostname").Should().Be("b");
         tcpConfig.GetInt("public-port").Should().Be(456);
+        tcpConfig.GetByteSize("send-buffer-size").Should().Be(256);
+        tcpConfig.GetByteSize("receive-buffer-size").Should().Be(512);
+        tcpConfig.GetByteSize("maximum-frame-size").Should().Be(128);
         
         var sslConfig = tcpConfig.GetConfig("ssl");
         sslConfig.GetBoolean("suppress-validation").Should().BeTrue();
@@ -218,6 +308,17 @@ public class RemoteConfigurationSpecs
         certConfig.GetString("thumbprint").Should().Be("e");
         certConfig.GetString("store-name").Should().Be("f");
         certConfig.GetString("store-location").Should().Be("g");
+        
+        transportFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.1.Seconds());
+        transportFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(1.2.Seconds());
+
+        watchFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.3.Seconds());
+        watchFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(1.4.Seconds());
+        watchFailureDetector.GetDouble("threshold").Should().Be(1.5);
+        watchFailureDetector.GetInt("max-sample-size").Should().Be(1);
+        watchFailureDetector.GetTimeSpan("min-std-deviation").Should().Be(1.6.Seconds());
+        watchFailureDetector.GetTimeSpan("unreachable-nodes-reaper-interval").Should().Be(1.7.Seconds());
+        watchFailureDetector.GetTimeSpan("expected-response-after").Should().Be(1.8.Seconds());
     }
     
     [Fact(DisplayName = "RemoteOptions using configurator should override remote settings that are overriden")]
@@ -232,6 +333,9 @@ public class RemoteConfigurationSpecs
             opt.Port = 123;
             opt.PublicPort = 456;
             opt.EnableSsl = true;
+            opt.SendBufferSize = 256;
+            opt.ReceiveBufferSize = 512;
+            opt.MaxFrameSize = 128;
             opt.Ssl.SuppressValidation = true;
             opt.Ssl.CertificateOptions.Path = "c";
             opt.Ssl.CertificateOptions.Password = "d";
@@ -239,10 +343,27 @@ public class RemoteConfigurationSpecs
             opt.Ssl.CertificateOptions.Thumbprint = "e";
             opt.Ssl.CertificateOptions.StoreName = "f";
             opt.Ssl.CertificateOptions.StoreLocation = "g";
+            opt.TransportFailureDetector = new DeadlineFailureDetectorOptions
+            {
+                HeartbeatInterval = 1.1.Seconds(),
+                AcceptableHeartbeatPause = 1.2.Seconds(),
+            };
+            opt.WatchFailureDetector = new PhiAccrualFailureDetectorOptions
+            {
+                HeartbeatInterval = 1.3.Seconds(),
+                AcceptableHeartbeatPause = 1.4.Seconds(),
+                Threshold = 1.5,
+                MaxSampleSize = 1,
+                MinStandardDeviation = 1.6.Seconds(),
+                UnreachableNodesReaperInterval = 1.7.Seconds(),
+                ExpectedResponseAfter = 1.8.Seconds()
+            };
         });
         
         // act
         var config = builder.Configuration.Value;
+        var transportFailureDetector = config.GetConfig("akka.remote.transport-failure-detector");
+        var watchFailureDetector = config.GetConfig("akka.remote.watch-failure-detector");
         var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
         
         // assert
@@ -250,6 +371,9 @@ public class RemoteConfigurationSpecs
         tcpConfig.GetInt("port").Should().Be(123);
         tcpConfig.GetString("public-hostname").Should().Be("b");
         tcpConfig.GetInt("public-port").Should().Be(456);
+        tcpConfig.GetByteSize("send-buffer-size").Should().Be(256);
+        tcpConfig.GetByteSize("receive-buffer-size").Should().Be(512);
+        tcpConfig.GetByteSize("maximum-frame-size").Should().Be(128);
         
         var sslConfig = tcpConfig.GetConfig("ssl");
         sslConfig.GetBoolean("suppress-validation").Should().BeTrue();
@@ -261,6 +385,17 @@ public class RemoteConfigurationSpecs
         certConfig.GetString("thumbprint").Should().Be("e");
         certConfig.GetString("store-name").Should().Be("f");
         certConfig.GetString("store-location").Should().Be("g");
+        
+        transportFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.1.Seconds());
+        transportFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(1.2.Seconds());
+
+        watchFailureDetector.GetTimeSpan("heartbeat-interval").Should().Be(1.3.Seconds());
+        watchFailureDetector.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(1.4.Seconds());
+        watchFailureDetector.GetDouble("threshold").Should().Be(1.5);
+        watchFailureDetector.GetInt("max-sample-size").Should().Be(1);
+        watchFailureDetector.GetTimeSpan("min-std-deviation").Should().Be(1.6.Seconds());
+        watchFailureDetector.GetTimeSpan("unreachable-nodes-reaper-interval").Should().Be(1.7.Seconds());
+        watchFailureDetector.GetTimeSpan("expected-response-after").Should().Be(1.8.Seconds());
     }
     
     [Fact(DisplayName = "RemoteOptions with explicit certificate and ssl enabled should use provided certificate")]

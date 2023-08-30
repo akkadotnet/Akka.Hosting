@@ -6,15 +6,39 @@
         public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Remote.Hosting.RemoteOptions> configure) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithRemoting(this Akka.Hosting.AkkaConfigurationBuilder builder, string? hostname = null, int? port = default, string? publicHostname = null, int? publicPort = default) { }
     }
+    public class DeadlineFailureDetectorOptions
+    {
+        public DeadlineFailureDetectorOptions() { }
+        public System.TimeSpan? AcceptableHeartbeatPause { get; set; }
+        public System.TimeSpan? HeartbeatInterval { get; set; }
+        public System.Text.StringBuilder ToHocon() { }
+    }
+    public class PhiAccrualFailureDetectorOptions
+    {
+        public PhiAccrualFailureDetectorOptions() { }
+        public System.TimeSpan? AcceptableHeartbeatPause { get; set; }
+        public System.TimeSpan? ExpectedResponseAfter { get; set; }
+        public System.TimeSpan? HeartbeatInterval { get; set; }
+        public int? MaxSampleSize { get; set; }
+        public System.TimeSpan? MinStandardDeviation { get; set; }
+        public double? Threshold { get; set; }
+        public System.TimeSpan? UnreachableNodesReaperInterval { get; set; }
+        public System.Text.StringBuilder ToHocon() { }
+    }
     public class RemoteOptions
     {
         public RemoteOptions() { }
         public bool? EnableSsl { get; set; }
         public string? HostName { get; set; }
+        public long? MaxFrameSize { get; set; }
         public int? Port { get; set; }
         public string? PublicHostName { get; set; }
         public int? PublicPort { get; set; }
+        public long? ReceiveBufferSize { get; set; }
+        public long? SendBufferSize { get; set; }
         public Akka.Remote.Hosting.SslOptions Ssl { get; set; }
+        public Akka.Remote.Hosting.DeadlineFailureDetectorOptions? TransportFailureDetector { get; set; }
+        public Akka.Remote.Hosting.PhiAccrualFailureDetectorOptions? WatchFailureDetector { get; set; }
     }
     public sealed class SslCertificateOptions
     {

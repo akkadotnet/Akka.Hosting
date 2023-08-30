@@ -18,36 +18,84 @@ namespace Akka.Remote.Hosting
     public class RemoteOptions
     {
         /// <summary>
-        /// The hostname or ip to bind akka remoting to, <see cref="IPAddress.Any"/> is used if empty
+        ///     The hostname or ip to bind akka remoting to, <see cref="IPAddress.Any"/> is used if empty
         /// </summary>
         public string? HostName { get; set; }
         
         /// <summary>
-        /// The default remote server port clients should connect to.
-        /// Default is 2552, use 0 if you want a random available port.
-        /// This port needs to be unique for each actor system on the same machine.
+        ///     The default remote server port clients should connect to.
+        ///     Default is 2552, use 0 if you want a random available port.
+        ///     This port needs to be unique for each actor system on the same machine.
         /// </summary>
         public int? Port { get; set; }
         
         /// <summary>
-        /// If this value is set, this becomes the public address for the actor system on this
-        /// transport, which might be different than the physical ip address (hostname).
-        /// This is designed to make it easy to support private / public addressing schemes
+        ///     If this value is set, this becomes the public address for the actor system on this
+        ///     transport, which might be different than the physical ip address (hostname).
+        ///     This is designed to make it easy to support private / public addressing schemes
         /// </summary>
         public string? PublicHostName { get; set; }
         
         /// <summary>
-        /// Similar to <see cref="PublicHostName"/>, this allows Akka.Remote users
-        /// to alias the port they're listening on. The socket will actually listen on the
-        /// <see cref="Port"/> property, but when connecting to other ActorSystems this node will advertise
-        /// itself as being connected to the "public-port". This is helpful when working with 
-        /// hosting environments that rely on address translation and port-forwarding, such as Docker.
+        ///     Similar to <see cref="PublicHostName"/>, this allows Akka.Remote users
+        ///     to alias the port they're listening on. The socket will actually listen on the
+        ///     <see cref="Port"/> property, but when connecting to other ActorSystems this node will advertise
+        ///     itself as being connected to the "public-port". This is helpful when working with 
+        ///     hosting environments that rely on address translation and port-forwarding, such as Docker.
         /// </summary>
         public int? PublicPort { get; set; }
 
+        /// <summary>
+        ///     <para>
+        ///         Sets the send buffer size of the Sockets, set to 0 for platform default.
+        ///     </para>
+        ///     <b>Default:</b> 256000
+        /// </summary>
+        public long? SendBufferSize { get; set; }
+        
+        /// <summary>
+        ///     <para>
+        ///         Sets the send buffer size of the Sockets, set to 0 for platform default.
+        ///     </para>
+        ///     <b>Default:</b> 256000
+        /// </summary>
+        public long? ReceiveBufferSize { get; set; }
+        
+        /// <summary>
+        ///     <para>
+        ///         Maximum message size the transport will accept, but at least 32000 bytes.
+        ///         Please note that UDP does not support arbitrary large datagrams,
+        ///         so this setting has to be chosen carefully when using UDP.
+        ///         Both <see cref="SendBufferSize"/> and <see cref="ReceiveBufferSize"/> settings has to
+        ///         be adjusted to be able to buffer messages of maximum size.
+        ///     </para>
+        ///     <b>Default:</b> 128000
+        /// </summary>
+        public long? MaxFrameSize { get; set; }
+        
+        /// <summary>
+        ///     Flag to enable TLS/SSL support. If set to true, <see cref="Ssl"/> property need to be set.
+        /// </summary>
         public bool? EnableSsl { get; set; }
     
+        /// <summary>
+        ///     The TLS/SSL option for the remote transport.
+        /// </summary>
         public SslOptions Ssl { get; set; } = new ();
+        
+        /// <summary>
+        ///     <para>
+        ///         Failure detection algorithm used to detect remote transport failure condition.
+        ///     </para>
+        /// </summary>
+        public DeadlineFailureDetectorOptions? TransportFailureDetector { get; set; }
+        
+        /// <summary>
+        ///     <para>
+        ///         Failure detection algorithm used to detect remote death watch.
+        ///     </para>
+        /// </summary>
+        public PhiAccrualFailureDetectorOptions? WatchFailureDetector { get; set; }
         
         internal void Build(AkkaConfigurationBuilder builder)
         {
@@ -67,36 +115,77 @@ namespace Akka.Remote.Hosting
         private void Build(StringBuilder builder)
         {
             var sb = new StringBuilder();
+            
+            if (TransportFailureDetector is not null)
+            {
+                var tsb = TransportFailureDetector.ToHocon();
+                if (tsb.Length > 0)
+                {
+                    sb.AppendLine("transport-failure-detector {\n");
+                    sb.Append(tsb);
+                    sb.AppendLine("}");
+                }
+            }
+            
+            if (WatchFailureDetector is not null)
+            {
+                var wsb = WatchFailureDetector.ToHocon();
+                if (wsb.Length > 0)
+                {
+                    sb.AppendLine("watch-failure-detector {\n");
+                    sb.Append(wsb);
+                    sb.AppendLine("}");
+                }
+            }
+            
+            var tcpSb = new StringBuilder();
         
             if (!string.IsNullOrWhiteSpace(HostName))
-                sb.AppendLine($"hostname = {HostName.ToHocon()}");
+                tcpSb.AppendLine($"hostname = {HostName.ToHocon()}");
         
             if (Port is not null)
-                sb.AppendLine($"port = {Port}");
+                tcpSb.AppendLine($"port = {Port}");
         
             if (!string.IsNullOrWhiteSpace(PublicHostName))
-                sb.AppendLine($"public-hostname = {PublicHostName.ToHocon()}");
+                tcpSb.AppendLine($"public-hostname = {PublicHostName.ToHocon()}");
         
             if (PublicPort is not null)
-                sb.AppendLine($"public-port = {PublicPort}");
+                tcpSb.AppendLine($"public-port = {PublicPort}");
+
+            if (SendBufferSize is not null)
+                tcpSb.AppendLine($"send-buffer-size = {SendBufferSize.ToHocon()}");
+
+            if (ReceiveBufferSize is not null)
+                tcpSb.AppendLine($"receive-buffer-size = {ReceiveBufferSize.ToHocon()}");
+
+            if (MaxFrameSize is not null)
+                tcpSb.AppendLine($"maximum-frame-size = {MaxFrameSize.ToHocon()}");
         
             if (EnableSsl is not null)
             {
-                sb.AppendLine($"enable-ssl = {EnableSsl.ToHocon()}");
+                tcpSb.AppendLine($"enable-ssl = {EnableSsl.ToHocon()}");
                 if (EnableSsl.Value)
                 {
                     if(Ssl is null)
                         throw new ConfigurationException("Ssl property need to be populated when EnableSsl is set to true.");
                 
-                    Ssl.Build(sb);
+                    Ssl.Build(tcpSb);
                 }
             }
-        
+
+            if(tcpSb.Length > 0)
+            {
+                tcpSb.Insert(0, "dot-netty.tcp {\n");
+                tcpSb.Append("}");
+                sb.Append(tcpSb);
+            }
+            
             if(sb.Length == 0)
                 return;
-        
-            sb.Insert(0, "akka.remote.dot-netty.tcp {\n");
+            
+            sb.Insert(0, "akka.remote {\n");
             sb.Append("}");
+            
             builder.Append(sb);
         }
         
