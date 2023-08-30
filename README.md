@@ -410,7 +410,7 @@ var host = new HostBuilder()
     });
 ```
 
-### Advanced Usage
+### Special Characters And Case Sensitivity
 
 This advanced usage of the `IConfiguration` adapter is solely used for edge cases where HOCON key capitalization needs to be preserved, such as declaring serialization binding. Note that when you're using this feature, none of the keys are normalized, you will have to write all of your keys in a HOCON compatible way.
 
