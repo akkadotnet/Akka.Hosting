@@ -1,6 +1,5 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="ConfigurationHoconAdapterTest.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -8,7 +7,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Akka.Configuration;
 using Akka.Hosting.Configuration;
 using FluentAssertions;
@@ -19,10 +20,13 @@ using static FluentAssertions.FluentActions;
 
 namespace Akka.Hosting.Tests.Configuration;
 
-public class ConfigurationHoconAdapterTest
+public class ConfigurationHoconAdapterTest: IAsyncLifetime
 {
     private const string ConfigSource = @"{
   ""akka"": {
+    ""actor.serialization-bindings"" : {
+        ""\""System.Int32\"""": ""json""
+    },
     ""cluster"": {
       ""roles"": [ ""front-end"", ""back-end"" ],
       ""role"" : {
@@ -44,43 +48,166 @@ public class ConfigurationHoconAdapterTest
   ""test4"": 4
 }";
 
-    private readonly Config _config;
+    private readonly IConfigurationRoot _root;
 
     public ConfigurationHoconAdapterTest()
     {
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__A", "A VALUE");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__B", "B VALUE");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__C__D", "D");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__0", "ZERO");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__22", "TWO");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__1", "ONE");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__A", "A VALUE");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__B", "B VALUE");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__C__D", "D");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__0", "ZERO");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__22", "TWO");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__1", "ONE");
+        
+        Environment.SetEnvironmentVariable("akka__test_value_3__a", "a value");
+        Environment.SetEnvironmentVariable("akka__test_value_3__b", "b value");
+        Environment.SetEnvironmentVariable("akka__test_value_3__c__d", "d");
+        Environment.SetEnvironmentVariable("akka__test_value_4__0", "zero");
+        Environment.SetEnvironmentVariable("akka__test_value_4__22", "two");
+        Environment.SetEnvironmentVariable("akka__test_value_4__1", "one");
+        Environment.SetEnvironmentVariable("akka__actor__serialization_bindings2__\"System.Object\"", "hyperion");
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ConfigSource));
-        var configuration = new ConfigurationBuilder()
+        _root = new ConfigurationBuilder()
             .AddJsonStream(stream)
             .AddEnvironmentVariables()
             .Build();
-        _config = configuration.ToHocon();
     }
 
+    public Task InitializeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task DisposeAsync()
+    {
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__A", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__B", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__C__D", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__0", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__22", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__1", null);
+        
+        Environment.SetEnvironmentVariable("akka__test_value_3__a", null);
+        Environment.SetEnvironmentVariable("akka__test_value_3__b", null);
+        Environment.SetEnvironmentVariable("akka__test_value_3__c__d", null);
+        Environment.SetEnvironmentVariable("akka__test_value_4__0", null);
+        Environment.SetEnvironmentVariable("akka__test_value_4__22", null);
+        Environment.SetEnvironmentVariable("akka__test_value_4__1", null);
+        Environment.SetEnvironmentVariable("akka__actor__serialization_bindings2__\"System.Object\"", null);
+        
+        return Task.CompletedTask;
+    }
+    
     #region Adapter unit tests
 
-    [Fact(DisplayName = "Adaptor should read environment variable sourced configuration correctly")]
+    [Fact(DisplayName = "Normalized adaptor should read environment variable sourced configuration correctly")]
     public void EnvironmentVariableTest()
     {
-        _config.GetString("akka.test-value-1.a").Should().Be("A VALUE");
-        _config.GetString("akka.test-value-1.b").Should().Be("B VALUE");
-        _config.GetString("akka.test-value-1.c.d").Should().Be("D");
-        var array = _config.GetStringList("akka.test-value-2");
+        var config = _root.ToHocon();
+        // should be normalized
+        config.GetString("akka.test-value-1.a").Should().Be("A VALUE");
+        config.GetString("akka.TEST-VALUE-1.A").Should().BeNull();
+        
+        // should be normalized
+        config.GetString("akka.test-value-1.b").Should().Be("B VALUE");
+        config.GetString("akka.TEST-VALUE-1.B").Should().BeNull();
+        
+        // should be normalized
+        config.GetString("akka.test-value-1.c.d").Should().Be("D");
+        config.GetString("akka.TEST-VALUE-1.C.D").Should().BeNull();
+
+        // should be normalized
+        var array = config.GetStringList("akka.test-value-2");
         array[0].Should().Be("ZERO");
         array[1].Should().Be("ONE");
         array[2].Should().Be("TWO");
+        config.GetStringList("AKKA.TEST-VALUE-2").Should().BeEmpty();
+
+        // proper cased environment vars should read just fine
+        config.GetString("akka.test-value-3.a").Should().Be("a value");
+        config.GetString("akka.test-value-3.b").Should().Be("b value");
+        config.GetString("akka.test-value-3.c.d").Should().Be("d");
+        array = config.GetStringList("akka.test-value-4");
+        array[0].Should().Be("zero");
+        array[1].Should().Be("one");
+        array[2].Should().Be("two");
+
+        // edge case should also be normalized and not usable
+        var bindings = config.GetConfig("akka.actor.serialization-bindings2").AsEnumerable()
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        bindings.ContainsKey("System.Object").Should().BeFalse();
+        bindings.ContainsKey("system.object").Should().BeTrue();
+        bindings["system.object"].GetString().Should().Be("hyperion");
+    }
+
+    [Fact(DisplayName = "Non-normalized adaptor should read environment variable sourced configuration correctly")]
+    public void EnvironmentVariableCaseSensitiveTest()
+    {
+        var config = _root.ToHocon(false);
+        
+        // should not be normalized
+        config.GetString("akka.TEST-VALUE-1.A").Should().Be("A VALUE");
+        config.GetString("akka.test-value-1.a").Should().BeNull();
+        
+        // should not be normalized
+        config.GetString("akka.TEST-VALUE-1.B").Should().Be("B VALUE");
+        config.GetString("akka.test-value-1.b").Should().BeNull();
+        
+        // should not be normalized
+        config.GetString("akka.TEST-VALUE-1.C.D").Should().Be("D");
+        config.GetString("akka.test-value-1.c.d").Should().BeNull();
+
+        // should not be normalized
+        config.GetStringList("akka.test-value-2").Should().BeEmpty();
+        var array = config.GetStringList("akka.TEST-VALUE-2");
+        array[0].Should().Be("ZERO");
+        array[1].Should().Be("ONE");
+        array[2].Should().Be("TWO");
+
+        // proper cased environment vars should read just fine
+        config.GetString("akka.test-value-3.a").Should().Be("a value");
+        config.GetString("akka.test-value-3.b").Should().Be("b value");
+        config.GetString("akka.test-value-3.c.d").Should().Be("d");
+        array = config.GetStringList("akka.test-value-4");
+        array[0].Should().Be("zero");
+        array[1].Should().Be("one");
+        array[2].Should().Be("two");
+
+        // edge case should not be normalized and usable
+        var bindings = config.GetConfig("akka.actor.serialization-bindings2").AsEnumerable()
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        bindings.ContainsKey("System.Object").Should().BeTrue();
+        bindings["System.Object"].GetString().Should().Be("hyperion");
+    }
+
+    [Fact(DisplayName = "Non-normalized Adaptor should read quote enclosed key inside JSON settings correctly")]
+    public void NonNormalizedJsonQuotedKeyTest()
+    {
+        var config = _root.ToHocon(false);
+        var bindings = config.GetConfig("akka.actor.serialization-bindings").AsEnumerable()
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        bindings.ContainsKey("System.Int32").Should().BeTrue();
+        bindings["System.Int32"].GetString().Should().Be("json");
+    }
+    
+    [Fact(DisplayName = "Normalized Adaptor should read quote enclosed key inside JSON settings incorrectly")]
+    public void NormalizedJsonQuotedKeyTest()
+    {
+        var config = _root.ToHocon();
+        var bindings = config.GetConfig("akka.actor.serialization-bindings").AsEnumerable()
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        
+        bindings.ContainsKey("System.Int32").Should().BeFalse();
+        bindings.ContainsKey("system.int32").Should().BeTrue();
+        bindings["system.int32"].GetString().Should().Be("json");
     }
     
     [Fact(DisplayName = "Adaptor should expand keys")]
     public void EncodedKeyTest()
     {
-        var test2 = _config.GetConfig("test2");
+        var config = _root.ToHocon();
+        var test2 = config.GetConfig("test2");
         test2.Should().NotBeNull();
         test2.GetBoolean("a").Should().BeTrue();
         test2.GetTimeSpan("b.c").Should().Be(2.Seconds());
@@ -91,18 +218,19 @@ public class ConfigurationHoconAdapterTest
     [Fact(DisplayName = "Adaptor should convert correctly")]
     public void ArrayTest()
     {
-        _config.GetString("test1").Should().Be("test1 content");
-        _config.GetInt("test3").Should().Be(3);
-        _config.GetInt("test4").Should().Be(4);
+        var config = _root.ToHocon();
+        config.GetString("test1").Should().Be("test1 content");
+        config.GetInt("test3").Should().Be(3);
+        config.GetInt("test4").Should().Be(4);
         
-        _config.GetStringList("akka.cluster.roles").Should().BeEquivalentTo("front-end", "back-end");
-        _config.GetInt("akka.cluster.role.back-end").Should().Be(5);
-        _config.GetString("akka.cluster.app-version").Should().Be("1.0.0");
-        _config.GetInt("akka.cluster.min-nr-of-members").Should().Be(99);
-        _config.GetStringList("akka.cluster.seed-nodes").Should()
+        config.GetStringList("akka.cluster.roles").Should().BeEquivalentTo("front-end", "back-end");
+        config.GetInt("akka.cluster.role.back-end").Should().Be(5);
+        config.GetString("akka.cluster.app-version").Should().Be("1.0.0");
+        config.GetInt("akka.cluster.min-nr-of-members").Should().Be(99);
+        config.GetStringList("akka.cluster.seed-nodes").Should()
             .BeEquivalentTo("akka.tcp://system@somewhere.com:9999");
-        _config.GetBoolean("akka.cluster.log-info").Should().BeFalse();
-        _config.GetBoolean("akka.cluster.log-info-verbose").Should().BeTrue();
+        config.GetBoolean("akka.cluster.log-info").Should().BeFalse();
+        config.GetBoolean("akka.cluster.log-info-verbose").Should().BeTrue();
     }
 
     #endregion

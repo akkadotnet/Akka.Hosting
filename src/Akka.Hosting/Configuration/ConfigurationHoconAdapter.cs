@@ -15,20 +15,20 @@ namespace Akka.Hosting.Configuration
 {
     public static class ConfigurationHoconAdapter
     {
-        public static Config ToHocon(this IConfiguration config)
+        public static Config ToHocon(this IConfiguration config, bool normalizeKeys = true)
         {
             var rootObject = new HoconObject();
             if (config is IConfigurationSection section)
             {
-                var value = section.ExpandKey(rootObject);
-                value.AppendValue(section.ToHoconElement());
+                var value = section.ExpandKey(rootObject, normalizeKeys);
+                value.AppendValue(section.ToHoconElement(normalizeKeys));
             }
             else
             {
                 foreach (var child in config.GetChildren())
                 {
-                    var value = child.ExpandKey(rootObject);
-                    value.AppendValue(child.ToHoconElement());
+                    var value = child.ExpandKey(rootObject, normalizeKeys);
+                    value.AppendValue(child.ToHoconElement(normalizeKeys));
                 }
             }
             
@@ -37,11 +37,11 @@ namespace Akka.Hosting.Configuration
             return new Config(new HoconRoot(rootValue));
         }
 
-        private static HoconValue ExpandKey(this IConfigurationSection config, HoconObject parent)
+        private static HoconValue ExpandKey(this IConfigurationSection config, HoconObject parent, bool normalizeKeys)
         {
             // Sanitize configuration brought in from environment variables, 
             // "__" are already converted to ":" by the environment configuration provider.
-            var sanitized = config.Key.ToLowerInvariant().Replace("_", "-");
+            var sanitized = (normalizeKeys ? config.Key.ToLowerInvariant() : config.Key).Replace("_", "-");
             var keys = sanitized.SplitDottedPathHonouringQuotes().ToList();
 
             // No need to expand the chain
@@ -69,7 +69,7 @@ namespace Akka.Hosting.Configuration
             return currentObj.GetOrCreateKey(keys[0]);
         }
         
-        private static IHoconElement ToHoconElement(this IConfigurationSection config)
+        private static IHoconElement ToHoconElement(this IConfigurationSection config, bool normalizeKeys)
         {
             if (config.IsArray())
             {
@@ -77,7 +77,7 @@ namespace Akka.Hosting.Configuration
                 foreach (var child in config.GetChildren().OrderBy(c => int.Parse(c.Key)))
                 {
                     var value = new HoconValue();
-                    var element = child.ToHoconElement();
+                    var element = child.ToHoconElement(normalizeKeys);
                     value.AppendValue(element);
                     array.Add(value);
                 }
@@ -89,8 +89,8 @@ namespace Akka.Hosting.Configuration
                 var rootObject = new HoconObject();
                 foreach (var child in config.GetChildren())
                 {
-                    var value = child.ExpandKey(rootObject);
-                    value.AppendValue(child.ToHoconElement());
+                    var value = child.ExpandKey(rootObject, normalizeKeys);
+                    value.AppendValue(child.ToHoconElement(normalizeKeys));
                 }
                 return rootObject;
             }

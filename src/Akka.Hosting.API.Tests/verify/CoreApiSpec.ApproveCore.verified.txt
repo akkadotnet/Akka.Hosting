@@ -66,7 +66,7 @@ namespace Akka.Hosting
         public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddAkka<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string actorSystemName, System.Action<Akka.Hosting.AkkaConfigurationBuilder, System.IServiceProvider> builder)
             where T : Akka.Hosting.AkkaHostedService { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddHocon(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Configuration.Config hocon, Akka.Hosting.HoconAddMode addMode) { }
-        public static Akka.Hosting.AkkaConfigurationBuilder AddHocon(this Akka.Hosting.AkkaConfigurationBuilder builder, Microsoft.Extensions.Configuration.IConfiguration configuration, Akka.Hosting.HoconAddMode addMode) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder AddHocon(this Akka.Hosting.AkkaConfigurationBuilder builder, Microsoft.Extensions.Configuration.IConfiguration configuration, Akka.Hosting.HoconAddMode addMode, bool normalizeKeys = true) { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddHoconFile(this Akka.Hosting.AkkaConfigurationBuilder builder, string hoconFilePath, Akka.Hosting.HoconAddMode addMode) { }
         public static Akka.Hosting.AkkaConfigurationBuilder AddSetup(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup setup) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActorAskTimeout(this Akka.Hosting.AkkaConfigurationBuilder builder, System.TimeSpan timeout) { }
@@ -187,7 +187,7 @@ namespace Akka.Hosting.Configuration
 {
     public static class ConfigurationHoconAdapter
     {
-        public static Akka.Configuration.Config ToHocon(this Microsoft.Extensions.Configuration.IConfiguration config) { }
+        public static Akka.Configuration.Config ToHocon(this Microsoft.Extensions.Configuration.IConfiguration config, bool normalizeKeys = true) { }
     }
 }
 namespace Akka.Hosting.Coordination

@@ -153,13 +153,15 @@ namespace Akka.Hosting
         /// <param name="builder">The builder instance being configured.</param>
         /// <param name="configuration">The <see cref="IConfiguration"/> instance to be converted to HOCON <see cref="Config"/>.</param>
         /// <param name="addMode">The <see cref="HoconAddMode"/> - defaults to appending this HOCON as a fallback.</param>
+        /// <param name="normalizeKeys"></param>
         /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
         public static AkkaConfigurationBuilder AddHocon(
             this AkkaConfigurationBuilder builder, 
             IConfiguration configuration,
-            HoconAddMode addMode)
+            HoconAddMode addMode,
+            bool normalizeKeys = true)
         {
-            return builder.AddHoconConfiguration(configuration.ToHocon(), addMode);
+            return builder.AddHoconConfiguration(configuration.ToHocon(normalizeKeys), addMode);
         }
         
         /// <summary>
