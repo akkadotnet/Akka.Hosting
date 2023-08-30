@@ -1,6 +1,5 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="ConfigurationHoconAdapterTest.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -10,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Akka.Configuration;
 using Akka.Hosting.Configuration;
 using FluentAssertions;
@@ -20,7 +20,7 @@ using static FluentAssertions.FluentActions;
 
 namespace Akka.Hosting.Tests.Configuration;
 
-public class ConfigurationHoconAdapterTest
+public class ConfigurationHoconAdapterTest: IAsyncLifetime
 {
     private const string ConfigSource = @"{
   ""akka"": {
@@ -52,12 +52,12 @@ public class ConfigurationHoconAdapterTest
 
     public ConfigurationHoconAdapterTest()
     {
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__A", "A VALUE");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__B", "B VALUE");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_1__C__D", "D");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__0", "ZERO");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__22", "TWO");
-        Environment.SetEnvironmentVariable("AKKA__TEST_VALUE_2__1", "ONE");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__A", "A VALUE");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__B", "B VALUE");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__C__D", "D");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__0", "ZERO");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__22", "TWO");
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__1", "ONE");
         
         Environment.SetEnvironmentVariable("akka__test_value_3__a", "a value");
         Environment.SetEnvironmentVariable("akka__test_value_3__b", "b value");
@@ -74,6 +74,31 @@ public class ConfigurationHoconAdapterTest
             .Build();
     }
 
+    public Task InitializeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task DisposeAsync()
+    {
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__A", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__B", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__C__D", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__0", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__22", null);
+        Environment.SetEnvironmentVariable("akka__TEST_VALUE_2__1", null);
+        
+        Environment.SetEnvironmentVariable("akka__test_value_3__a", null);
+        Environment.SetEnvironmentVariable("akka__test_value_3__b", null);
+        Environment.SetEnvironmentVariable("akka__test_value_3__c__d", null);
+        Environment.SetEnvironmentVariable("akka__test_value_4__0", null);
+        Environment.SetEnvironmentVariable("akka__test_value_4__22", null);
+        Environment.SetEnvironmentVariable("akka__test_value_4__1", null);
+        Environment.SetEnvironmentVariable("akka__actor__serialization_bindings2__\"System.Object\"", null);
+        
+        return Task.CompletedTask;
+    }
+    
     #region Adapter unit tests
 
     [Fact(DisplayName = "Normalized adaptor should read environment variable sourced configuration correctly")]
@@ -82,15 +107,15 @@ public class ConfigurationHoconAdapterTest
         var config = _root.ToHocon();
         // should be normalized
         config.GetString("akka.test-value-1.a").Should().Be("A VALUE");
-        config.GetString("AKKA.TEST-VALUE-1.A").Should().BeNull();
+        config.GetString("akka.TEST-VALUE-1.A").Should().BeNull();
         
         // should be normalized
         config.GetString("akka.test-value-1.b").Should().Be("B VALUE");
-        config.GetString("AKKA.TEST-VALUE-1.B").Should().BeNull();
+        config.GetString("akka.TEST-VALUE-1.B").Should().BeNull();
         
         // should be normalized
         config.GetString("akka.test-value-1.c.d").Should().Be("D");
-        config.GetString("AKKA.TEST-VALUE-1.C.D").Should().BeNull();
+        config.GetString("akka.TEST-VALUE-1.C.D").Should().BeNull();
 
         // should be normalized
         var array = config.GetStringList("akka.test-value-2");
