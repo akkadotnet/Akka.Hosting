@@ -13,7 +13,9 @@ using Akka.Cluster.Hosting.SBR;
 using Akka.Cluster.SBR;
 using Akka.Configuration;
 using Akka.Hosting;
+using Akka.Remote.Hosting;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,6 +44,8 @@ public class ClusterOptionsSpec
         settings.LogInfo.Should().BeTrue();
         settings.LogInfoVerbose.Should().BeFalse();
         settings.DowningProviderType.Should().Be(typeof(SplitBrainResolverProvider));
+        settings.HeartbeatInterval.Should().Be(1.Seconds());
+        settings.HeartbeatExpectedResponseAfter.Should().Be(1.Seconds());
     }
     
     [Fact(DisplayName = "ClusterOptions should generate proper HOCON values")]
@@ -64,6 +68,16 @@ public class ClusterOptionsSpec
                 SplitBrainResolver = new KeepMajorityOption
                 {
                     Role = "back-end"
+                },
+                FailureDetector = new PhiAccrualFailureDetectorOptions
+                {
+                    HeartbeatInterval = 1.1.Seconds(),
+                    AcceptableHeartbeatPause = 1.1.Seconds(),
+                    Threshold = 1.1,
+                    MaxSampleSize = 1,
+                    MinStandardDeviation = 1.1.Seconds(),
+                    UnreachableNodesReaperInterval = 1.1.Seconds(),
+                    ExpectedResponseAfter = 1.1.Seconds()
                 }
             });
         
@@ -86,6 +100,15 @@ public class ClusterOptionsSpec
         var sbrConfig = builder.Configuration.Value.GetConfig("akka.cluster.split-brain-resolver");
         sbrConfig.GetString("active-strategy").Should().Be(SplitBrainResolverSettings.KeepMajorityName);
         sbrConfig.GetString($"{SplitBrainResolverSettings.KeepMajorityName}.role").Should().Be("back-end");
+
+        var detectorConfig = builder.Configuration.Value.GetConfig("akka.cluster.failure-detector");
+        detectorConfig.GetTimeSpan("heartbeat-interval").Should().Be(1.1.Seconds());
+        detectorConfig.GetTimeSpan("acceptable-heartbeat-pause").Should().Be(1.1.Seconds());
+        detectorConfig.GetDouble("threshold").Should().Be(1.1);
+        detectorConfig.GetInt("max-sample-size").Should().Be(1);
+        detectorConfig.GetTimeSpan("min-std-deviation").Should().Be(1.1.Seconds());
+        detectorConfig.GetTimeSpan("unreachable-nodes-reaper-interval").Should().Be(1.1.Seconds());
+        detectorConfig.GetTimeSpan("expected-response-after").Should().Be(1.1.Seconds());
     }
 
     [Fact(DisplayName = "ClusterOptions should be bindable using Microsoft.Extensions.Configuration")]

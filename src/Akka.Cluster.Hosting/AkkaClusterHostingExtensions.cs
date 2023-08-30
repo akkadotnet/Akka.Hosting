@@ -16,6 +16,8 @@ using Akka.DependencyInjection;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
+using Akka.Remote;
+using Akka.Remote.Hosting;
 using Akka.Util;
 
 #nullable enable
@@ -114,6 +116,13 @@ namespace Akka.Cluster.Hosting
         ///     uses the keep majority resolving strategy.
         /// </summary>
         public SplitBrainResolverOption? SplitBrainResolver { get; set; }
+        
+        /// <summary>
+        ///     <para>
+        ///         Settings for the failure detector used by the cluster subsystem to detect unreachable members.
+        ///     </para>
+        /// </summary>
+        public PhiAccrualFailureDetectorOptions? FailureDetector { get; set; }
     }
 
     public sealed class ClusterSingletonOptions
@@ -299,39 +308,39 @@ namespace Akka.Cluster.Hosting
             
             var sb = new StringBuilder();
 
-            if (Role is { })
+            if (Role is not null)
                 sb.AppendLine($"role = {Role.ToHocon()}");
             
-            if(RememberEntities is { })
+            if(RememberEntities is not null)
                 sb.AppendLine($"remember-entities = {RememberEntities.ToHocon()}");
             
-            if(RememberEntitiesStore is { })
+            if(RememberEntitiesStore is not null)
                 sb.AppendLine($"remember-entities-store = {RememberEntitiesStore.ToString().ToLowerInvariant().ToHocon()}");
 
             var journalId = JournalOptions?.PluginId ?? JournalPluginId ?? null;
-            if (journalId is { })
+            if (journalId is not null)
                 sb.AppendLine($"journal-plugin-id = {journalId.ToHocon()}");
 
             var snapshotId = SnapshotOptions?.PluginId ?? SnapshotPluginId ?? null;
-            if (snapshotId is { })
+            if (snapshotId is not null)
                 sb.AppendLine($"snapshot-plugin-id = {snapshotId.ToHocon()}");
 
-            if (StateStoreMode is { })
+            if (StateStoreMode is not null)
                 sb.AppendLine($"state-store-mode = {StateStoreMode.ToString().ToLowerInvariant().ToHocon()}");
 
-            if (LeaseImplementation is { })
+            if (LeaseImplementation is not null)
                 sb.AppendLine($"use-lease = {LeaseImplementation.ConfigPath}");
 
-            if (LeaseRetryInterval is { })
+            if (LeaseRetryInterval is not null)
                 sb.AppendLine($"lease-retry-interval = {LeaseRetryInterval.ToHocon()}");
 
-            if (FailOnInvalidEntityStateTransition is { })
+            if (FailOnInvalidEntityStateTransition is not null)
                 sb.AppendLine(
                     $"fail-on-invalid-entity-state-transition = {FailOnInvalidEntityStateTransition.ToHocon()}");
             
             if(ShouldPassivateIdleEntities is false)
                 sb.AppendLine("passivate-idle-entity-after = off");
-            else if(PassivateIdleEntityAfter is { })
+            else if(PassivateIdleEntityAfter is not null)
                 sb.AppendLine($"passivate-idle-entity-after = {PassivateIdleEntityAfter.ToHocon()}");
 
             if (sb.Length > 0)
@@ -353,9 +362,9 @@ namespace Akka.Cluster.Hosting
             base.Apply(builder, "akka.cluster.sharding");
 
             var sb = new StringBuilder();
-            if (MajorityMinimumCapacity is { })
+            if (MajorityMinimumCapacity is not null)
                 sb.AppendLine($"majority-min-cap = {MajorityMinimumCapacity}");
-            if (MaxDeltaElements is { })
+            if (MaxDeltaElements is not null)
                 sb.AppendLine($"max-delta-elements = {MaxDeltaElements}");
             
             if(sb.Length == 0)
@@ -407,28 +416,28 @@ namespace Akka.Cluster.Hosting
         {
             var sb = new StringBuilder();
 
-            if (Name is { })
+            if (Name is not null)
                 sb.AppendLine($"name = {Name.ToHocon()}");
-            if (Role is { })
+            if (Role is not null)
                 sb.AppendLine($"role = {Role.ToHocon()}");
-            if (RecreateOnFailure is { })
+            if (RecreateOnFailure is not null)
                 sb.AppendLine($"recreate-on-failure = {RecreateOnFailure.ToHocon()}");
-            if (PreferOldest is { })
+            if (PreferOldest is not null)
                 sb.AppendLine($"prefer-oldest = {PreferOldest.ToHocon()}");
-            if (VerboseDebugLogging is { })
+            if (VerboseDebugLogging is not null)
                 sb.AppendLine($"verbose-debug-logging = {VerboseDebugLogging.ToHocon()}");
 
             var durableSb = new StringBuilder();
-            if (Durable.Keys is { })
+            if (Durable.Keys is not null)
                 durableSb.AppendLine($"keys = [{string.Join(",", Durable.Keys.Select(s => s.ToHocon()))}]");
             
             var lmdbSb = new StringBuilder();
             var lmdb = Durable.Lmdb;
-            if (lmdb.Directory is { })
+            if (lmdb.Directory is not null)
                 lmdbSb.AppendLine($"dir = {lmdb.Directory.ToHocon()}");
-            if (lmdb.MapSize is { })
+            if (lmdb.MapSize is not null)
                 lmdbSb.AppendLine($"map-size = {lmdb.MapSize}");
-            if (lmdb.WriteBehindInterval is { })
+            if (lmdb.WriteBehindInterval is not null)
                 lmdbSb.AppendLine($"write-behind-interval = {lmdb.WriteBehindInterval.ToHocon()}");
 
             if (lmdbSb.Length > 0)
@@ -551,18 +560,28 @@ namespace Akka.Cluster.Hosting
                 sb.AppendLine("]");
             }
 
-            if (options.MinimumNumberOfMembers is { })
+            if (options.MinimumNumberOfMembers is not null)
                 sb.AppendLine($"min-nr-of-members = {options.MinimumNumberOfMembers}");
 
-            if (options.AppVersion is { })
+            if (options.AppVersion is not null)
                 sb.AppendLine($"app-version = {options.AppVersion.ToHocon()}");
 
-            if (options.LogInfo is { })
+            if (options.LogInfo is not null)
                 sb.AppendLine($"log-info = {options.LogInfo.ToHocon()}");
 
-            if (options.LogInfoVerbose is { })
+            if (options.LogInfoVerbose is not null)
                 sb.AppendLine($"log-info-verbose = {options.LogInfoVerbose.ToHocon()}");
 
+            if (options.FailureDetector is not null)
+            {
+                var fsb = options.FailureDetector.ToHocon();
+                if (fsb.Length > 0)
+                {
+                    sb.AppendLine("failure-detector {\n");
+                    sb.Append(fsb);
+                    sb.AppendLine("}");
+                }
+            }
             sb.AppendLine("}");
 
             // prepend the composed configuration
@@ -1080,7 +1099,7 @@ namespace Akka.Cluster.Hosting
                 var clusterSingletonManagerSettings =
                     ClusterSingletonManagerSettings.Create(system).WithSingletonName(singletonName);
 
-                if (options.LeaseImplementation is { })
+                if (options.LeaseImplementation is not null)
                 {
                     var retry = options.LeaseRetryInterval ?? TimeSpan.FromSeconds(5);
                     clusterSingletonManagerSettings = clusterSingletonManagerSettings
