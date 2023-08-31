@@ -1,3 +1,10 @@
+## [1.5.12.1] / 31 August 2023
+
+* [Add IConfiguration to HOCON adapter key name normalization toggle flag](https://github.com/akkadotnet/Akka.Hosting/pull/365)
+* [Expand Cluster.Hosting and Remote.Hosting options](https://github.com/akkadotnet/Akka.Hosting/pull/366)
+
+You can now specify whether IConfiguration key strings should be normalized to lower case or not when they are being converted into HOCON keys. You can read the documentation [here](https://github.com/akkadotnet/Akka.Hosting/#special-characters-and-case-sensitivity)
+
 ## [1.5.12] / 3 August 2023
 
 * [Update Akka.NET to 1.5.12](https://github.com/akkadotnet/akka.net/releases/tag/1.5.12)
