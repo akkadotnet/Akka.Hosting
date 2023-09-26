@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using FluentAssertions;
 using Xunit;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Hosting.Tests;
 
@@ -129,7 +130,7 @@ public class ActorRegistrySpecs
     }
     
     [Fact]
-    public void GetAsync_should_Cancel_after_Timeout()
+    public async Task GetAsync_should_Cancel_after_Timeout()
     {
         // arrange
         var registry = new ActorRegistry();
@@ -137,13 +138,11 @@ public class ActorRegistrySpecs
 
         // act
         var task = registry.GetAsync<Nobody>(cancellationTokenSource.Token);
-        Action cancel = () =>
+        // assert
+        await Awaiting(async () =>
         {
             cancellationTokenSource.Cancel();
-            task.Wait(TimeSpan.FromSeconds(3));
-        };
-
-        // assert
-        cancel.Should().Throw<TaskCanceledException>();
+            await task.WaitAsync(TimeSpan.FromSeconds(3));
+        }).Should().ThrowAsync<TaskCanceledException>();
     }
 }
