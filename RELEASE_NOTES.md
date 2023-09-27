@@ -1,3 +1,7 @@
+## [1.5.13] / 27 September 2023
+
+* [Update Akka.NET to 1.5.13](https://github.com/akkadotnet/akka.net/releases/tag/1.5.13)
+
 ## [1.5.12.1] / 31 August 2023
 
 * [Add IConfiguration to HOCON adapter key name normalization toggle flag](https://github.com/akkadotnet/Akka.Hosting/pull/365)
