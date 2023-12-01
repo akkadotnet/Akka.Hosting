@@ -25,7 +25,7 @@
         <XunitVersion>2.5.3</XunitVersion>
         <TestSdkVersion>17.8.0</TestSdkVersion>
         <CoverletVersion>6.0.0</CoverletVersion>
-	    <XunitRunneVisualstudio>2.5.3</XunitRunneVisualstudio>
+	    <XunitRunneVisualstudio>2.5.4</XunitRunneVisualstudio>
         <AkkaVersion>1.5.14</AkkaVersion>
         <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
     </PropertyGroup>
