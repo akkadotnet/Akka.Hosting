@@ -74,6 +74,9 @@ namespace Akka.Hosting.TestKit
         protected virtual void ConfigureServices(HostBuilderContext context, IServiceCollection services)
         { }
         
+        protected virtual void ConfigureHostBuilder(IHostBuilder builder)
+        { }
+        
         private void InternalConfigureServices(HostBuilderContext context, IServiceCollection services)
         {
             ConfigureServices(context, services);
@@ -144,8 +147,9 @@ namespace Akka.Hosting.TestKit
                 });
             hostBuilder
                 .ConfigureHostConfiguration(ConfigureHostConfiguration)
-                .ConfigureAppConfiguration(ConfigureAppConfiguration)
-                .ConfigureServices(InternalConfigureServices);
+                .ConfigureAppConfiguration(ConfigureAppConfiguration);
+            ConfigureHostBuilder(hostBuilder);
+            hostBuilder.ConfigureServices(InternalConfigureServices);
 
             _host = hostBuilder.Build();
 
