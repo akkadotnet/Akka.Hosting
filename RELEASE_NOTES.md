@@ -1,6 +1,8 @@
-## [1.5.13] / 27 September 2023
+## [1.5.14] / 09 January 2024
 
-* [Update Akka.NET to 1.5.13](https://github.com/akkadotnet/akka.net/releases/tag/1.5.13)
+* [Update Akka.NET to 1.5.14](https://github.com/akkadotnet/akka.net/releases/tag/1.5.14)
+* [Akka.Cluster.Hosting: don't use sharding delegates](https://github.com/akkadotnet/Akka.Hosting/pull/424)
+* [Akka.Hosting.TestKit: Add method to configure `IHostBuilder`](https://github.com/akkadotnet/Akka.Hosting/pull/423)
 
 ## [1.5.12.1] / 31 August 2023
 
