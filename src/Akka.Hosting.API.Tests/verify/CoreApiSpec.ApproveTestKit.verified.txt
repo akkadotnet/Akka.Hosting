@@ -38,6 +38,7 @@ namespace Akka.Hosting.TestKit
         protected virtual System.Threading.Tasks.Task BeforeTestStart() { }
         protected abstract void ConfigureAkka(Akka.Hosting.AkkaConfigurationBuilder builder, System.IServiceProvider provider);
         protected virtual void ConfigureAppConfiguration(Microsoft.Extensions.Hosting.HostBuilderContext context, Microsoft.Extensions.Configuration.IConfigurationBuilder builder) { }
+        protected virtual void ConfigureHostBuilder(Microsoft.Extensions.Hosting.IHostBuilder builder) { }
         protected virtual void ConfigureHostConfiguration(Microsoft.Extensions.Configuration.IConfigurationBuilder builder) { }
         protected virtual void ConfigureLogging(Microsoft.Extensions.Logging.ILoggingBuilder builder) { }
         protected virtual void ConfigureServices(Microsoft.Extensions.Hosting.HostBuilderContext context, Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
