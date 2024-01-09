@@ -628,28 +628,6 @@ namespace Akka.Cluster.Hosting
             return hoconBuilder.WithActorRefProvider(ProviderSelection.Cluster.Instance);
         }
 
-        private static ExtractEntityId ToExtractEntityId(this IMessageExtractor self)
-        {
-            Option<(string, object)> ExtractEntityId(object msg)
-            {
-                if (self.EntityId(msg) != null) return (self.EntityId(msg), self.EntityMessage(msg));
-
-                return Option<(string, object)>.None;
-            }
-
-            return ExtractEntityId;
-        }
-
-        private static ExtractShardId ToExtractShardId(this IMessageExtractor self)
-        {
-            string? ExtractShardId(object msg)
-            {
-                return self.EntityId(msg) != null ? self.ShardId(msg) : null;
-            }
-
-            return ExtractShardId;
-        }
-
         public static AkkaConfigurationBuilder WithDistributedData(
             this AkkaConfigurationBuilder builder,
             Action<DDataOptions> configurator)
@@ -702,7 +680,7 @@ namespace Akka.Cluster.Hosting
             ShardOptions shardOptions)
         {
             return builder.WithShardRegion<TKey>(typeName, (_, _, _) => entityPropsFactory,
-                messageExtractor.ToExtractEntityId(), messageExtractor.ToExtractShardId(), shardOptions);
+                messageExtractor, shardOptions);
         }
 
         /// <summary>
@@ -785,7 +763,7 @@ namespace Akka.Cluster.Hosting
         {
             return builder.WithShardRegion<TKey>(typeName,
                 (system, registry, _) => entityPropsFactory(system, registry),
-                messageExtractor.ToExtractEntityId(), messageExtractor.ToExtractShardId(), shardOptions);
+                messageExtractor, shardOptions);
         }
 
         /// <summary>
@@ -869,8 +847,23 @@ namespace Akka.Cluster.Hosting
             IMessageExtractor messageExtractor,
             ShardOptions shardOptions)
         {
-            return builder.WithShardRegion<TKey>(typeName, entityPropsFactory,
-                messageExtractor.ToExtractEntityId(), messageExtractor.ToExtractShardId(), shardOptions);
+            shardOptions.Apply(builder);
+            builder.AddHocon(
+                ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
+                HoconAddMode.Append);
+
+            return builder.StartActors(Resolver);
+
+            async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
+            {
+                var props = entityPropsFactory(system, registry, resolver);
+                var settings = ClusterShardingSettings.Create(system);
+                var allocationStrategy = ClusterSharding.Get(system).DefaultShardAllocationStrategy(settings);
+                var shardRegion = await ClusterSharding.Get(system).StartAsync(
+                    typeName, props, settings, messageExtractor, allocationStrategy, 
+                    shardOptions.HandOffStopMessage ?? PoisonPill.Instance).ConfigureAwait(false);
+                registry.Register<TKey>(shardRegion);
+            }
         }
 
         /// <summary>
