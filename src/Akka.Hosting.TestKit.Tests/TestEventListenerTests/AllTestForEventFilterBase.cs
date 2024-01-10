@@ -326,7 +326,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
                 {
                     LogMessage("whatever");
                 });
-            }).Should().Throw<TrueException>().WithMessage("timeout*");
+            }).Should().Throw<FailException>().WithMessage("timeout*");
         }
 
         [Fact]

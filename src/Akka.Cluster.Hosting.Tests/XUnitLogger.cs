@@ -19,7 +19,7 @@ public class XUnitLogger: ILogger
         _logLevel = logLevel;
     }
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception?, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         if (!IsEnabled(logLevel))
             return;
@@ -65,8 +65,8 @@ public class XUnitLogger: ILogger
     
     private static bool TryFormatMessage<TState>(
         TState state,
-        Exception exception,
-        Func<TState, Exception, string> formatter,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter,
         out string? result)
     {
         formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));

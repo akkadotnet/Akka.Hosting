@@ -1,5 +1,6 @@
 using Akka.Actor;
 using Akka.Cluster.Hosting;
+using Akka.Cluster.Sharding;
 using Akka.Remote.Hosting;
 using Akka.Util;
 
@@ -35,18 +36,13 @@ public class EchoActor : ReceiveActor
 public class Program
 {
     private const int NumberOfShards = 5;
-    
-    private static Option<(string, object)> ExtractEntityId(object message)
-        => message switch {
-            string id => (id, id),
-            _ => Option<(string, object)>.None
-        };
 
-    private static string? ExtractShardId(object message)
-        => message switch {
-            string id => (id.GetHashCode() % NumberOfShards).ToString(),
-            _ => null
-        };
+    private static IMessageExtractor Extractor { get; } = HashCodeMessageExtractor.Create(NumberOfShards, msg =>
+    {
+        if (msg is string id)
+            return id;
+        return string.Empty;
+    });
 
     public static void Main(params string[] args)
     {
@@ -64,8 +60,7 @@ public class Program
                     {
                         return s => resolver.Props<EchoActor>(s);
                     },
-                    extractEntityId: ExtractEntityId,
-                    extractShardId: ExtractShardId,
+                    messageExtractor: Extractor,
                     shardOptions: new ShardOptions());
         });
 

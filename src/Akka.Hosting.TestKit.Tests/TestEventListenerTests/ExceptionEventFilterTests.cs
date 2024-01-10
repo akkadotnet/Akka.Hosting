@@ -128,7 +128,7 @@ public class ExceptionEventFilterTests : EventFilterTestBase
                 Log.Error(new SomeException(), "whatever");
                 Log.Error(new SomeException(), "whatever");
             }))
-            .Should().Throw<TrueException>().WithMessage("*1 message too many*");
+            .Should().Throw<FailException>().WithMessage("*1 message too many*");
     }
 
     [Fact]
