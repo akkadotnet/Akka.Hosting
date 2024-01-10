@@ -714,6 +714,7 @@ namespace Akka.Cluster.Hosting
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        [Obsolete("Use IMessageExtractor instead of the ExtractEntityId and ExtractShardId delegates.")]
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
@@ -799,6 +800,7 @@ namespace Akka.Cluster.Hosting
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        [Obsolete("Use IMessageExtractor instead of the ExtractEntityId and ExtractShardId delegates.")]
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
@@ -899,6 +901,7 @@ namespace Akka.Cluster.Hosting
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        [Obsolete("Use IMessageExtractor instead of the ExtractEntityId and ExtractShardId delegates.")]
         public static AkkaConfigurationBuilder WithShardRegion<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
@@ -954,6 +957,7 @@ namespace Akka.Cluster.Hosting
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        [Obsolete("Use IMessageExtractor instead of the ExtractEntityId and ExtractShardId delegates.")]
         public static AkkaConfigurationBuilder WithShardRegionProxy<TKey>(
             this AkkaConfigurationBuilder builder,
             string typeName,
