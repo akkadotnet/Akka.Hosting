@@ -28,7 +28,7 @@
         <CoverletVersion>6.0.0</CoverletVersion>
 	    <XunitRunneVisualstudio>2.5.6</XunitRunneVisualstudio>
         <AkkaVersion>1.5.15</AkkaVersion>
-        <MicrosoftExtensionsVersion>[3.0.0,)</MicrosoftExtensionsVersion>
+        <MicrosoftExtensionsVersion>[6.0.0,)</MicrosoftExtensionsVersion>
     </PropertyGroup>
 
     <!-- SourceLink support for all Akka.NET projects -->
