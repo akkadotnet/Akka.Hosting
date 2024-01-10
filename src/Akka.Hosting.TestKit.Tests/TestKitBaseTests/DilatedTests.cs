@@ -40,7 +40,7 @@ public class DilatedTests : TestKit
     {
         var stopwatch = Stopwatch.StartNew();
         Invoking(() => AwaitCondition(() => false, TimeSpan.FromMilliseconds(Timeout)))
-            .Should().Throw<TrueException>();
+            .Should().Throw<FailException>();
         stopwatch.Stop();
         AssertDilated(stopwatch.ElapsedMilliseconds, $"Expected the timeout to be {ExpectedTimeout} but in fact it was {stopwatch.ElapsedMilliseconds}.");
     }
