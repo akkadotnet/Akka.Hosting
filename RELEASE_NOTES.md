@@ -1,3 +1,8 @@
+## [1.5.15] / 10 January 2024
+
+* [Update Akka.NET to 1.5.15](https://github.com/akkadotnet/akka.net/releases/tag/1.5.15)
+* Marked all Akka.Cluster.Hosting methods that accept deprecated sharding delegates as `Obsolete`
+
 ## [1.5.14] / 09 January 2024
 
 * [Update Akka.NET to 1.5.14](https://github.com/akkadotnet/akka.net/releases/tag/1.5.14)
