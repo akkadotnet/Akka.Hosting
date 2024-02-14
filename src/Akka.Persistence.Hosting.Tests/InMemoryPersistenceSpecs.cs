@@ -2,18 +2,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Event;
 using Akka.Hosting;
-using Akka.TestKit.Xunit2.Internals;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Akka.Persistence.Hosting.Tests
 {
-    public class InMemoryPersistenceSpecs: Akka.Hosting.TestKit.TestKit
+    public class InMemoryPersistenceSpecs: Akka.Hosting.TestKit.Xunit2.TestKit
     {
         
         private readonly ITestOutputHelper _output;

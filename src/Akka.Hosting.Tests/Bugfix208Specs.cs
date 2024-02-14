@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Akka.Hosting.Tests;
 
-public class Bugfix208Specs : TestKit.TestKit
+public class Bugfix208Specs : TestKit.Xunit2.TestKit
 {
     private class MyTestActor : ReceiveActor
     {

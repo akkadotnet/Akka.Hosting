@@ -13,54 +13,46 @@ using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
 using Akka.Event;
-using Akka.Hosting.Logging;
 using Akka.Hosting.TestKit.Internals;
 using Akka.TestKit;
-using Akka.TestKit.Xunit2;
-using Akka.TestKit.Xunit2.Internals;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Xunit;
-using Xunit.Abstractions;
-using Xunit.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.TestKit
 {
-    public abstract class TestKit: TestKitBase, IAsyncLifetime
+    /// <summary>
+    /// <remarks>Unless you're creating a Hosting TestKit for a specific test framework, you should probably not inherit directly from this class.</remarks>
+    /// </summary>
+    public abstract class TestKitBase: Akka.TestKit.TestKitBase
     {
-        /// <summary>
-        /// Commonly used assertions used throughout the testkit.
-        /// </summary>
-        protected static XunitAssertions Assertions { get; } = new XunitAssertions();
-
         private IHost? _host;
         public IHost Host
         {
             get
             {
                 if(_host is null)
-                    throw new XunitException("Test has not been initialized yet");
+                    ThrowNotInitialized();
                 return _host;
             }
         }
+        
+        protected abstract void ThrowNotInitialized();
 
         public ActorRegistry ActorRegistry => Host.Services.GetRequiredService<ActorRegistry>();
         
         public TimeSpan StartupTimeout { get; }
         public string ActorSystemName { get; }
-        public ITestOutputHelper? Output { get; }
         public LogLevel LogLevel { get; }
 
         private readonly TaskCompletionSource<Done> _initialized = new TaskCompletionSource<Done>();
 
-        protected TestKit(string? actorSystemName = null, ITestOutputHelper? output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
-        : base(Assertions)
+        protected TestKitBase(ITestKitAssertions assertions, string? actorSystemName = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
+        : base(assertions)
         {
             ActorSystemName = actorSystemName ?? "test";
-            Output = output;
             LogLevel = logLevel;
             StartupTimeout = startupTimeout ?? TimeSpan.FromSeconds(10);
         }
@@ -94,7 +86,7 @@ namespace Akka.Hosting.TestKit
                     logger.AddLogger<TestEventListener>();
                 });
 
-                if (Output is { })
+                if (ShouldUseCustomLogger)
                 {
                     builder.StartActors(async (system, registry) =>
                     {
@@ -119,7 +111,9 @@ namespace Akka.Hosting.TestKit
             });
         }
 
-        internal virtual async Task LoggerHook(ActorSystem system, IActorRegistry registry)
+        protected virtual bool ShouldUseCustomLogger => false; 
+        
+        protected virtual async Task LoggerHook(ActorSystem system, IActorRegistry registry)
         {
             var extSystem = (ExtendedActorSystem)system;
             var logger = extSystem.SystemActorOf(Props.Create(() => new TestKitLoggerFactoryLogger()), "log-test");
@@ -137,14 +131,8 @@ namespace Akka.Hosting.TestKit
         public async Task InitializeAsync()
         {
             var hostBuilder = new HostBuilder();
-            if (Output != null)
-                hostBuilder.ConfigureLogging(logger =>
-                {
-                    logger.ClearProviders();
-                    logger.AddProvider(new XUnitLoggerProvider(Output, LogLevel));
-                    logger.AddFilter("Akka.*", LogLevel);
-                    ConfigureLogging(logger);
-                });
+            if (ShouldUseCustomLogger)
+                hostBuilder.ConfigureLogging(ConfigureLogging);
             hostBuilder
                 .ConfigureHostConfiguration(ConfigureHostConfiguration)
                 .ConfigureAppConfiguration(ConfigureAppConfiguration);

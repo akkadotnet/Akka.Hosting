@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Akka.Persistence.Hosting.Tests;
 
-public class EventAdapterSpecs: Akka.Hosting.TestKit.TestKit
+public class EventAdapterSpecs: Akka.Hosting.TestKit.Xunit2.TestKit
 {
     public static async Task<IHost> StartHost(Action<IServiceCollection> testSetup)
     {

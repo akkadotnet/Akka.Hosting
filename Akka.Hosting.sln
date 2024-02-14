@@ -34,13 +34,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Hosting.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit", "src\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj", "{E28D4F3C-6C34-497B-BDC8-F2B3EA8BA309}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit.Xunit2", "src\Akka.Hosting.TestKit.Xunit2\Akka.Hosting.TestKit.Xunit2.csproj", "{E28D4F3C-6C34-497B-BDC8-F2B3EA8BA309}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit.Tests", "src\Akka.Hosting.TestKit.Tests\Akka.Hosting.TestKit.Tests.csproj", "{3883AD08-B981-4943-8153-1E7FFD2C3127}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit.Xunit2.Tests", "src\Akka.Hosting.TestKit.Xunit2.Tests\Akka.Hosting.TestKit.Xunit2.Tests.csproj", "{3883AD08-B981-4943-8153-1E7FFD2C3127}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.API.Tests", "src\Akka.Hosting.API.Tests\Akka.Hosting.API.Tests.csproj", "{410065E0-6636-4F34-85AE-4C4BA413ADB4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{11062839-0674-4DF9-AB8B-B7901A564ADC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit.MsTest", "src\Akka.Hosting.TestKit.MsTest\Akka.Hosting.TestKit.MsTest.csproj", "{6AC61E0C-D5D4-4E9D-8439-A6AD33140F7A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit.MsTest.Tests", "src\Akka.Hosting.TestKit.MsTest.Tests\Akka.Hosting.TestKit.MsTest.Tests.csproj", "{9CF6226E-DD91-433D-9B9E-D1212B727251}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit", "src\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj", "{0257FD4C-ABE9-4F05-87DB-67C9F6625912}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -106,6 +112,18 @@ Global
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AC61E0C-D5D4-4E9D-8439-A6AD33140F7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AC61E0C-D5D4-4E9D-8439-A6AD33140F7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AC61E0C-D5D4-4E9D-8439-A6AD33140F7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AC61E0C-D5D4-4E9D-8439-A6AD33140F7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CF6226E-DD91-433D-9B9E-D1212B727251}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CF6226E-DD91-433D-9B9E-D1212B727251}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CF6226E-DD91-433D-9B9E-D1212B727251}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CF6226E-DD91-433D-9B9E-D1212B727251}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0257FD4C-ABE9-4F05-87DB-67C9F6625912}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0257FD4C-ABE9-4F05-87DB-67C9F6625912}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0257FD4C-ABE9-4F05-87DB-67C9F6625912}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0257FD4C-ABE9-4F05-87DB-67C9F6625912}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
