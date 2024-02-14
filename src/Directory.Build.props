@@ -24,11 +24,11 @@
         <TestsNetCoreFramework>net6.0</TestsNetCoreFramework>
         <XunitVersion>2.6.6</XunitVersion>
         <MsTestVersion>3.2.0</MsTestVersion>
-        <TestSdkVersion>17.8.0</TestSdkVersion>
+        <MicrosoftTestPlatformTestHostVersion>17.9.0</MicrosoftTestPlatformTestHostVersion>
+        <TestSdkVersion>17.9.0</TestSdkVersion>
         <CoverletVersion>6.0.0</CoverletVersion>
-	    <XunitRunneVisualstudio>2.5.6</XunitRunneVisualstudio>
-        <MicrosoftTestPlatformTestHostVersion>17.8.0</MicrosoftTestPlatformTestHostVersion>
-        <AkkaVersion>1.5.15</AkkaVersion>
+	      <XunitRunneVisualstudio>2.5.6</XunitRunneVisualstudio>
+        <AkkaVersion>1.5.16</AkkaVersion>
         <AkkaTestKitMsTestVersion>1.5.0</AkkaTestKitMsTestVersion>
         <MicrosoftExtensionsVersion>[6.0.0,)</MicrosoftExtensionsVersion>
     </PropertyGroup>
