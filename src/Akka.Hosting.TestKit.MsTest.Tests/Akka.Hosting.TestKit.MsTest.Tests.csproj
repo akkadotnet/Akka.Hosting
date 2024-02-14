@@ -14,12 +14,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="xunit.runner.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\Akka.Hosting.TestKit.MsTest\Akka.Hosting.TestKit.MsTest.csproj" />
     </ItemGroup>
     
