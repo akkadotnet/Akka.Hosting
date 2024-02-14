@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Cluster.Hosting.Tests;
 
-public class ClusterSingletonWithDiSpecs : Akka.Hosting.TestKit.TestKit
+public class ClusterSingletonWithDiSpecs : Akka.Hosting.TestKit.Xunit2.TestKit
 {
     #region Actor and DI impls
     

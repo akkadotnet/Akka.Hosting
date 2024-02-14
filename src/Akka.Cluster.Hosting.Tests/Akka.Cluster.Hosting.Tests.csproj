@@ -17,7 +17,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj" />
-        <ProjectReference Include="..\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj" />
+        <ProjectReference Include="..\Akka.Hosting.TestKit.Xunit2\Akka.Hosting.TestKit.Xunit2.csproj" />
     </ItemGroup>
 
     <ItemGroup>

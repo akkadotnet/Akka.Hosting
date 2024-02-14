@@ -36,7 +36,7 @@ public class CoreApiSpec
     [Fact]
     public Task ApproveTestKit()
     {
-        return VerifyAssembly<TestKit.TestKit>();
+        return VerifyAssembly<TestKit.Xunit2.TestKit>();
     }
     
     [Fact]

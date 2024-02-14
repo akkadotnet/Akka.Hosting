@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Description>TestKit for writing tests for Akka.NET using Akka.Hosting and MS Test.</Description>
+        <TargetFramework>$(LibraryFramework)</TargetFramework>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Akka.TestKit.MsTest" Version="$(AkkaTestKitMsTestVersion)" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+        <PackageReference Include="MSTest.TestFramework" Version="$(MsTestVersion)" />
+        <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="$(MicrosoftTestPlatformTestHostVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj" />
+      <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
+    </ItemGroup>
+
+</Project>

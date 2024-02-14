@@ -1,16 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Description>TestKit for writing tests for Akka.NET using Akka.Hosting and xUnit.</Description>
+        <Description>You need a Akka.Hosting.TestKit.* package! Add the one appropriate for the test framework you use instead. For example: Akka.Hosting.TestKit.Xunit or Akka.Hosting.TestKit.MsTest. This package only contains base functionality for writing tests for the Akka.NET framework using Akka.Hosting.</Description>
         <TargetFramework>$(LibraryFramework)</TargetFramework>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+        <PackageReference Include="Akka.TestKit" Version="$(AkkaVersion)" />
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
-        <PackageReference Include="xunit" Version="$(XunitVersion)" />
     </ItemGroup>
     
     <ItemGroup>
