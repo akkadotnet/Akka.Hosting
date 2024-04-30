@@ -1,3 +1,8 @@
+## [1.5.20] / 30 April 2024
+
+* [Update Akka.NET to 1.5.20](https://github.com/akkadotnet/akka.net/releases/tag/1.5.20)
+* Added improved APIs for setting default `ILogMessageFormatter`s - the `LoggerConfigBuilder.WithDefaultLogMessageFormatter<T>` method.
+
 ## [1.5.19] / 17 April 2024
 
 * [Update Akka.NET to 1.5.19](https://github.com/akkadotnet/akka.net/releases/tag/1.5.19)
