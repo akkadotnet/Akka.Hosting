@@ -47,6 +47,7 @@ namespace Akka.Hosting
 
         public DebugOptions? DebugOptions { get; set; }
 
+        [Obsolete("Use the WithDefaultLogMessageFormatter<T> method instead")]
         public Type LogMessageFormatter
         {
             get => _logMessageFormatter;
@@ -83,6 +84,17 @@ namespace Akka.Hosting
             _loggers.Add(logger);
             return this;
         }
+        
+        /// <summary>
+        /// Sets the formatter used by the logger
+        /// </summary>
+        public LoggerConfigBuilder WithDefaultLogMessageFormatter<T>() where T: ILogMessageFormatter
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            LogMessageFormatter = typeof(T);
+#pragma warning restore CS0618 // Type or member is obsolete
+            return this;
+        }
 
         /// <summary>
         /// INTERNAL API
@@ -112,7 +124,7 @@ namespace Akka.Hosting
             return ConfigurationFactory.ParseString(sb.ToString());
         }
 
-        private string ParseLogLevel(LogLevel logLevel)
+        private static string ParseLogLevel(LogLevel logLevel)
             => logLevel switch
             {
                 LogLevel.DebugLevel => "Debug",

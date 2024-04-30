@@ -35,7 +35,7 @@ public class LogMessageFormatterSpec
     [Fact(DisplayName = "ILogMessageFormatter should transform log messages")]
     public async Task TransformMessagesTest()
     {
-        using var host = await SetupHost(typeof(TestLogMessageFormatter));
+        using var host = await SetupHost<TestLogMessageFormatter>();
 
         try
         {
@@ -59,11 +59,11 @@ public class LogMessageFormatterSpec
     [Fact(DisplayName = "Invalid LogMessageFormatter property should throw")]
     public async Task InvalidLogMessageFormatterThrowsTest()
     {
-        await Awaiting(async () => await SetupHost(typeof(InvalidLogMessageFormatter)))
+        await Awaiting(async () => await SetupHost<InvalidLogMessageFormatter>())
             .Should().ThrowAsync<ConfigurationException>().WithMessage("*must have an empty constructor*");
     }
 
-    private async Task<IHost> SetupHost(Type formatter)
+    private async Task<IHost> SetupHost<TFormatter>() where TFormatter : ILogMessageFormatter
     {
         var host = new HostBuilder()
             .ConfigureLogging(builder =>
@@ -79,7 +79,7 @@ public class LogMessageFormatterSpec
                         {
                             setup.LogLevel = Event.LogLevel.DebugLevel;
                             setup.AddLoggerFactory();
-                            setup.LogMessageFormatter = formatter;
+                            setup.WithDefaultLogMessageFormatter<TFormatter>();
                         });
                 });
             }).Build();
