@@ -572,6 +572,48 @@ You can now use `ILoggerFactory` from Microsoft.Extensions.Logging as one of the
 
 [Back to top](#akkahosting)
 
+<a id="serilog-support"></a>
+## Serilog Message Formatting Support
+
+If you're interested in using [Akka.Logger.Serilog](https://github.com/akkadotnet/Akka.Logger.Serilog), you can set Akka.NET's default logger and log message formatter to allow for Serilog's semantic logging to be enabled by default:
+
+```csharp
+builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+{
+    configurationBuilder
+        .ConfigureLoggers(setup =>
+        {
+            // Example: This sets the minimum log level
+            setup.LogLevel = LogLevel.DebugLevel;
+            
+            // Example: Clear all loggers
+            setup.ClearLoggers();
+            
+            // Add Serilog
+            setup.AddLogger<SerilogLogger>();
+            
+            // use the default SerilogFormatter everywhere
+            setup.WithDefaultLogMessageFormatter<SerilogLogMessageFormatter>();
+        })
+        .WithActors((system, registry) =>
+        {
+            var echo = system.ActorOf(act =>
+            {
+                act.ReceiveAny((o, context) =>
+                {
+                    Logging.GetLogger(context.System, "echo").Info($"Actor received {o}");
+                    context.Sender.Tell($"{context.Self} rcv {o}");
+                });
+            }, "echo");
+            registry.TryRegister<Echo>(echo); // register for DI
+        });
+});
+```
+
+This will eliminate the need to have to do `Context.GetLogger<SerilogLoggingAdapter>()` everywhere you want to use it.
+
+[Back to top](#akkahosting)
+
 <a id="microsoftextensionslogging-log-event-filtering"></a>
 ## Microsoft.Extensions.Logging Log Event Filtering
 
