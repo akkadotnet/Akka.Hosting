@@ -156,10 +156,13 @@ namespace Akka.Hosting
         public Akka.Hosting.DebugOptions? DebugOptions { get; set; }
         public bool LogConfigOnStart { get; set; }
         public Akka.Event.LogLevel LogLevel { get; set; }
+        [System.Obsolete("Use the WithDefaultLogMessageFormatter<T> method instead")]
         public System.Type LogMessageFormatter { get; set; }
         public Akka.Hosting.LoggerConfigBuilder AddLogger<T>()
             where T : Akka.Dispatch.IRequiresMessageQueue<Akka.Event.ILoggerMessageQueueSemantics> { }
         public Akka.Hosting.LoggerConfigBuilder ClearLoggers() { }
+        public Akka.Hosting.LoggerConfigBuilder WithDefaultLogMessageFormatter<T>()
+            where T : Akka.Event.ILogMessageFormatter { }
     }
     public static class LoggingExtensions
     {
