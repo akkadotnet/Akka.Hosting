@@ -27,6 +27,7 @@ See the ["Introduction to Akka.Hosting - HOCON-less, "Pit of Success" Akka.NET R
 - [Microsoft.Extensions.Logging Integration](#microsoftextensionslogging-integration)
     * [Logger Configuration Support](#logger-configuration-support)
     * [Microsoft.Extensions.Logging.ILoggerFactory Logging Support](#microsoftextensionsloggingiloggerfactory-logging-support)
+    * [Serilog Support](#serilog-support)
     * [Microsoft.Extensions.Logging Log Event Filtering](#microsoftextensionslogging-log-event-filtering)
 
 <a id="supported-packages"></a>
