@@ -6,6 +6,8 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Linq;
+using Akka.Event;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,5 +33,34 @@ public class HostingExtensionsSpec
             .WithActorAskTimeout(TimeSpan.Zero);
         builder.Configuration.HasValue.Should().BeTrue();
         builder.Configuration.Value.GetString("akka.actor.ask-timeout").Should().Be("infinite");
+    }
+    
+    [Fact(DisplayName = "WithLogFilter should inject LogFilterSetup")]
+    public void WithLogFilterSetupTest()
+    {
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "fake")
+            .WithLogFilter(filterBuilder =>
+            {
+                filterBuilder.ExcludeMessageContaining("Test");
+            });
+        var filterSetup = builder.Setups.OfType<LogFilterSetup>().First();
+        filterSetup.Filters.Length.Should().Be(1);
+        filterSetup.Filters.Any(f => f is RegexLogMessageFilter).Should().BeTrue();
+    }
+    
+    [Fact(DisplayName = "ConfigureLogger WithLogFilter should inject LogFilterSetup")]
+    public void ConfigureLoggerWithLogFilterSetupTest()
+    {
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "fake")
+            .ConfigureLoggers(logger =>
+            {
+                logger.WithLogFilter(filterBuilder =>
+                {
+                    filterBuilder.ExcludeMessageContaining("Test");
+                });
+            });
+        var filterSetup = builder.Setups.OfType<LogFilterSetup>().First();
+        filterSetup.Filters.Length.Should().Be(1);
+        filterSetup.Filters.Any(f => f is RegexLogMessageFilter).Should().BeTrue();
     }
 }

@@ -24,7 +24,7 @@ namespace Akka.Hosting.Logging
         /// </summary>
         protected readonly ILoggingAdapter InternalLogger = Akka.Event.Logging.GetLogger(Context.System.EventStream, nameof(LoggerFactoryLogger));
         private readonly ILoggerFactory _loggerFactory;
-        private ILogger<ActorSystem> _akkaLogger;
+        private readonly ILogger<ActorSystem> _akkaLogger;
 
         public LoggerFactoryLogger()
         {

@@ -46,6 +46,8 @@ namespace Akka.Hosting
         public DeadLetterOptions? DeadLetterOptions { get; set; }
 
         public DebugOptions? DebugOptions { get; set; }
+        
+        public LogFilterBuilder? LogFilterBuilder { get; set; }
 
         [Obsolete("Use the WithDefaultLogMessageFormatter<T> method instead")]
         public Type LogMessageFormatter
@@ -96,6 +98,13 @@ namespace Akka.Hosting
             return this;
         }
 
+        public LoggerConfigBuilder WithLogFilter(Action<LogFilterBuilder> filterBuilder)
+        {
+            LogFilterBuilder ??= new LogFilterBuilder();
+            filterBuilder(LogFilterBuilder);
+            return this;
+        }
+
         /// <summary>
         /// INTERNAL API
         ///
@@ -108,7 +117,7 @@ namespace Akka.Hosting
             _loggers.Add(logger);
         }
         
-        internal Config ToConfig()
+        private Config ToConfig()
         {
             var sb = new StringBuilder()
                 .Append("akka.loglevel=").AppendLine(ParseLogLevel(LogLevel))
@@ -122,6 +131,15 @@ namespace Akka.Hosting
                 sb.AppendLine(DeadLetterOptions.ToString());
             
             return ConfigurationFactory.ParseString(sb.ToString());
+        }
+
+        internal AkkaConfigurationBuilder Build(AkkaConfigurationBuilder builder)
+        {
+            builder.AddHoconConfiguration(ToConfig(), HoconAddMode.Prepend);
+            if (LogFilterBuilder is not null)
+                builder.AddSetup(LogFilterBuilder.Build());
+            
+            return builder;
         }
 
         private static string ParseLogLevel(LogLevel logLevel)
