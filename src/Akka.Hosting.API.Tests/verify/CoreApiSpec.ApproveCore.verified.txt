@@ -155,6 +155,7 @@ namespace Akka.Hosting
         public Akka.Hosting.DeadLetterOptions? DeadLetterOptions { get; set; }
         public Akka.Hosting.DebugOptions? DebugOptions { get; set; }
         public bool LogConfigOnStart { get; set; }
+        public Akka.Event.LogFilterBuilder? LogFilterBuilder { get; set; }
         public Akka.Event.LogLevel LogLevel { get; set; }
         [System.Obsolete("Use the WithDefaultLogMessageFormatter<T> method instead")]
         public System.Type LogMessageFormatter { get; set; }
@@ -163,6 +164,7 @@ namespace Akka.Hosting
         public Akka.Hosting.LoggerConfigBuilder ClearLoggers() { }
         public Akka.Hosting.LoggerConfigBuilder WithDefaultLogMessageFormatter<T>()
             where T : Akka.Event.ILogMessageFormatter { }
+        public Akka.Hosting.LoggerConfigBuilder WithLogFilter(System.Action<Akka.Event.LogFilterBuilder> filterBuilder) { }
     }
     public static class LoggingExtensions
     {

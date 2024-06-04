@@ -5,8 +5,9 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Linq;
 using Akka.Configuration;
-using Akka.Hosting.Logging;
+using Akka.Event;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -106,4 +107,42 @@ public class LoggerConfigBuilderSpecs
         }.ToString();
         cfg.GetInt("akka.log-dead-letters").Should().Be(10);
     }
+
+    [Fact(DisplayName = "WithLogFilter should populate the LogFilterBuilder property")]
+    public void WithLogFilterPropertyTest()
+    {
+        var akkaBuilder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        var loggerConfigBuilder = new LoggerConfigBuilder(akkaBuilder)
+                .WithLogFilter(filterBuilder =>
+                {
+                    filterBuilder.ExcludeMessageContaining("Test");
+                });
+        loggerConfigBuilder.LogFilterBuilder.Should().NotBeNull();
+        var filterSetup = loggerConfigBuilder.LogFilterBuilder!.Build();
+        filterSetup.Filters.Length.Should().Be(1);
+        filterSetup.Filters.Any(f => f is RegexLogMessageFilter).Should().BeTrue();
+    }
+    
+    [Fact(DisplayName = "WithLogFilter should append existing LogFilterBuilder property")]
+    public void WithLogFilterConcatTest()
+    {
+        var akkaBuilder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        var loggerConfigBuilder = new LoggerConfigBuilder(akkaBuilder)
+        {
+            LogFilterBuilder = new LogFilterBuilder()
+                .ExcludeSourceContaining("Test")
+        };
+        loggerConfigBuilder
+            .WithLogFilter(filterBuilder =>
+            {
+                filterBuilder.ExcludeMessageContaining("Test");
+            });
+        
+        loggerConfigBuilder.LogFilterBuilder.Should().NotBeNull();
+        var filterSetup = loggerConfigBuilder.LogFilterBuilder.Build();
+        filterSetup.Filters.Length.Should().Be(2);
+        filterSetup.Filters.Any(f => f is RegexLogMessageFilter).Should().BeTrue();
+        filterSetup.Filters.Any(f => f is RegexLogSourceFilter).Should().BeTrue();
+    }
+    
 }

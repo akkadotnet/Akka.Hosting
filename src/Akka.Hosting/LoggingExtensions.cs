@@ -24,7 +24,7 @@ namespace Akka.Hosting
         {
             var setup = new LoggerConfigBuilder(builder);
             configurator(setup);
-            return builder.AddHoconConfiguration(setup.ToConfig(), HoconAddMode.Prepend);
+            return setup.Build(builder);
         }
         
         /// <summary>
