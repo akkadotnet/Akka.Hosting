@@ -172,7 +172,6 @@ namespace Akka.Hosting
         public static Akka.Hosting.LoggerConfigBuilder AddLoggerFactory(this Akka.Hosting.LoggerConfigBuilder configBuilder) { }
         public static Akka.Hosting.LoggerConfigBuilder AddLoggerFactory(this Akka.Hosting.LoggerConfigBuilder configBuilder, Microsoft.Extensions.Logging.ILoggerFactory loggerFactory) { }
         public static Akka.Hosting.AkkaConfigurationBuilder ConfigureLoggers(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Hosting.LoggerConfigBuilder> configurator) { }
-        public static Akka.Hosting.AkkaConfigurationBuilder WithLogFilter(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Event.LogFilterBuilder> logBuilder) { }
     }
     public sealed class MissingActorRegistryEntryException : Akka.Hosting.ActorRegistryException
     {
