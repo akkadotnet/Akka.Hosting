@@ -27,13 +27,6 @@ namespace Akka.Hosting
             return setup.Build(builder);
         }
         
-        public static AkkaConfigurationBuilder WithLogFilter(this AkkaConfigurationBuilder builder, Action<LogFilterBuilder> logBuilder)
-        {
-            var logFilterBuilder = new LogFilterBuilder();
-            logBuilder(logFilterBuilder);
-            return builder.AddSetup(logFilterBuilder.Build());
-        }
-        
         /// <summary>
         /// Add the default Akka.NET logger that sinks all log events to the console
         /// </summary>

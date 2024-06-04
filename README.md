@@ -642,22 +642,7 @@ To set up the `Microsoft.Extensions.Logging` log filtering, you will need to edi
 
 In Akka.NET 1.5.21, we introduced [log filtering for log messages based on the LogSource or the content of a log message](https://getakka.net/articles/utilities/logging.html#filtering-log-messages). Depending on your coding style, you can use this feature in Akka.Hosting in several ways.
 
-1. Using the `WithLogFilter()` `AkkaConfigurationBuilder` extension method.
-
-   The `WithLogFilter()` extension method lets you set up the `LogFilterBuilder` 
-
-   ```csharp
-   builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
-   {
-       configurationBuilder
-           .WithLogFilter(filterBuilder =>
-           {
-               filterBuilder.ExcludeMessageContaining("Test");
-           });
-   });
-   ```
-
-2. Using The `LoggerConfigBuilder.WithLogFilter()` method.
+1. Using The `LoggerConfigBuilder.WithLogFilter()` method.
 
    The `LoggerConfigBuilder.WithLogFilter()` method lets you set up the `LogFilterBuilder`
 
@@ -675,7 +660,7 @@ In Akka.NET 1.5.21, we introduced [log filtering for log messages based on the L
    });
    ```
 
-3. Setting the `loggerConfigBuilder.LogFilterBuilder` property directly.
+2. Setting the `loggerConfigBuilder.LogFilterBuilder` property directly.
 
    ```csharp
    builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
