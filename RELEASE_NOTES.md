@@ -1,3 +1,44 @@
+## [1.5.22] / 4 June 2024
+
+* [Update Akka.NET to 1.5.22](https://github.com/akkadotnet/akka.net/releases/tag/1.5.22)
+* [Add log filtering extension method](https://github.com/akkadotnet/Akka.Hosting/pull/460)
+
+**Filtering Logs In Akka.NET**
+
+In Akka.NET 1.5.21, we introduced [log filtering for log messages based on the LogSource or the content of a log message](https://getakka.net/articles/utilities/logging.html#filtering-log-messages). Depending on your coding style, you can use this feature in Akka.Hosting in several ways.
+
+1. Using The `LoggerConfigBuilder.WithLogFilter()` method.
+
+   The `LoggerConfigBuilder.WithLogFilter()` method lets you set up the `LogFilterBuilder`
+
+   ```csharp
+   builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+   {
+       configurationBuilder
+           .ConfigureLoggers(loggerConfigBuilder =>
+           {
+               loggerConfigBuilder.WithLogFilter(filterBuilder =>
+               {
+                   filterBuilder.ExcludeMessageContaining("Test");
+               });
+           });
+   });
+   ```
+
+2. Setting the `loggerConfigBuilder.LogFilterBuilder` property directly.
+
+   ```csharp
+   builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+   {
+       configurationBuilder
+           .ConfigureLoggers(loggerConfigBuilder =>
+           {
+               loggerConfigBuilder.LogFilterBuilder = new LogFilterBuilder();
+               loggerConfigBuilder.LogFilterBuilder.ExcludeMessageContaining("Test");
+           });
+   });
+   ```
+
 ## [1.5.20] / 30 April 2024
 
 * [Update Akka.NET to 1.5.20](https://github.com/akkadotnet/akka.net/releases/tag/1.5.20)
