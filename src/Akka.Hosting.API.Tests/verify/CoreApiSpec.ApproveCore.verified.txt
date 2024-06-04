@@ -155,6 +155,7 @@ namespace Akka.Hosting
         public Akka.Hosting.DeadLetterOptions? DeadLetterOptions { get; set; }
         public Akka.Hosting.DebugOptions? DebugOptions { get; set; }
         public bool LogConfigOnStart { get; set; }
+        public Akka.Event.LogFilterBuilder? LogFilterBuilder { get; set; }
         public Akka.Event.LogLevel LogLevel { get; set; }
         [System.Obsolete("Use the WithDefaultLogMessageFormatter<T> method instead")]
         public System.Type LogMessageFormatter { get; set; }
@@ -163,6 +164,7 @@ namespace Akka.Hosting
         public Akka.Hosting.LoggerConfigBuilder ClearLoggers() { }
         public Akka.Hosting.LoggerConfigBuilder WithDefaultLogMessageFormatter<T>()
             where T : Akka.Event.ILogMessageFormatter { }
+        public Akka.Hosting.LoggerConfigBuilder WithLogFilter(System.Action<Akka.Event.LogFilterBuilder> filterBuilder) { }
     }
     public static class LoggingExtensions
     {
@@ -170,6 +172,7 @@ namespace Akka.Hosting
         public static Akka.Hosting.LoggerConfigBuilder AddLoggerFactory(this Akka.Hosting.LoggerConfigBuilder configBuilder) { }
         public static Akka.Hosting.LoggerConfigBuilder AddLoggerFactory(this Akka.Hosting.LoggerConfigBuilder configBuilder, Microsoft.Extensions.Logging.ILoggerFactory loggerFactory) { }
         public static Akka.Hosting.AkkaConfigurationBuilder ConfigureLoggers(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Hosting.LoggerConfigBuilder> configurator) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithLogFilter(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Event.LogFilterBuilder> logBuilder) { }
     }
     public sealed class MissingActorRegistryEntryException : Akka.Hosting.ActorRegistryException
     {
