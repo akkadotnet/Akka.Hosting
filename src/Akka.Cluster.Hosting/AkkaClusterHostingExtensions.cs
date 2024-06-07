@@ -1012,6 +1012,34 @@ namespace Akka.Cluster.Hosting
             });
         }
     
+        /// <summary>
+        ///     Starts a <see cref="ShardedDaemonProcess"/> <see cref="DaemonMessageRouter"/> actor for the
+        ///     given entity type <paramref name="name"/> and registers the <see cref="DaemonMessageRouter"/>
+        ///     <see cref="IActorRef"/> with <see typeparamref="TKey"/> in the <see cref="ActorRegistry"/> for this
+        ///     <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="name">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="numberOfInstances">
+        ///     The number of actors the <see cref="DaemonMessageRouter"/> should instantiate during start-up
+        /// </param>
+        /// <param name="propsFactory">
+        ///     Function that, given an integer, returns the <see cref="Actor.Props"/> of the entity actors that will
+        ///     be created by the <see cref="DaemonMessageRouter"/>.
+        /// </param>
+        /// <param name="options">
+        ///     The set of options for configuring <see cref="ShardedDaemonProcessSettings"/>
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="DaemonMessageRouter"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
         public static AkkaConfigurationBuilder WithShardedDaemonProcess<TKey>(
             this AkkaConfigurationBuilder builder,
             string name,
@@ -1056,6 +1084,34 @@ namespace Akka.Cluster.Hosting
             return builder;
         }
 
+        /// <summary>
+        ///     Starts a <see cref="ShardedDaemonProcess"/> <see cref="DaemonMessageRouter"/> proxy actor that
+        ///     points to a <see cref="ShardedDaemonProcess"/> hosted on a different <paramref name="role"/> inside
+        ///     the cluster and registers the <see cref="IActorRef"/> with <typeparamref name="TKey"/> in the
+        ///     <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+        ///
+        ///     Note that the <paramref name="name"/>, <paramref name="numberOfInstances"/>, and
+        ///     <paramref name="role"/> argument MUST match the target <see cref="ShardedDaemonProcess"/>
+        ///     for the proxy to work.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="name">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="numberOfInstances">
+        ///     The number of actors the <see cref="DaemonMessageRouter"/> should instantiate during start-up
+        /// </param>
+        /// <param name="role">
+        ///     The role of the Akka.Cluster member that is hosting this <see cref="ShardedDaemonProcess"/>.
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="DaemonMessageRouter"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
         public static AkkaConfigurationBuilder WithShardedDaemonProcessProxy<TKey>(
             this AkkaConfigurationBuilder builder,
             string name,
