@@ -1011,6 +1011,69 @@ namespace Akka.Cluster.Hosting
                 registry.Register<TKey>(shardRegionProxy);
             });
         }
+    
+        public static AkkaConfigurationBuilder WithShardedDaemonProcess<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string name,
+            int numberOfInstances,
+            Func<int, Props> propsFactory,
+            ClusterDaemonOptions? options = null)
+        {
+            var config = options?.ToHocon();
+            if (config != null)
+                builder.AddHocon(config, HoconAddMode.Prepend);
+            
+            builder
+                .AddHocon(ClusterSharding.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(ClusterSingletonManager.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
+
+            builder.WithActors((system, registry) =>
+            {
+                var settings = ShardedDaemonProcessSettings.Create(system);
+                
+                if (options is not null)
+                {
+                    if (!string.IsNullOrWhiteSpace(options.Role))
+                        settings = settings.WithRole(options.Role!);
+                    if (options.ShardingSettings is not null)
+                        settings = settings.WithShardingSettings(options.ShardingSettings);
+                    if (options.KeepAliveInterval is not null)
+                        settings = settings.WithKeepAliveInterval(options.KeepAliveInterval.Value);
+                }
+
+                var router = ShardedDaemonProcess.Get(system: system).Init(
+                    name: name,
+                    numberOfInstances: numberOfInstances,
+                    propsFactory: propsFactory,
+                    settings: settings,
+                    stopMessage: options?.HandoffStopMessage);
+                
+                if(router is not null)
+                    registry.Register<TKey>(router);
+            });
+
+            return builder;
+        }
+
+        public static AkkaConfigurationBuilder WithShardedDaemonProcessProxy<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string name,
+            int numberOfInstances,
+            string role)
+        {
+            builder
+                .AddHocon(ClusterSharding.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(ClusterSingletonProxy.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append)
+                .WithActors((system, registry) =>
+                {
+                    var proxyRouter = ShardedDaemonProcess.Get(system).InitProxy(name, numberOfInstances, role);
+                    registry.Register<TKey>(proxyRouter);
+                });
+
+            return builder;
+        }
 
         /// <summary>
         ///     Starts <see cref="DistributedPubSub"/> on this node immediately upon <see cref="ActorSystem"/> startup.
