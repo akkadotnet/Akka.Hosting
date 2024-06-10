@@ -1,3 +1,27 @@
+## [1.5.24] / 10 June 2024
+
+* [Update Akka.NET to 1.5.24](https://github.com/akkadotnet/akka.net/releases/tag/1.5.24)
+* [Add ShardedDaemonProcess integration](https://github.com/akkadotnet/Akka.Hosting/pull/463)
+
+You can now start `ShardedDaemonProcess` host and proxy using Akka.Hosting through 2 new _Akka.Cluster.Hosting_ extension methods
+ 
+```csharp
+public static AkkaConfigurationBuilder WithShardedDaemonProcess<TKey>(
+   this AkkaConfigurationBuilder builder,
+   string name,
+   int numberOfInstances,
+   Func<ActorSystem, IActorRegistry, IDependencyResolver, Func<int, Props>> entityPropsFactory,
+   ClusterDaemonOptions? options = null)
+```
+
+```csharp
+public static AkkaConfigurationBuilder WithShardedDaemonProcessProxy<TKey>(
+   this AkkaConfigurationBuilder builder,
+   string name,
+   int numberOfInstances,
+   string role)
+```
+
 ## [1.5.22] / 4 June 2024
 
 * [Update Akka.NET to 1.5.22](https://github.com/akkadotnet/akka.net/releases/tag/1.5.22)
