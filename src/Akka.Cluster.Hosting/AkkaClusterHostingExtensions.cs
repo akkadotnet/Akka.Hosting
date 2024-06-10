@@ -1031,6 +1031,8 @@ namespace Akka.Cluster.Hosting
         /// <param name="entityPropsFactory">
         ///     Function that, given an integer, returns the <see cref="Actor.Props"/> of the entity actors that will
         ///     be created by the <see cref="DaemonMessageRouter"/>.
+        ///
+        ///     This function also accepts the <see cref="ActorSystem"/> and the <see cref="IActorRegistry"/> as inputs.    
         /// </param>
         /// <param name="options">
         ///     The set of options for configuring <see cref="ShardedDaemonProcessSettings"/>
