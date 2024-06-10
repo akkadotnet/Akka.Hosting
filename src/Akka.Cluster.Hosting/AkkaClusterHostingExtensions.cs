@@ -13,6 +13,7 @@ using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Coordination;
 using Akka.DependencyInjection;
+using Akka.Event;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
@@ -1027,7 +1028,7 @@ namespace Akka.Cluster.Hosting
         /// <param name="numberOfInstances">
         ///     The number of actors the <see cref="DaemonMessageRouter"/> should instantiate during start-up
         /// </param>
-        /// <param name="propsFactory">
+        /// <param name="entityPropsFactory">
         ///     Function that, given an integer, returns the <see cref="Actor.Props"/> of the entity actors that will
         ///     be created by the <see cref="DaemonMessageRouter"/>.
         /// </param>
@@ -1044,7 +1045,7 @@ namespace Akka.Cluster.Hosting
             this AkkaConfigurationBuilder builder,
             string name,
             int numberOfInstances,
-            Func<int, Props> propsFactory,
+            Func<ActorSystem, IActorRegistry, IDependencyResolver, Func<int, Props>> entityPropsFactory,
             ClusterDaemonOptions? options = null)
         {
             var config = options?.ToHocon();
@@ -1056,7 +1057,7 @@ namespace Akka.Cluster.Hosting
                 .AddHocon(ClusterSingletonManager.DefaultConfig(), HoconAddMode.Append)
                 .AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
 
-            builder.WithActors((system, registry) =>
+            builder.WithActors((system, registry, resolver) =>
             {
                 var settings = ShardedDaemonProcessSettings.Create(system);
                 
@@ -1069,11 +1070,13 @@ namespace Akka.Cluster.Hosting
                     if (options.KeepAliveInterval is not null)
                         settings = settings.WithKeepAliveInterval(options.KeepAliveInterval.Value);
                 }
+                
+                var props = entityPropsFactory(system, registry, resolver);
 
                 var router = ShardedDaemonProcess.Get(system: system).Init(
                     name: name,
                     numberOfInstances: numberOfInstances,
-                    propsFactory: propsFactory,
+                    propsFactory: props,
                     settings: settings,
                     stopMessage: options?.HandoffStopMessage);
                 

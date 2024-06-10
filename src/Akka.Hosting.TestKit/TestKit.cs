@@ -102,19 +102,24 @@ namespace Akka.Hosting.TestKit
                     });
                 }
 
-                ConfigureAkka(builder, provider);
-
-                builder.AddStartup((system, _) =>
+                builder.StartActors((system, registry) =>
                 {
                     try
                     {
                         base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
-                        _initialized.SetResult(Done.Instance);
+                        registry.Register<TestProbe>(TestActor);
                     }
                     catch (Exception e)
                     {
                         _initialized.SetException(e);
                     }
+                });
+
+                ConfigureAkka(builder, provider);
+
+                builder.AddStartup((_, _) =>
+                {
+                    _initialized.TrySetResult(Done.Instance);
                 });
             });
         }
