@@ -13,6 +13,7 @@ using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Coordination;
 using Akka.DependencyInjection;
+using Akka.Event;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
@@ -1010,6 +1011,129 @@ namespace Akka.Cluster.Hosting
 
                 registry.Register<TKey>(shardRegionProxy);
             });
+        }
+    
+        /// <summary>
+        ///     Starts a <see cref="ShardedDaemonProcess"/> <see cref="DaemonMessageRouter"/> actor for the
+        ///     given entity type <paramref name="name"/> and registers the <see cref="DaemonMessageRouter"/>
+        ///     <see cref="IActorRef"/> with <see typeparamref="TKey"/> in the <see cref="ActorRegistry"/> for this
+        ///     <see cref="ActorSystem"/>.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="name">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="numberOfInstances">
+        ///     The number of actors the <see cref="DaemonMessageRouter"/> should instantiate during start-up
+        /// </param>
+        /// <param name="entityPropsFactory">
+        ///     Function that, given an integer, returns the <see cref="Actor.Props"/> of the entity actors that will
+        ///     be created by the <see cref="DaemonMessageRouter"/>.
+        ///
+        ///     This function also accepts the <see cref="ActorSystem"/> and the <see cref="IActorRegistry"/> as inputs.    
+        /// </param>
+        /// <param name="options">
+        ///     The set of options for configuring <see cref="ShardedDaemonProcessSettings"/>
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="DaemonMessageRouter"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithShardedDaemonProcess<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string name,
+            int numberOfInstances,
+            Func<ActorSystem, IActorRegistry, IDependencyResolver, Func<int, Props>> entityPropsFactory,
+            ClusterDaemonOptions? options = null)
+        {
+            var config = options?.ToHocon();
+            if (config != null)
+                builder.AddHocon(config, HoconAddMode.Prepend);
+            
+            builder
+                .AddHocon(ClusterSharding.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(ClusterSingletonManager.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
+
+            builder.WithActors((system, registry, resolver) =>
+            {
+                var settings = ShardedDaemonProcessSettings.Create(system);
+                
+                if (options is not null)
+                {
+                    if (!string.IsNullOrWhiteSpace(options.Role))
+                        settings = settings.WithRole(options.Role!);
+                    if (options.ShardingSettings is not null)
+                        settings = settings.WithShardingSettings(options.ShardingSettings);
+                    if (options.KeepAliveInterval is not null)
+                        settings = settings.WithKeepAliveInterval(options.KeepAliveInterval.Value);
+                }
+                
+                var props = entityPropsFactory(system, registry, resolver);
+
+                var router = ShardedDaemonProcess.Get(system: system).Init(
+                    name: name,
+                    numberOfInstances: numberOfInstances,
+                    propsFactory: props,
+                    settings: settings,
+                    stopMessage: options?.HandoffStopMessage);
+                
+                if(router is not null)
+                    registry.Register<TKey>(router);
+            });
+
+            return builder;
+        }
+
+        /// <summary>
+        ///     Starts a <see cref="ShardedDaemonProcess"/> <see cref="DaemonMessageRouter"/> proxy actor that
+        ///     points to a <see cref="ShardedDaemonProcess"/> hosted on a different <paramref name="role"/> inside
+        ///     the cluster and registers the <see cref="IActorRef"/> with <typeparamref name="TKey"/> in the
+        ///     <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
+        ///
+        ///     Note that the <paramref name="name"/>, <paramref name="numberOfInstances"/>, and
+        ///     <paramref name="role"/> argument MUST match the target <see cref="ShardedDaemonProcess"/>
+        ///     for the proxy to work.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="name">
+        ///     The name of the entity type
+        /// </param>
+        /// <param name="numberOfInstances">
+        ///     The number of actors the <see cref="DaemonMessageRouter"/> should instantiate during start-up
+        /// </param>
+        /// <param name="role">
+        ///     The role of the Akka.Cluster member that is hosting this <see cref="ShardedDaemonProcess"/>.
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The type key to use to retrieve the <see cref="IActorRef"/> for this <see cref="DaemonMessageRouter"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithShardedDaemonProcessProxy<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string name,
+            int numberOfInstances,
+            string role)
+        {
+            builder
+                .AddHocon(ClusterSharding.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(ClusterSingletonProxy.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append)
+                .WithActors((system, registry) =>
+                {
+                    var proxyRouter = ShardedDaemonProcess.Get(system).InitProxy(name, numberOfInstances, role);
+                    registry.Register<TKey>(proxyRouter);
+                });
+
+            return builder;
         }
 
         /// <summary>

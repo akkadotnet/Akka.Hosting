@@ -27,9 +27,19 @@ namespace Akka.Cluster.Hosting
         [System.Obsolete("Use IMessageExtractor instead of the ExtractEntityId and ExtractShardId delegates" +
             ".")]
         public static Akka.Hosting.AkkaConfigurationBuilder WithShardRegionProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string typeName, string roleName, Akka.Cluster.Sharding.ExtractEntityId extractEntityId, Akka.Cluster.Sharding.ExtractShardId extractShardId) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardedDaemonProcess<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string name, int numberOfInstances, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, Akka.DependencyInjection.IDependencyResolver, System.Func<int, Akka.Actor.Props>> entityPropsFactory, Akka.Cluster.Hosting.ClusterDaemonOptions? options = null) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithShardedDaemonProcessProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string name, int numberOfInstances, string role) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithSingleton<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonName, Akka.Actor.Props actorProps, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null, bool createProxyToo = true) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithSingleton<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonName, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, Akka.DependencyInjection.IDependencyResolver, Akka.Actor.Props> propsFactory, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null, bool createProxyToo = true) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithSingletonProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonName, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null, string? singletonManagerPath = null) { }
+    }
+    public sealed class ClusterDaemonOptions
+    {
+        public ClusterDaemonOptions() { }
+        public object? HandoffStopMessage { get; set; }
+        public System.TimeSpan? KeepAliveInterval { get; set; }
+        public string? Role { get; set; }
+        public Akka.Cluster.Sharding.ClusterShardingSettings? ShardingSettings { get; set; }
     }
     public sealed class ClusterOptions
     {
