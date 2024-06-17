@@ -1,3 +1,7 @@
+## [1.5.25] / 17 June 2024
+
+* [Update Akka.NET to 1.5.25](https://github.com/akkadotnet/akka.net/releases/tag/1.5.25), which resolves a critical bug: [Akka.Logging: v1.5.21 appears to have truncated log source, timestamps, etc from all log messages ](https://github.com/akkadotnet/akka.net/issues/7255)
+
 ## [1.5.24] / 10 June 2024
 
 * [Update Akka.NET to 1.5.24](https://github.com/akkadotnet/akka.net/releases/tag/1.5.24)
