@@ -7,6 +7,21 @@ namespace Akka.Hosting.TestKit.Internals
     public class XUnitLogger: ILogger
     {
         private const string NullFormatted = "[null]";
+        
+        internal sealed class NullScope : IDisposable
+        {
+            public static NullScope Instance { get; } = new NullScope();
+
+            private NullScope()
+            {
+            }
+
+            /// <inheritdoc />
+            public void Dispose()
+            {
+            }
+        }
+
 
         private readonly string _category;
         private readonly ITestOutputHelper _helper;
@@ -60,7 +75,7 @@ namespace Akka.Hosting.TestKit.Internals
 
         public IDisposable BeginScope<TState>(TState state) where TState : notnull
         {
-            throw new NotImplementedException();
+            return NullScope.Instance;
         }
         
         private static bool TryFormatMessage<TState>(

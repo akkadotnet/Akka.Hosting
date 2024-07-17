@@ -31,4 +31,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Akka.Hosting.TestKit">
+      <HintPath>bin\Debug\net6.0\Akka.Hosting.TestKit.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>
