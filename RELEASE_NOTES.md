@@ -1,6 +1,7 @@
-## [1.5.25] / 17 June 2024
+## [1.5.26] / 17 July 2024
 
-* [Update Akka.NET to 1.5.25](https://github.com/akkadotnet/akka.net/releases/tag/1.5.25), which resolves a critical bug: [Akka.Logging: v1.5.21 appears to have truncated log source, timestamps, etc from all log messages ](https://github.com/akkadotnet/akka.net/issues/7255)
+* [Update Akka.NET to 1.5.26](https://github.com/akkadotnet/akka.net/releases/tag/1.5.26)
+* Added scopes to all Microsoft.Extensions.Logging output, for better semantic logging support.
 
 ## [1.5.24] / 10 June 2024
 
