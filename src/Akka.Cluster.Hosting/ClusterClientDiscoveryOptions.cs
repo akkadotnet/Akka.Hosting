@@ -1,18 +1,28 @@
 ﻿using System;
 using System.Text;
+using Akka.Cluster.Tools.Client;
 using Akka.Discovery.AwsApi.Ec2;
 using Akka.Discovery.AwsApi.Ecs;
 using Akka.Discovery.Azure;
 using Akka.Discovery.Config.Hosting;
 using Akka.Discovery.KubernetesApi;
 using Akka.Hosting;
+using Akka.Management.Cluster.Bootstrap;
 
 namespace Akka.Cluster.Hosting;
 
 public sealed class ClusterClientDiscoveryOptions
 {
     /// <summary>
-    /// The discovery sub-system that will be used to discover cluster client contacts
+    ///     <para>
+    ///         The discovery sub-system that will be used to discover cluster client contacts. This has to be
+    ///         an instance of <see cref="KubernetesDiscoveryOptions"/>, <see cref="AkkaDiscoveryOptions"/>,
+    ///         <see cref="Ec2ServiceDiscoveryOptions"/>, <see cref="EcsServiceDiscoveryOptions"/>, or
+    ///         <see cref="ConfigServiceDiscoveryOptions"/>.
+    ///     </para>
+    ///     Note that if you're also using Akka.Discovery for <see cref="ClusterBootstrap"/>, in order for
+    ///     <see cref="ClusterClientDiscovery"/> to work, you <b>will need</b> to set
+    ///     <c>DiscoveryOptions.IsDefaultPlugin</c> to <c>false</c>
     /// </summary>
     public IHoconOption DiscoveryOptions { get; set; } = null!;
     
