@@ -13,13 +13,11 @@ using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Coordination;
 using Akka.DependencyInjection;
-using Akka.Event;
+using Akka.Discovery;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
-using Akka.Remote;
 using Akka.Remote.Hosting;
-using Akka.Util;
 
 #nullable enable
 namespace Akka.Cluster.Hosting
@@ -1518,6 +1516,63 @@ namespace Akka.Cluster.Hosting
             var clientConfig = config.GetConfig("akka.cluster.client");
             return ClusterClientSettings.Create(clientConfig)
                 .WithInitialContacts(initialContacts.ToImmutableHashSet());
+        }
+
+        public static AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string serviceName,
+            IHoconOption discoveryOptions,
+            string? portName = null,
+            TimeSpan? retryInterval = null,
+            TimeSpan? timeout = null,
+            int? numberOfContacts = null,
+            string? clientActorName = null)
+        {
+            return builder.ApplyClusterClientDiscovery<TKey>(new ClusterClientDiscoveryOptions
+            {
+                DiscoveryOptions = discoveryOptions,
+                ServiceName = serviceName,
+                PortName = portName,
+                RetryInterval = retryInterval,
+                Timeout = timeout,
+                NumberOfContacts = numberOfContacts,
+                ClientActorName = clientActorName
+            });
+        }
+
+        public static AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            Action<ClusterClientDiscoveryOptions> configure)
+        {
+            var options = new ClusterClientDiscoveryOptions();
+            configure(options);
+            return builder.ApplyClusterClientDiscovery<TKey>(options);
+        }
+
+        public static AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            ClusterClientDiscoveryOptions options)
+        {
+            return builder.ApplyClusterClientDiscovery<TKey>(options);
+        }
+
+        private static AkkaConfigurationBuilder ApplyClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            ClusterClientDiscoveryOptions options)
+        {
+            options.Apply(builder);
+
+            builder
+                .AddHocon(ClusterClientReceptionist.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(DiscoveryProvider.DefaultConfiguration(), HoconAddMode.Append);
+            
+            builder.WithActors((system, registry) =>
+                {
+                    var clusterClient = system.ActorOf(ClusterClient.Props(ClusterClientSettings.Create(system)), options.ClientActorName);
+                    registry.TryRegister<TKey>(clusterClient);
+                });
+            
+            return builder;
         }
     }
 }
