@@ -1650,17 +1650,20 @@ namespace Akka.Cluster.Hosting
             this AkkaConfigurationBuilder builder,
             ClusterClientDiscoveryOptions options)
         {
-            options.Apply(builder);
+            options.DiscoveryOptions.Apply(builder);
 
             builder
                 .AddHocon(ClusterClientReceptionist.DefaultConfig(), HoconAddMode.Append)
                 .AddHocon(DiscoveryProvider.DefaultConfiguration(), HoconAddMode.Append);
             
             builder.WithActors((system, registry) =>
-                {
-                    var clusterClient = system.ActorOf(ClusterClient.Props(ClusterClientSettings.Create(system)), options.ClientActorName);
-                    registry.TryRegister<TKey>(clusterClient);
-                });
+            {
+                var config = options.ToConfig()
+                    .WithFallback(system.Settings.Config.GetConfig("akka.cluster.client"));
+                
+                var clusterClient = system.ActorOf(ClusterClient.Props(ClusterClientSettings.Create(config)), options.ClientActorName);
+                registry.TryRegister<TKey>(clusterClient);
+            });
             
             return builder;
         }

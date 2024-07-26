@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using Akka.Cluster.Tools.Client;
+using Akka.Configuration;
 using Akka.Hosting;
 
 namespace Akka.Cluster.Hosting;
@@ -49,13 +50,14 @@ public sealed class ClusterClientDiscoveryOptions
     /// The name of the cluster client actor
     /// </summary>
     public string? ClientActorName { get; set; }
+
+    public Config ToConfig() => ToString();
     
-    internal void Apply(AkkaConfigurationBuilder builder)
+    public override string ToString()
     {
         Validate();
         
         var sb = new StringBuilder();
-        sb.AppendLine("akka.cluster.client {");
         sb.AppendLine("use-initial-contacts-discovery = true");
         sb.AppendLine("discovery {");
         sb.AppendLine($"method = {DiscoveryOptions.ConfigPath.ToHocon()}");
@@ -68,10 +70,9 @@ public sealed class ClusterClientDiscoveryOptions
             sb.AppendLine($"interval = {RetryInterval.ToHocon()}");
         if (Timeout is not null)
             sb.AppendLine($"resolve-timeout = {Timeout.ToHocon()}");
-        
-        sb.AppendLine("}}");
-            
-        DiscoveryOptions.Apply(builder);
+        sb.AppendLine("}");
+
+        return sb.ToString();
     }
 
     private void Validate()
