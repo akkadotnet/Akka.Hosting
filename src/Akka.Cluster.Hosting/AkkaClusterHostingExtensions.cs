@@ -1658,7 +1658,7 @@ namespace Akka.Cluster.Hosting
             
             builder.WithActors((system, registry) =>
             {
-                var config = options.ToConfig()
+                var config = ConfigurationFactory.ParseString(options.ToString())
                     .WithFallback(system.Settings.Config.GetConfig("akka.cluster.client"));
                 
                 var clusterClient = system.ActorOf(ClusterClient.Props(ClusterClientSettings.Create(config)), options.ClientActorName);

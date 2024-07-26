@@ -51,8 +51,6 @@ public sealed class ClusterClientDiscoveryOptions
     /// </summary>
     public string? ClientActorName { get; set; }
 
-    public Config ToConfig() => ToString();
-    
     public override string ToString()
     {
         Validate();

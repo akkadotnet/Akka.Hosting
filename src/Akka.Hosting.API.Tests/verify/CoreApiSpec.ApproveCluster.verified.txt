@@ -46,6 +46,7 @@ namespace Akka.Cluster.Hosting
         public System.TimeSpan? RetryInterval { get; set; }
         public string ServiceName { get; set; }
         public System.TimeSpan? Timeout { get; set; }
+        public override string ToString() { }
     }
     public sealed class ClusterDaemonOptions
     {
