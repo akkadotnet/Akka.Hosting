@@ -8,6 +8,7 @@ namespace Akka.Cluster.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<Akka.Actor.Address> initialContactAddresses, string receptionistActorName = "receptionist") { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientReceptionist(this Akka.Hosting.AkkaConfigurationBuilder builder, string name = "receptionist", string? role = null) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClustering(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ClusterOptions? options = null) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithDefaultClusterShardingSettings(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedData(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.DDataOptions options) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedData(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Cluster.Hosting.DDataOptions> configurator) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedPubSub(this Akka.Hosting.AkkaConfigurationBuilder builder, string role) { }
@@ -104,6 +105,8 @@ namespace Akka.Cluster.Hosting
         public Akka.Persistence.Hosting.SnapshotOptions? SnapshotOptions { get; set; }
         public string? SnapshotPluginId { get; set; }
         public Akka.Cluster.Sharding.StateStoreMode? StateStoreMode { get; set; }
+        public Akka.Configuration.Config ToConfig() { }
+        public override string ToString() { }
     }
     public sealed class ShardingDDataOptions : Akka.Cluster.Hosting.DDataOptions
     {
