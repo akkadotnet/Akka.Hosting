@@ -13,9 +13,5 @@
   <ItemGroup>
     <PackageReference Include="Akka.Cluster.Sharding" Version="$(AkkaVersion)" />
     <PackageReference Include="Akka.DistributedData" Version="$(AkkaVersion)" />
-    <PackageReference Include="Akka.Management" Version="$(AkkaManagementVersion)" />
-    <PackageReference Include="Akka.Discovery.KubernetesApi" Version="$(AkkaManagementVersion)" />
-    <PackageReference Include="Akka.Discovery.AwsApi" Version="$(AkkaManagementVersion)" />
-    <PackageReference Include="Akka.Discovery.Azure" Version="$(AkkaManagementVersion)" />
   </ItemGroup>
 </Project>
