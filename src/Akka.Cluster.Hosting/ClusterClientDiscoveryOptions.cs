@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Text;
 using Akka.Cluster.Tools.Client;
-using Akka.Discovery.AwsApi.Ec2;
-using Akka.Discovery.AwsApi.Ecs;
-using Akka.Discovery.Azure;
-using Akka.Discovery.Config.Hosting;
-using Akka.Discovery.KubernetesApi;
 using Akka.Hosting;
-using Akka.Management.Cluster.Bootstrap;
 
 namespace Akka.Cluster.Hosting;
 
@@ -16,11 +10,11 @@ public sealed class ClusterClientDiscoveryOptions
     /// <summary>
     ///     <para>
     ///         The discovery sub-system that will be used to discover cluster client contacts. This has to be
-    ///         an instance of <see cref="KubernetesDiscoveryOptions"/>, <see cref="AkkaDiscoveryOptions"/>,
-    ///         <see cref="Ec2ServiceDiscoveryOptions"/>, <see cref="EcsServiceDiscoveryOptions"/>, or
-    ///         <see cref="ConfigServiceDiscoveryOptions"/>.
+    ///         an instance of <c>KubernetesDiscoveryOptions</c>, <c>AkkaDiscoveryOptions</c>,
+    ///         <c>Ec2ServiceDiscoveryOptions</c>, <c>EcsServiceDiscoveryOptions</c>,
+    ///         or <c>ConfigServiceDiscoveryOptions</c>.
     ///     </para>
-    ///     Note that if you're also using Akka.Discovery for <see cref="ClusterBootstrap"/>, in order for
+    ///     Note that if you're also using Akka.Discovery for ClusterBootstrap, in order for
     ///     <see cref="ClusterClientDiscovery"/> to work, you <b>will need</b> to set
     ///     <c>DiscoveryOptions.IsDefaultPlugin</c> to <c>false</c>
     /// </summary>
@@ -82,17 +76,15 @@ public sealed class ClusterClientDiscoveryOptions
 
     private void Validate()
     {
-        if (DiscoveryOptions is not ConfigServiceDiscoveryOptions
-            or KubernetesDiscoveryOptions
-            or AkkaDiscoveryOptions
-            or Ec2ServiceDiscoveryOptions
-            or EcsServiceDiscoveryOptions)
+        var type = DiscoveryOptions.GetType().Name;
+        if(!(type.Contains("ConfigServiceDiscoveryOptions") 
+             || type.Contains("KubernetesDiscoveryOptions")
+             || type.Contains("AkkaDiscoveryOptions")
+             || type.Contains("Ec2ServiceDiscoveryOptions")
+             || type.Contains("EcsServiceDiscoveryOptions")))
             throw new ArgumentException(
-                $"Discovery options must be of Type {nameof(ConfigServiceDiscoveryOptions)}, " +
-                $"{nameof(KubernetesDiscoveryOptions)}, " +
-                $"{nameof(AkkaDiscoveryOptions)}, " +
-                $"{nameof(Ec2ServiceDiscoveryOptions)}, " +
-                $"or {nameof(EcsServiceDiscoveryOptions)}",
+                "Discovery options must be of Type KubernetesDiscoveryOptions, AkkaDiscoveryOptions, " +
+                "Ec2ServiceDiscoveryOptions, EcsServiceDiscoveryOptions, or ConfigServiceDiscoveryOptions",
                 nameof(DiscoveryOptions));
 
         if (string.IsNullOrWhiteSpace(ServiceName))
