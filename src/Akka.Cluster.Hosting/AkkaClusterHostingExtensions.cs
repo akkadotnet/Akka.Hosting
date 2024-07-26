@@ -279,7 +279,7 @@ namespace Akka.Cluster.Hosting
         /// <summary>
         ///     <para>
         ///         Settings for the Distributed Data replicator.
-        ///         The <see cref="DistributedData.Role"/> property is not used. The distributed-data
+        ///         The <see cref="ShardingDDataOptions.Role"/> property is not used. The distributed-data
         ///         role will be the same as <see cref="ShardOptions.Role"/>.
         ///         Note that there is one Replicator per role and it's not possible
         ///         to have different distributed-data settings for different sharding entity types.
@@ -287,6 +287,9 @@ namespace Akka.Cluster.Hosting
         ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.DData"/>
         /// </summary>
+        [Obsolete("This property is not being applied to the ActorSystem anymore. " +
+                  "Use manual HOCON configuration to set \"akka.cluster.sharding.distributed-data\" values. " +
+                  "Since v1.5.27")]
         public ShardingDDataOptions DistributedData { get; } = new();
 
         /// <summary>
@@ -643,35 +646,6 @@ namespace Akka.Cluster.Hosting
         }
 
         /// <summary>
-        ///     Applies a default setting that, if not overriden, will be applied to all shard regions
-        /// </summary>
-        /// <param name="builder">
-        ///     The builder instance being configured.
-        /// </param>
-        /// <param name="shardOptions">
-        ///     The set of options for configuring <see cref="ClusterShardingSettings"/>
-        /// </param>
-        /// <returns>
-        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
-        /// </returns>
-        public static AkkaConfigurationBuilder WithDefaultClusterShardingSettings(
-            this AkkaConfigurationBuilder builder,
-            ShardOptions shardOptions)
-        {
-            shardOptions.DistributedData.Apply(builder);
-            
-            var sb = new StringBuilder(shardOptions.ToString());
-            if (sb.Length <= 0) 
-                return builder;
-            
-            sb.Insert(0, "akka.cluster.sharding {\n");
-            sb.AppendLine("}");
-            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-
-            return builder;
-        }
-        
-        /// <summary>
         ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
         ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
         ///     <see cref="ActorRegistry"/> for this <see cref="ActorSystem"/>.
@@ -874,7 +848,6 @@ namespace Akka.Cluster.Hosting
             IMessageExtractor messageExtractor,
             ShardOptions shardOptions)
         {
-            shardOptions.DistributedData.Apply(builder);
             builder.AddHocon(
                 ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
                 HoconAddMode.Append);
@@ -940,7 +913,6 @@ namespace Akka.Cluster.Hosting
             ExtractShardId extractShardId,
             ShardOptions shardOptions)
         {
-            shardOptions.DistributedData.Apply(builder);
             builder.AddHocon(
                 ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
                 HoconAddMode.Append);
