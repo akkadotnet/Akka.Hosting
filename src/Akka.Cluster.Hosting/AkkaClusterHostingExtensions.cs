@@ -1536,11 +1536,11 @@ namespace Akka.Cluster.Hosting
         /// <param name="discoveryOptions">
         ///     <para>
         ///         The discovery sub-system that will be used to discover cluster client contacts. This has to be
-        ///         an instance of <see cref="KubernetesDiscoveryOptions"/>, <see cref="AkkaDiscoveryOptions"/>,
-        ///         <see cref="Ec2ServiceDiscoveryOptions"/>, <see cref="EcsServiceDiscoveryOptions"/>, or
-        ///         <see cref="ConfigServiceDiscoveryOptions"/>.
+        ///         an instance of <c>KubernetesDiscoveryOptions</c>, <c>AkkaDiscoveryOptions</c>,
+        ///         <c>Ec2ServiceDiscoveryOptions"</c>, <c>EcsServiceDiscoveryOptions"</c>, or
+        ///         <c>"ConfigServiceDiscoveryOptions"</c>.
         ///     </para>
-        ///     Note that if you're also using Akka.Discovery for <see cref="ClusterBootstrap"/>, in order for
+        ///     Note that if you're also using Akka.Discovery for <c>ClusterBootstrap</c>, in order for
         ///     <see cref="ClusterClientDiscovery"/> to work, you <b>will need</b> to set
         ///     <c>discoveryOptions.IsDefaultPlugin</c> to <c>false</c>
         /// </param>
@@ -1646,7 +1646,7 @@ namespace Akka.Cluster.Hosting
             return builder.ApplyClusterClientDiscovery<TKey>(options);
         }
 
-        private static AkkaConfigurationBuilder ApplyClusterClientDiscovery<TKey>(
+        internal static AkkaConfigurationBuilder ApplyClusterClientDiscovery<TKey>(
             this AkkaConfigurationBuilder builder,
             ClusterClientDiscoveryOptions options)
         {

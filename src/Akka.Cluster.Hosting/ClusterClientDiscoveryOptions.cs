@@ -60,7 +60,7 @@ public sealed class ClusterClientDiscoveryOptions
         sb.AppendLine("discovery {");
         sb.AppendLine($"method = {DiscoveryOptions.ConfigPath.ToHocon()}");
         sb.AppendLine($"service-name = {ServiceName.ToHocon()}");
-        if (string.IsNullOrWhiteSpace(PortName))
+        if (!string.IsNullOrWhiteSpace(PortName))
             sb.AppendLine($"port-name = {PortName.ToHocon()}");
         if (NumberOfContacts is not null)
             sb.AppendLine($"number-of-contacts = {NumberOfContacts.ToHocon()}");
@@ -96,7 +96,7 @@ public sealed class ClusterClientDiscoveryOptions
             throw new ArgumentException("Timeout must be greater than zero", nameof(Timeout));
 
         if (NumberOfContacts < 1)
-            throw new ArgumentException("Number of contacts must be greater than 0", nameof(NumberOfContacts));
+            throw new ArgumentException("Number of contacts must be greater than zero", nameof(NumberOfContacts));
 
         if (ClientActorName is not null && string.IsNullOrWhiteSpace(ClientActorName))
             throw new ArgumentException("Cluster client actor name must not be empty or whitespace", nameof(ClientActorName));
