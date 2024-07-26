@@ -8,7 +8,6 @@ namespace Akka.Cluster.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<Akka.Actor.Address> initialContactAddresses, string receptionistActorName = "receptionist") { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientReceptionist(this Akka.Hosting.AkkaConfigurationBuilder builder, string name = "receptionist", string? role = null) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClustering(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ClusterOptions? options = null) { }
-        public static Akka.Hosting.AkkaConfigurationBuilder WithDefaultClusterShardingSettings(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ShardOptions shardOptions) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedData(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.DDataOptions options) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedData(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Cluster.Hosting.DDataOptions> configurator) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedPubSub(this Akka.Hosting.AkkaConfigurationBuilder builder, string role) { }
@@ -90,6 +89,9 @@ namespace Akka.Cluster.Hosting
     public sealed class ShardOptions
     {
         public ShardOptions() { }
+        [System.Obsolete("This property is not being applied to the ActorSystem anymore. Use manual HOCON c" +
+            "onfiguration to set \"akka.cluster.sharding.distributed-data\" values. Since v1.5." +
+            "27")]
         public Akka.Cluster.Hosting.ShardingDDataOptions DistributedData { get; }
         public bool? FailOnInvalidEntityStateTransition { get; set; }
         public object? HandOffStopMessage { get; set; }
