@@ -641,6 +641,35 @@ namespace Akka.Cluster.Hosting
             builder.AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
             return builder;
         }
+
+        /// <summary>
+        ///     Applies a default setting that, if not overriden, will be applied to all shard regions
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="shardOptions">
+        ///     The set of options for configuring <see cref="ClusterShardingSettings"/>
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithDefaultClusterShardingSettings(
+            this AkkaConfigurationBuilder builder,
+            ShardOptions shardOptions)
+        {
+            shardOptions.DistributedData.Apply(builder);
+            
+            var sb = new StringBuilder(shardOptions.ToString());
+            if (sb.Length <= 0) 
+                return builder;
+            
+            sb.Insert(0, "akka.cluster.sharding {\n");
+            sb.AppendLine("}");
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+
+            return builder;
+        }
         
         /// <summary>
         ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
