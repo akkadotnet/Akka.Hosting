@@ -14,10 +14,8 @@ using Akka.Configuration;
 using Akka.Coordination;
 using Akka.DependencyInjection;
 using Akka.Discovery;
-using Akka.Discovery.Config.Hosting;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
-using Akka.Management.Cluster.Bootstrap;
 using Akka.Persistence.Hosting;
 using Akka.Remote.Hosting;
 
