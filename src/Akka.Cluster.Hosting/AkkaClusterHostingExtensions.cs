@@ -305,8 +305,8 @@ namespace Akka.Cluster.Hosting
         /// or <see cref="ShouldPassivateIdleEntities"/> is set to false.
         /// </summary>
         public TimeSpan? PassivateIdleEntityAfter { get; set; }
-
-        public Config ToConfig() => ToString();
+        
+        public TimeSpan? ShardRegionQueryTimeout { get; set; }
 
         public override string ToString()
         {
@@ -347,6 +347,9 @@ namespace Akka.Cluster.Hosting
             else if(PassivateIdleEntityAfter is not null)
                 sb.AppendLine($"passivate-idle-entity-after = {PassivateIdleEntityAfter.ToHocon()}");
 
+            if (ShardRegionQueryTimeout is not null)
+                sb.AppendLine($"shard-region-query-timeout = {ShardRegionQueryTimeout.ToHocon()}");
+            
             return sb.ToString();
         }
     }
@@ -849,7 +852,9 @@ namespace Akka.Cluster.Hosting
             ShardOptions shardOptions)
         {
             builder.AddHocon(
-                ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
+                ClusterSharding.DefaultConfig()
+                    .WithFallback(DistributedData.DistributedData.DefaultConfig())
+                    .WithFallback(ClusterSingletonManager.DefaultConfig()), 
                 HoconAddMode.Append);
 
             return builder.StartActors(Resolver);
@@ -857,7 +862,7 @@ namespace Akka.Cluster.Hosting
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
                 var props = entityPropsFactory(system, registry, resolver);
-                var shardingConfig = shardOptions.ToConfig()
+                var shardingConfig = ConfigurationFactory.ParseString(shardOptions.ToString())
                     .WithFallback(system.Settings.Config.GetConfig("akka.cluster.sharding"));
                 var coordinatorConfig = system.Settings.Config.GetConfig(
                     shardingConfig.GetString("coordinator-singleton"));
@@ -914,7 +919,9 @@ namespace Akka.Cluster.Hosting
             ShardOptions shardOptions)
         {
             builder.AddHocon(
-                ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
+                ClusterSharding.DefaultConfig()
+                    .WithFallback(DistributedData.DistributedData.DefaultConfig())
+                    .WithFallback(ClusterSingletonManager.DefaultConfig()), 
                 HoconAddMode.Append);
 
             return builder.StartActors(Resolver);
@@ -922,7 +929,7 @@ namespace Akka.Cluster.Hosting
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
                 var props = entityPropsFactory(system, registry, resolver);
-                var shardingConfig = shardOptions.ToConfig()
+                var shardingConfig = ConfigurationFactory.ParseString(shardOptions.ToString())
                     .WithFallback(system.Settings.Config.GetConfig("akka.cluster.sharding"));
                 var coordinatorConfig = system.Settings.Config.GetConfig(
                     shardingConfig.GetString("coordinator-singleton"));
