@@ -1,3 +1,14 @@
+## [1.5.27] / 29 July 2024
+
+* [Update Akka.NET to 1.5.27.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.27.1)
+* [Fix only the last ShardOptions were applied](https://github.com/akkadotnet/Akka.Hosting/pull/480)
+* [Add ClusterClientDiscovery support](https://github.com/akkadotnet/Akka.Hosting/pull/478)
+
+> [!Note]
+> 
+> We added support for cluster client initial contact discovery feature in this feature.
+> To use this feature, you will need to use Akka.Management v1.5.27 or higher.
+
 ## [1.5.25] / 17 June 2024
 
 * [Update Akka.NET to 1.5.25](https://github.com/akkadotnet/akka.net/releases/tag/1.5.25), which resolves a critical bug: [Akka.Logging: v1.5.21 appears to have truncated log source, timestamps, etc from all log messages ](https://github.com/akkadotnet/akka.net/issues/7255)
