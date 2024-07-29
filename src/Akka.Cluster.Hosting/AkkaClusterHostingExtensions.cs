@@ -1568,7 +1568,7 @@ namespace Akka.Cluster.Hosting
         public static AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(
             this AkkaConfigurationBuilder builder,
             string serviceName,
-            IHoconOption discoveryOptions,
+            IDiscoveryOptions discoveryOptions,
             string? portName = null,
             TimeSpan? retryInterval = null,
             TimeSpan? timeout = null,

@@ -8,7 +8,7 @@ namespace Akka.Cluster.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<Akka.Actor.Address> initialContactAddresses, string receptionistActorName = "receptionist") { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ClusterClientDiscoveryOptions options) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Cluster.Hosting.ClusterClientDiscoveryOptions> configure) { }
-        public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string serviceName, Akka.Hosting.IHoconOption discoveryOptions, string? portName = null, System.TimeSpan? retryInterval = default, System.TimeSpan? timeout = default, int? numberOfContacts = default, string? clientActorName = null) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string serviceName, Akka.Hosting.IDiscoveryOptions discoveryOptions, string? portName = null, System.TimeSpan? retryInterval = default, System.TimeSpan? timeout = default, int? numberOfContacts = default, string? clientActorName = null) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClientReceptionist(this Akka.Hosting.AkkaConfigurationBuilder builder, string name = "receptionist", string? role = null) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClustering(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.ClusterOptions? options = null) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithDistributedData(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Cluster.Hosting.DDataOptions options) { }
@@ -40,7 +40,7 @@ namespace Akka.Cluster.Hosting
     {
         public ClusterClientDiscoveryOptions() { }
         public string? ClientActorName { get; set; }
-        public Akka.Hosting.IHoconOption DiscoveryOptions { get; set; }
+        public Akka.Hosting.IDiscoveryOptions DiscoveryOptions { get; set; }
         public int? NumberOfContacts { get; set; }
         public string? PortName { get; set; }
         public System.TimeSpan? RetryInterval { get; set; }

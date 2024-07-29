@@ -103,13 +103,6 @@ public class ClusterClientDiscoverySpecs
     {
         Invoking(() => new ClusterClientDiscoveryOptions
             {
-                DiscoveryOptions = new InvalidServiceDiscoveryOptions()
-            }.ToString())
-            .Should().ThrowExactly<ArgumentException>()
-            .WithMessage("Discovery options must be of Type KubernetesDiscoveryOptions*");
-        
-        Invoking(() => new ClusterClientDiscoveryOptions
-            {
                 DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
                 ServiceName = null!
             }.ToString())
@@ -162,19 +155,7 @@ public class ClusterClientDiscoverySpecs
         
     }
     
-    private class InvalidServiceDiscoveryOptions: IHoconOption
-    {
-        public string ConfigPath { get; set; } = "invalid";
-        public Type Class { get; } = typeof(ConfigServiceDiscovery);
-        public bool IsDefaultPlugin { get; set; } = true;
-
-        public void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    
-    private class ConfigServiceDiscoveryOptions: IHoconOption
+    private class ConfigServiceDiscoveryOptions: IDiscoveryOptions
     {
         internal const string DefaultPath = "config";
         internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;

@@ -19,7 +19,7 @@ public sealed class ClusterClientDiscoveryOptions
     ///     <see cref="ClusterClientDiscovery"/> to work, you <b>will need</b> to set
     ///     <c>DiscoveryOptions.IsDefaultPlugin</c> to <c>false</c>
     /// </summary>
-    public IHoconOption DiscoveryOptions { get; set; } = null!;
+    public IDiscoveryOptions DiscoveryOptions { get; set; } = null!;
     
     /// <summary>
     /// The service name that are being discovered. This setting is not optional. 
@@ -75,17 +75,6 @@ public sealed class ClusterClientDiscoveryOptions
 
     private void Validate()
     {
-        var type = DiscoveryOptions.GetType().Name;
-        if(!(type.Contains("ConfigServiceDiscoveryOptions") 
-             || type.Contains("KubernetesDiscoveryOptions")
-             || type.Contains("AkkaDiscoveryOptions")
-             || type.Contains("Ec2ServiceDiscoveryOptions")
-             || type.Contains("EcsServiceDiscoveryOptions")))
-            throw new ArgumentException(
-                "Discovery options must be of Type KubernetesDiscoveryOptions, AkkaDiscoveryOptions, " +
-                "Ec2ServiceDiscoveryOptions, EcsServiceDiscoveryOptions, or ConfigServiceDiscoveryOptions",
-                nameof(DiscoveryOptions));
-
         if (string.IsNullOrWhiteSpace(ServiceName))
             throw new ArgumentException("Service name must be provided", nameof(ServiceName));
 
