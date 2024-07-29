@@ -131,6 +131,7 @@ namespace Akka.Hosting
         bool TryRegister(System.Type key, Akka.Actor.IActorRef actor, bool overwrite = false);
         bool TryRegister<TKey>(Akka.Actor.IActorRef actor, bool overwrite = false);
     }
+    public interface IDiscoveryOptions : Akka.Hosting.IHoconOption { }
     public interface IHoconOption
     {
         System.Type Class { get; }

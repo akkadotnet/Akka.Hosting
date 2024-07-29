@@ -13,13 +13,11 @@ using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Coordination;
 using Akka.DependencyInjection;
-using Akka.Event;
+using Akka.Discovery;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
-using Akka.Remote;
 using Akka.Remote.Hosting;
-using Akka.Util;
 
 #nullable enable
 namespace Akka.Cluster.Hosting
@@ -1531,6 +1529,156 @@ namespace Akka.Cluster.Hosting
             var clientConfig = config.GetConfig("akka.cluster.client");
             return ClusterClientSettings.Create(clientConfig)
                 .WithInitialContacts(initialContacts.ToImmutableHashSet());
+        }
+
+        /// <summary>
+        ///     <para>
+        ///         Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        ///         <see cref="TKey"/>.
+        ///     </para>
+        ///     Instead of using an initial contact list, the <see cref="ClusterClient"/> will leverage
+        ///     <see cref="ClusterClientDiscovery"/> to discover the needed initial contacts inside the declared
+        ///     <paramref name="serviceName"/> service.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="serviceName">
+        ///     The service name that are being discovered.
+        /// </param>
+        /// <param name="discoveryOptions">
+        ///     <para>
+        ///         The discovery sub-system that will be used to discover cluster client contacts. This has to be
+        ///         an instance of <c>KubernetesDiscoveryOptions</c>, <c>AkkaDiscoveryOptions</c>,
+        ///         <c>Ec2ServiceDiscoveryOptions"</c>, <c>EcsServiceDiscoveryOptions"</c>, or
+        ///         <c>"ConfigServiceDiscoveryOptions"</c>.
+        ///     </para>
+        ///     Note that if you're also using Akka.Discovery for <c>ClusterBootstrap</c>, in order for
+        ///     <see cref="ClusterClientDiscovery"/> to work, you <b>will need</b> to set
+        ///     <c>discoveryOptions.IsDefaultPlugin</c> to <c>false</c>
+        /// </param>
+        /// <param name="portName">
+        ///     The Akka.Management port name, usually used in conjunction with Akka.Discovery.KubernetesApi
+        /// </param>
+        /// <param name="retryInterval">
+        ///     Interval at which service discovery will be polled in search for new initial contacts
+        /// </param>
+        /// <param name="timeout">
+        ///     Timeout for getting a reply from the service-discovery subsystem
+        /// </param>
+        /// <param name="numberOfContacts">
+        ///     The number of initial contacts will be trimmed down to this number of contact points to the client
+        /// </param>
+        /// <param name="clientActorName">
+        ///     The name of the cluster client actor
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The key type to use for the <see cref="ActorRegistry"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            string serviceName,
+            IDiscoveryOptions discoveryOptions,
+            string? portName = null,
+            TimeSpan? retryInterval = null,
+            TimeSpan? timeout = null,
+            int? numberOfContacts = null,
+            string? clientActorName = null)
+        {
+            return builder.ApplyClusterClientDiscovery<TKey>(new ClusterClientDiscoveryOptions
+            {
+                DiscoveryOptions = discoveryOptions,
+                ServiceName = serviceName,
+                PortName = portName,
+                RetryInterval = retryInterval,
+                Timeout = timeout,
+                NumberOfContacts = numberOfContacts,
+                ClientActorName = clientActorName
+            });
+        }
+
+        /// <summary>
+        ///     <para>
+        ///         Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        ///         <see cref="TKey"/>.
+        ///     </para>
+        ///     Instead of using an initial contact list, the <see cref="ClusterClient"/> will leverage
+        ///     <see cref="ClusterClientDiscovery"/> to discover the needed initial contacts inside the declared
+        ///     <see cref="ClusterClientDiscoveryOptions.ServiceName"/> service.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="configure">
+        ///     Configuration method for configuring the <see cref="ClusterClientDiscoveryOptions"/>
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The key type to use for the <see cref="ActorRegistry"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            Action<ClusterClientDiscoveryOptions> configure)
+        {
+            var options = new ClusterClientDiscoveryOptions();
+            configure(options);
+            return builder.ApplyClusterClientDiscovery<TKey>(options);
+        }
+
+        /// <summary>
+        ///     <para>
+        ///         Creates a <see cref="ClusterClient"/> and adds it to the <see cref="ActorRegistry"/> using the given
+        ///         <see cref="TKey"/>.
+        ///     </para>
+        ///     Instead of using an initial contact list, the <see cref="ClusterClient"/> will leverage
+        ///     <see cref="ClusterClientDiscovery"/> to discover the needed initial contacts inside the declared
+        ///     <see cref="ClusterClientDiscoveryOptions.ServiceName"/> service.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="options">
+        ///     The <see cref="ClusterClientDiscoveryOptions"/> that will be used to configure
+        ///     <see cref="ClusterClientDiscovery"/> 
+        /// </param>
+        /// <typeparam name="TKey">
+        ///     The key type to use for the <see cref="ActorRegistry"/>.
+        /// </typeparam>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            ClusterClientDiscoveryOptions options)
+        {
+            return builder.ApplyClusterClientDiscovery<TKey>(options);
+        }
+
+        internal static AkkaConfigurationBuilder ApplyClusterClientDiscovery<TKey>(
+            this AkkaConfigurationBuilder builder,
+            ClusterClientDiscoveryOptions options)
+        {
+            options.DiscoveryOptions.Apply(builder);
+
+            builder
+                .AddHocon(ClusterClientReceptionist.DefaultConfig(), HoconAddMode.Append)
+                .AddHocon(DiscoveryProvider.DefaultConfiguration(), HoconAddMode.Append);
+            
+            builder.WithActors((system, registry) =>
+            {
+                var config = ConfigurationFactory.ParseString(options.ToString())
+                    .WithFallback(system.Settings.Config.GetConfig("akka.cluster.client"));
+                
+                var clusterClient = system.ActorOf(ClusterClient.Props(ClusterClientSettings.Create(config)), options.ClientActorName);
+                registry.TryRegister<TKey>(clusterClient);
+            });
+            
+            return builder;
         }
     }
 }
