@@ -103,11 +103,11 @@ namespace Akka.Cluster.Hosting
         public bool? RememberEntities { get; set; }
         public Akka.Cluster.Sharding.RememberEntitiesStore? RememberEntitiesStore { get; set; }
         public string? Role { get; set; }
+        public System.TimeSpan? ShardRegionQueryTimeout { get; set; }
         public bool? ShouldPassivateIdleEntities { get; set; }
         public Akka.Persistence.Hosting.SnapshotOptions? SnapshotOptions { get; set; }
         public string? SnapshotPluginId { get; set; }
         public Akka.Cluster.Sharding.StateStoreMode? StateStoreMode { get; set; }
-        public Akka.Configuration.Config ToConfig() { }
         public override string ToString() { }
     }
     public sealed class ShardingDDataOptions : Akka.Cluster.Hosting.DDataOptions
