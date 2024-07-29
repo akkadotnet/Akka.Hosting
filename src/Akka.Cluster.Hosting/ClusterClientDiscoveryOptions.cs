@@ -10,10 +10,8 @@ public sealed class ClusterClientDiscoveryOptions
 {
     /// <summary>
     ///     <para>
-    ///         The discovery sub-system that will be used to discover cluster client contacts. This has to be
-    ///         an instance of <c>KubernetesDiscoveryOptions</c>, <c>AkkaDiscoveryOptions</c>,
-    ///         <c>Ec2ServiceDiscoveryOptions</c>, <c>EcsServiceDiscoveryOptions</c>,
-    ///         or <c>ConfigServiceDiscoveryOptions</c>.
+    ///         The discovery sub-system that will be used to discover cluster client contacts.
+    ///         Must be discovery options class instance from Akka.Management v1.5.27 and higher. 
     ///     </para>
     ///     Note that if you're also using Akka.Discovery for ClusterBootstrap, in order for
     ///     <see cref="ClusterClientDiscovery"/> to work, you <b>will need</b> to set
