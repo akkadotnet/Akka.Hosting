@@ -279,7 +279,7 @@ namespace Akka.Cluster.Hosting
         /// <summary>
         ///     <para>
         ///         Settings for the Distributed Data replicator.
-        ///         The <see cref="DistributedData.Role"/> property is not used. The distributed-data
+        ///         The <see cref="ShardingDDataOptions.Role"/> property is not used. The distributed-data
         ///         role will be the same as <see cref="ShardOptions.Role"/>.
         ///         Note that there is one Replicator per role and it's not possible
         ///         to have different distributed-data settings for different sharding entity types.
@@ -287,6 +287,9 @@ namespace Akka.Cluster.Hosting
         ///     <b>NOTE</b> This setting is only used when <see cref="StateStoreMode"/> is set to
         ///     <see cref="Akka.Cluster.Sharding.StateStoreMode.DData"/>
         /// </summary>
+        [Obsolete("This property is not being applied to the ActorSystem anymore. " +
+                  "Use manual HOCON configuration to set \"akka.cluster.sharding.distributed-data\" values. " +
+                  "Since v1.5.27")]
         public ShardingDDataOptions DistributedData { get; } = new();
 
         /// <summary>
@@ -303,12 +306,12 @@ namespace Akka.Cluster.Hosting
         /// </summary>
         public TimeSpan? PassivateIdleEntityAfter { get; set; }
         
-        internal void Apply(AkkaConfigurationBuilder builder)
-        {
-            DistributedData.Apply(builder);
-            
-            var sb = new StringBuilder();
+        public TimeSpan? ShardRegionQueryTimeout { get; set; }
 
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            
             if (Role is not null)
                 sb.AppendLine($"role = {Role.ToHocon()}");
             
@@ -344,12 +347,10 @@ namespace Akka.Cluster.Hosting
             else if(PassivateIdleEntityAfter is not null)
                 sb.AppendLine($"passivate-idle-entity-after = {PassivateIdleEntityAfter.ToHocon()}");
 
-            if (sb.Length > 0)
-            {
-                sb.Insert(0, "akka.cluster.sharding {\n");
-                sb.AppendLine("}");
-                builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-            }
+            if (ShardRegionQueryTimeout is not null)
+                sb.AppendLine($"shard-region-query-timeout = {ShardRegionQueryTimeout.ToHocon()}");
+            
+            return sb.ToString();
         }
     }
 
@@ -646,7 +647,7 @@ namespace Akka.Cluster.Hosting
             builder.AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
             return builder;
         }
-        
+
         /// <summary>
         ///     Starts a <see cref="ShardRegion"/> actor for the given entity <see cref="typeName"/>
         ///     and registers the ShardRegion <see cref="IActorRef"/> with <see cref="TKey"/> in the
@@ -850,9 +851,10 @@ namespace Akka.Cluster.Hosting
             IMessageExtractor messageExtractor,
             ShardOptions shardOptions)
         {
-            shardOptions.Apply(builder);
             builder.AddHocon(
-                ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
+                ClusterSharding.DefaultConfig()
+                    .WithFallback(DistributedData.DistributedData.DefaultConfig())
+                    .WithFallback(ClusterSingletonManager.DefaultConfig()), 
                 HoconAddMode.Append);
 
             return builder.StartActors(Resolver);
@@ -860,7 +862,12 @@ namespace Akka.Cluster.Hosting
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
                 var props = entityPropsFactory(system, registry, resolver);
-                var settings = ClusterShardingSettings.Create(system);
+                var shardingConfig = ConfigurationFactory.ParseString(shardOptions.ToString())
+                    .WithFallback(system.Settings.Config.GetConfig("akka.cluster.sharding"));
+                var coordinatorConfig = system.Settings.Config.GetConfig(
+                    shardingConfig.GetString("coordinator-singleton"));
+                
+                var settings = ClusterShardingSettings.Create(shardingConfig, coordinatorConfig);
                 var allocationStrategy = ClusterSharding.Get(system).DefaultShardAllocationStrategy(settings);
                 var shardRegion = await ClusterSharding.Get(system).StartAsync(
                     typeName, props, settings, messageExtractor, allocationStrategy, 
@@ -911,23 +918,29 @@ namespace Akka.Cluster.Hosting
             ExtractShardId extractShardId,
             ShardOptions shardOptions)
         {
-            shardOptions.Apply(builder);
             builder.AddHocon(
-                ClusterSharding.DefaultConfig().WithFallback(DistributedData.DistributedData.DefaultConfig()), 
+                ClusterSharding.DefaultConfig()
+                    .WithFallback(DistributedData.DistributedData.DefaultConfig())
+                    .WithFallback(ClusterSingletonManager.DefaultConfig()), 
                 HoconAddMode.Append);
-            
+
+            return builder.StartActors(Resolver);
+
             async Task Resolver(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
             {
                 var props = entityPropsFactory(system, registry, resolver);
-                var settings = ClusterShardingSettings.Create(system);
+                var shardingConfig = ConfigurationFactory.ParseString(shardOptions.ToString())
+                    .WithFallback(system.Settings.Config.GetConfig("akka.cluster.sharding"));
+                var coordinatorConfig = system.Settings.Config.GetConfig(
+                    shardingConfig.GetString("coordinator-singleton"));
+                
+                var settings = ClusterShardingSettings.Create(shardingConfig, coordinatorConfig);
                 var allocationStrategy = ClusterSharding.Get(system).DefaultShardAllocationStrategy(settings);
                 var shardRegion = await ClusterSharding.Get(system).StartAsync(
                     typeName, props, settings, extractEntityId, extractShardId, allocationStrategy, 
                     shardOptions.HandOffStopMessage ?? PoisonPill.Instance).ConfigureAwait(false);
                 registry.Register<TKey>(shardRegion);
             }
-
-            return builder.StartActors(Resolver);
         }
 
         /// <summary>

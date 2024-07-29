@@ -2,9 +2,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Cluster.Hosting.SBR;
+using Akka.Cluster.Hosting.Tests.Lease;
 using Akka.Cluster.Sharding;
+using Akka.Cluster.Tools.Singleton;
+using Akka.Configuration;
 using Akka.Hosting;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -109,5 +114,68 @@ public class ClusterShardingSpecs
         // assert
         id.Should().Be("foo");
         sourceRef.Should().Be(actorRegistry.Get<MyTopLevelActor>());
+    }
+
+    [Fact(DisplayName = "ShardOptions with different values should generate valid ClusterShardSettings")]
+    public void ShardOptionsTest()
+    {
+        var settings1 = ToSettings(new ShardOptions
+        {
+            RememberEntities = true,
+            StateStoreMode = StateStoreMode.Persistence,
+            RememberEntitiesStore = RememberEntitiesStore.Eventsourced,
+            Role = "first",
+            PassivateIdleEntityAfter = 1.Seconds(),
+            SnapshotPluginId = "firstSnapshot",
+            JournalPluginId = "firstJournal", 
+            LeaseImplementation = new TestLeaseOption(),
+            LeaseRetryInterval = 2.Seconds(),
+            ShardRegionQueryTimeout = 3.Seconds(),
+        });
+        settings1.RememberEntities.Should().BeTrue();
+        settings1.StateStoreMode.Should().Be(StateStoreMode.Persistence);
+        settings1.RememberEntitiesStore.Should().Be(RememberEntitiesStore.Eventsourced);
+        settings1.Role.Should().Be("first");
+        settings1.PassivateIdleEntityAfter.Should().Be(1.Seconds());
+        settings1.SnapshotPluginId.Should().Be("firstSnapshot");
+        settings1.JournalPluginId.Should().Be("firstJournal");
+        settings1.LeaseSettings.LeaseImplementation.Should().Be("test-lease");
+        settings1.LeaseSettings.LeaseRetryInterval.Should().Be(2.Seconds());
+        settings1.ShardRegionQueryTimeout.Should().Be(3.Seconds());
+        
+        var settings2 = ToSettings(new ShardOptions
+        {
+            RememberEntities = false,
+            StateStoreMode = StateStoreMode.DData,
+            RememberEntitiesStore = RememberEntitiesStore.DData,
+            Role = "second",
+            PassivateIdleEntityAfter = 4.Seconds(),
+            SnapshotPluginId = "secondSnapshot",
+            JournalPluginId = "secondJournal", 
+            ShardRegionQueryTimeout = 5.Seconds(),
+        });
+        settings2.RememberEntities.Should().BeFalse();
+        settings2.StateStoreMode.Should().Be(StateStoreMode.DData);
+        settings2.RememberEntitiesStore.Should().Be(RememberEntitiesStore.DData);
+        settings2.Role.Should().Be("second");
+        settings2.PassivateIdleEntityAfter.Should().Be(4.Seconds());
+        settings2.JournalPluginId.Should().Be("secondJournal");
+        settings2.SnapshotPluginId.Should().Be("secondSnapshot");
+        settings2.LeaseSettings.Should().BeNull();
+        settings2.ShardRegionQueryTimeout.Should().Be(5.Seconds());
+    }
+
+    private static ClusterShardingSettings ToSettings(ShardOptions shardOptions)
+    {
+        var defaultConfig = ClusterSharding.DefaultConfig()
+            .WithFallback(DistributedData.DistributedData.DefaultConfig())
+            .WithFallback(ClusterSingletonManager.DefaultConfig());
+        
+        var shardingConfig = ConfigurationFactory.ParseString(shardOptions.ToString())
+            .WithFallback(defaultConfig.GetConfig("akka.cluster.sharding"));
+        var coordinatorConfig = defaultConfig.GetConfig(
+            shardingConfig.GetString("coordinator-singleton"));
+
+        return ClusterShardingSettings.Create(shardingConfig, coordinatorConfig);
     }
 }
