@@ -104,6 +104,9 @@ namespace Akka.Cluster.Hosting
     public sealed class ShardOptions
     {
         public ShardOptions() { }
+        [System.Obsolete("This property is not being applied to the ActorSystem anymore. Use manual HOCON c" +
+            "onfiguration to set \"akka.cluster.sharding.distributed-data\" values. Since v1.5." +
+            "27")]
         public Akka.Cluster.Hosting.ShardingDDataOptions DistributedData { get; }
         public bool? FailOnInvalidEntityStateTransition { get; set; }
         public object? HandOffStopMessage { get; set; }
@@ -115,10 +118,12 @@ namespace Akka.Cluster.Hosting
         public bool? RememberEntities { get; set; }
         public Akka.Cluster.Sharding.RememberEntitiesStore? RememberEntitiesStore { get; set; }
         public string? Role { get; set; }
+        public System.TimeSpan? ShardRegionQueryTimeout { get; set; }
         public bool? ShouldPassivateIdleEntities { get; set; }
         public Akka.Persistence.Hosting.SnapshotOptions? SnapshotOptions { get; set; }
         public string? SnapshotPluginId { get; set; }
         public Akka.Cluster.Sharding.StateStoreMode? StateStoreMode { get; set; }
+        public override string ToString() { }
     }
     public sealed class ShardingDDataOptions : Akka.Cluster.Hosting.DDataOptions
     {
