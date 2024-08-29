@@ -7,7 +7,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using Akka.Configuration;
 using Akka.Dispatch;
@@ -17,7 +16,7 @@ namespace Akka.Hosting
 {
     public sealed class LoggerConfigBuilder
     {
-        private readonly List<Type> _loggers = new List<Type> { typeof(DefaultLogger) };
+        private readonly List<Type> _loggers = new() { typeof(DefaultLogger) };
         private Type _logMessageFormatter = typeof(DefaultLogMessageFormatter);
         internal AkkaConfigurationBuilder Builder { get; }
 
