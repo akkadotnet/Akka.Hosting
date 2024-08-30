@@ -5,6 +5,7 @@ using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
 using Akka.Hosting.Configuration;
+using Akka.Streams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -58,6 +59,12 @@ namespace Akka.Hosting
         public static IServiceCollection AddAkka<T>(this IServiceCollection services, string actorSystemName, Action<AkkaConfigurationBuilder, IServiceProvider> builder) where T:AkkaHostedService
         {
             var b = new AkkaConfigurationBuilder(services, actorSystemName);
+            
+            // add the default Akka.Streams configuration by default - hurts nothing, but
+            // ensures that StreamRefs work correctly out of the box in case users
+            // haven't attempted to materialize a stream yet
+            b.AddHocon(ActorMaterializer.DefaultConfig(), HoconAddMode.Append);
+            
             services.AddSingleton<AkkaConfigurationBuilder>(sp =>
             {
                 builder(b, sp);

@@ -83,8 +83,8 @@ namespace Akka.Hosting
     {
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
-        internal readonly HashSet<SerializerRegistration> Serializers = new HashSet<SerializerRegistration>();
-        internal readonly List<Type> Extensions = new List<Type>();
+        internal readonly HashSet<SerializerRegistration> Serializers = new();
+        internal readonly List<Type> Extensions = new();
 
         /// <summary>
         /// INTERNAL API.
@@ -95,7 +95,7 @@ namespace Akka.Hosting
         /// Use the provided <see cref="AddSetup"/> method instead.
         /// </summary>
         [InternalApi]
-        public readonly HashSet<Setup> Setups = new HashSet<Setup>();
+        public readonly HashSet<Setup> Setups = new();
         
         /// <summary>
         /// The currently configured <see cref="ProviderSelection"/>.
