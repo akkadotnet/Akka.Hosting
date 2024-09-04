@@ -1,3 +1,8 @@
+## [1.5.28] / 4 September 2024
+
+* [Update Akka.NET to 1.5.28](https://github.com/akkadotnet/akka.net/releases/tag/1.5.29)
+* [Include Akka.Streams configuration by default](https://github.com/akkadotnet/Akka.Hosting/pull/489)
+
 ## [1.5.27] / 29 July 2024
 
 * [Update Akka.NET to 1.5.27.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.27.1)
