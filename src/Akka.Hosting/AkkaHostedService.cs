@@ -72,6 +72,9 @@ namespace Akka.Hosting
             catch (Exception ex)
             {
                 Logger.Log(LogLevel.Critical, ex, "Unable to start AkkaHostedService - shutting down application");
+                
+                // resolve https://github.com/akkadotnet/Akka.Hosting/issues/470 - never allow failures to be silent
+                Console.WriteLine($"Unable to start AkkaHostedService due to [{ex}] - shutting down application");
                 HostApplicationLifetime?.StopApplication();
             }
         }
