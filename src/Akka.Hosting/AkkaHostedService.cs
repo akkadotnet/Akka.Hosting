@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -72,7 +73,15 @@ namespace Akka.Hosting
             catch (Exception ex)
             {
                 Logger.Log(LogLevel.Critical, ex, "Unable to start AkkaHostedService - shutting down application");
-                HostApplicationLifetime?.StopApplication();
+                
+                // resolve https://github.com/akkadotnet/Akka.Hosting/issues/470 - never allow failures to be silent
+                Console.WriteLine($"Unable to start AkkaHostedService - shutting down application.\nCause: {ex}");
+                
+                // Best effort to perform a clean stop
+                var capturedException = ExceptionDispatchInfo.Capture(ex);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                await StopAsync(cts.Token);
+                capturedException.Throw();
             }
         }
 
