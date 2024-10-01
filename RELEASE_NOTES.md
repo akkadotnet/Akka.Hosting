@@ -1,6 +1,7 @@
 ## [1.5.29] / October 1st 2024
 
 * [Update Akka.NET to 1.5.29](https://github.com/akkadotnet/akka.net/releases/tag/1.5.29)
+* [Make sure that any exceptions thrown during start-up are logged and stops the application](https://github.com/akkadotnet/Akka.Hosting/pull/494)
 
 ## [1.5.28] / 4 September 2024
 
