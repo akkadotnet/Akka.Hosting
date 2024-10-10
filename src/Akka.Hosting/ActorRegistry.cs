@@ -82,13 +82,13 @@ namespace Akka.Hosting
                 return _internalRef;
 
             // attempt 2 - synchronously check the registry (fast path)
-            if (_registry.TryGet<TActor>(out _internalRef))
+            if (_registry.TryGet<TActor>(out var internalRef))
             {
-                return _internalRef;
+                return _internalRef = internalRef;
             }
 
             // attempt 3 - wait for the actor to be registered
-            return await _registry.GetAsync<TActor>(cancellationToken).ConfigureAwait(false);
+            return _internalRef = await _registry.GetAsync<TActor>(cancellationToken).ConfigureAwait(false);
         }
     }
 
