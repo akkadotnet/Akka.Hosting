@@ -1,3 +1,7 @@
+## [1.5.30.1] / October 18th 2024
+
+* [Fix ActorRegistry.GetAsync() returning Nobody](https://github.com/akkadotnet/Akka.Hosting/pull/501)
+
 ## [1.5.30] / October 3rd 2024
 
 * [Update Akka.NET to 1.5.30](https://github.com/akkadotnet/akka.net/releases/tag/1.5.30)
