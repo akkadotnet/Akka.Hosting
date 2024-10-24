@@ -6,14 +6,17 @@ This module provides `Akka.Hosting` ease-of-use extension methods for [`Akka.Clu
 
 - [Akka.Cluster](https://getakka.net/articles/clustering/cluster-overview.html)
   - [WithClustering()](#withclustering-method)
-    - [Configure A Cluster With Split-Brain Resolver](#configure-a-cluster-with-split-brain-resolverhttpsgetakkanetarticlesclusteringsplit-brain-resolverhtml-sbr)
+    - [Configure A Cluster With Split-Brain Resolver](#configure-a-cluster-with-split-brain-resolver-sbr)
+    - [Using Lease-Majority Split Brain Resolver Strategy](#using-lease-majority-split-brain-resolver-strategy)
 - [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html)
   - [WithShardRegion()](#withshardregion-method)
+    - [Using Lease With Cluster Sharding](#using-lease-with-cluster-sharding)
   - [WithShardRegionProxy()](#withshardregionproxy-method)
 - [Distributed Publish-Subscribe](https://getakka.net/articles/clustering/distributed-publish-subscribe.html)
   - [WithDistributedPubSub()](#withdistributedpubsub-method)
 - [Cluster Singleton](https://getakka.net/articles/clustering/cluster-singleton.html)
   - [WithSingleton()](#withsingleton-method)
+    - [Using Lease With Cluster Singleton](#using-lease-with-cluster-singleton)
   - [WithSingletonProxy()](#withsingletonproxy-method)
 - [Cluster Client](https://getakka.net/articles/clustering/cluster-client.html)
   - [WithClusterClient()](#withclusterclient-method)
@@ -28,22 +31,13 @@ An extension method to add [Akka.Cluster](https://getakka.net/articles/clusterin
 ```csharp
 public static AkkaConfigurationBuilder WithClustering(
     this AkkaConfigurationBuilder builder, 
-    ClusterOptions options = null, 
-    SplitBrainResolverOption sbrOptions = null);
+    ClusterOptions options = null);
 ```
 
 ### Parameters
 * `options` __ClusterOptions__
 
   Optional. Akka.Cluster configuration parameters.
-
-* `sbrOptions` __SplitBrainResolverOption__
-
-  Optional. Split brain resolver configuration parameters. This can be an instance of one of these classes:
-  - `KeepMajorityOption`
-  - `StaticQuorumOption`
-  - `KeepOldestOption`
-  - `LeaseMajorityOption`
 
 ### Example
 ```csharp
@@ -53,12 +47,11 @@ builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 {
     configurationBuilder
         .WithRemoting("localhost", 8110)
-        .WithClustering(
-            options: new ClusterOptions { 
-                Roles = new[] { "myRole" },
-                SeedNodes = new[] { Address.Parse("akka.tcp://MyActorSystem@localhost:8110")}}
-            sbrOptions: SplitBrainResolverOption.Default
-        );
+        .WithClustering(new ClusterOptions { 
+            Roles = new[] { "myRole" },
+            SeedNodes = new[] { Address.Parse("akka.tcp://MyActorSystem@localhost:8110")},
+            SplitBrainResolver = SplitBrainResolverOption.Default
+        });
 });
 
 var app = builder.Build();
@@ -67,9 +60,9 @@ app.Run();
 
 The code above will start [`Akka.Cluster`](https://getakka.net/articles/clustering/cluster-overview.html) with [`Akka.Remote`](https://getakka.net/articles/remoting/index.html) at localhost domain port 8110 and joins itself through the configured `SeedNodes` to form a single node cluster. The `ClusterOptions` class lets you configure the node roles and the seed nodes it should join at start up.
 
-### Configure A Cluster With [Split-Brain Resolver](https://getakka.net/articles/clustering/split-brain-resolver.html) (SBR)
+### Configure A Cluster With Split-Brain Resolver (SBR)
 
-The __sbrOptions__ parameter lets you configure a SBR. There are four different strategies that the SBR can use, to set one up you will need to pass in one of these class instances:
+The __ClusterOptions.SplitBrainResolver__ property lets you configure a SBR. There are four different strategies that the SBR can use, to set one up you will need to pass in one of these class instances:
 
 | Strategy name  | Option class          |
 |----------------|-----------------------|
@@ -84,11 +77,52 @@ You can also pass in `SplitBrainResolverOption.Default` for the default SBR sett
 builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 {
     configurationBuilder
-        .WithClustering(sbrOption: new KeepMajorityOption{ Role = "myRole" });
+        .WithClustering(new ClusterOptions { 
+            SplitBrainResolver = new KeepMajorityOption{ Role = "myRole" },
+        });
 });
 ```
 
-__NOTE__: Currently, in order to use `LeaseMajorityOption` you will need to provide the absolute HOCON path to the `Lease` module you're going to use in the `LeaseMajorityOption.LeaseImplementation` property. For [`Akka.Coordination.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi) this is `akka.coordination.lease.kubernetes`
+### Using Lease-Majority Split-Brain Resolver Strategy
+
+In order to use `LeaseMajorityOption` you will need to provide an instance of the option class of the `Lease` module you're going to use in the `LeaseMajorityOption.LeaseImplementation` property. 
+
+- For [`Akka.Coordination.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi), this is an instance of `Akka.Coordination.KubernetesApi.KubernetesLeaseOption` class.
+
+  ```csharp
+  builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+  {
+      var leaseOptions = new KubernetesLeaseOption();
+
+      configurationBuilder
+          .WithClustering(new ClusterOptions { 
+              SplitBrainResolver = new LeaseMajorityOption{
+                LeaseImplementation = leaseOptions,
+              },
+          })
+          .WithKubernetesLease(leaseOptions);
+  });
+  ```
+
+- For [`Akka.Coordination.Azure`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/azure/Akka.Coordination.Azure) this is an instance of `Akka.Coordination.Azure.AzureLeaseOption` class.
+
+  ```csharp
+  builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+  {
+      var leaseOptions = new AzureLeaseOption {
+          ConnectionString = "<Your-Azure-Blob-storage-connection-string>",
+          ContainerName = "<Your-Azure-Blob-storage-container-name>";
+      };
+
+      configurationBuilder
+          .WithClustering(new ClusterOptions { 
+              SplitBrainResolver = new LeaseMajorityOption{
+                LeaseImplementation = leaseOptions,
+              },
+          })
+          .WithAzureLease(leaseOptions);
+  });
+  ```
 
 # Akka.Cluster.Sharding Extension Methods
 
@@ -240,6 +274,31 @@ public class Program
 }
 ```
 
+### Using Lease With Cluster Sharding
+
+To use the cluster sharding lease feature, you will need to pass in the lease option into the `shardOptions` parameter:
+
+```csharp
+var leaseOptions = new AzureLeaseOption {
+    ConnectionString = "<Your-Azure-Blob-storage-connection-string>",
+    ContainerName = "<Your-Azure-Blob-storage-container-name>";
+};
+
+configurationBuilder
+    .WithRemoting(hostname: "localhost", port: 8110)
+    .WithClustering(new ClusterOptions{SeedNodes = new []{ Address.Parse("akka.tcp://MyActorSystem@localhost:8110"), }})
+    .WithShardRegion<Echo>(
+        typeName: "myRegion",
+        entityPropsFactory: PropsFactory, 
+        extractEntityId: ExtractEntityId,
+        extractShardId: ExtractShardId,
+        shardOptions: new ShardOptions{
+          LeaseImplementation = leaseOptions,
+        })
+    .WithAzureLease(leaseOptions);
+
+```
+
 ## WithShardRegionProxy Method
 
 An extension method to start a `ShardRegion` proxy actor that points to a `ShardRegion` hosted on a different role inside the cluster and registers the `IActorRef` with `TKey` in the `ActorRegistry` for this `ActorSystem`.
@@ -357,6 +416,32 @@ Optional. The set of options for configuring both the `ClusterSingletonManager` 
 * `createProxyToo` __bool__
 
 When set to _true_, creates a `ClusterSingletonProxy` that automatically points to the `ClusterSingletonManager` created by this method.
+
+### Using Lease With Cluster Singleton
+
+To use the cluster singleton lease feature, you will need to pass in the lease option into the `options` parameter:
+
+```csharp
+Props propsFactory(ActorSystem system, IActorRegistry registry, IDependencyResolver resolver)
+  => Props.Create(() => new EchoActor());
+
+var leaseOptions = new AzureLeaseOption {
+    ConnectionString = "<Your-Azure-Blob-storage-connection-string>",
+    ContainerName = "<Your-Azure-Blob-storage-container-name>";
+};
+
+configurationBuilder
+    .WithRemoting()
+    .WithClustering()
+    .WithSingleton<Echo>(
+        singletonName: "singleton",
+        propsFactory: propsFactory, 
+        options: new ClusterSingletonOptions {
+          LeaseImplementation = leaseOptions,
+        })
+    .WithAzureLease(leaseOptions);
+
+```
 
 ## WithSingletonProxy Method
 
