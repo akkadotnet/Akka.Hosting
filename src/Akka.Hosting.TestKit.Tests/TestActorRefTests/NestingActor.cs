@@ -16,7 +16,7 @@ public class NestingActor : ActorBase
 
     public NestingActor(bool createTestActorRef)
     {
-        _nested = createTestActorRef ? Context.System.ActorOf<NestedActor>() : new TestActorRef<NestedActor>(Context.System, Props.Create<NestedActor>(), null, null);
+        _nested = createTestActorRef ? Context.ActorOf<NestedActor>() : new TestActorRef<NestedActor>(Context.System, Props.Create<NestedActor>(), null, null);
     }
 
     protected override bool Receive(object message)
