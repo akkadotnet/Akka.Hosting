@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.DistributedData;
@@ -33,17 +34,18 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
     public async Task WithDistributedDataStartsAutomaticallyTest()
     {
         var cluster = Cluster.Get(Sys);
-        cluster.Join(cluster.SelfAddress);
+        await cluster.JoinAsync(cluster.SelfAddress);
+        cluster.State.Members.Count(m => m.Status == MemberStatus.Up).Should().Be(1);
         
         var settings = ReplicatorSettings.Create(Sys);
         var coordinatorName = settings.RestartReplicatorOnFailure ? $"{ReplicatorName}Supervisor" : ReplicatorName;
         
         var actorSelection = Sys.ActorSelection(new RootActorPath(cluster.SelfAddress) / "user" / coordinatorName);
         
-        await AwaitAssertAsync(() =>
+        await AwaitAssertAsync(async () =>
         {
             actorSelection.Tell(new Identify("coordinator"), TestActor);
-            var identity = ExpectMsg<ActorIdentity>(TimeSpan.FromSeconds(3));
+            var identity = await ExpectMsgAsync<ActorIdentity>(TimeSpan.FromSeconds(3));
             
             // The DData replicator should be running
             // * This actor is created inside DistributedData extension .ctor
