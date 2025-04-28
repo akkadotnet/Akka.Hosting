@@ -14,6 +14,7 @@ using Akka.Configuration;
 using Akka.Coordination;
 using Akka.DependencyInjection;
 using Akka.Discovery;
+using Akka.DistributedData;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
@@ -691,6 +692,7 @@ namespace Akka.Cluster.Hosting
         {
             options.Apply(builder);
             builder.AddHocon(DistributedData.DistributedData.DefaultConfig(), HoconAddMode.Append);
+            builder.WithExtension<DistributedDataProvider>();
             return builder;
         }
 
