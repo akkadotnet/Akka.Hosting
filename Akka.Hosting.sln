@@ -32,7 +32,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Hosting", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Hosting.Tests", "src\Akka.Persistence.Hosting.Tests\Akka.Persistence.Hosting.Tests.csproj", "{876DE0B6-5FA8-4F79-876E-92EF5E9E7011}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.Asp.LoggingDemo", "src\Examples\Akka.Hosting.Asp.LoggingDemo\Akka.Hosting.Asp.LoggingDemo.csproj", "{4F79325B-9EE7-4501-800F-7A1F8DFBCC80}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.TestKit", "src\Akka.Hosting.TestKit\Akka.Hosting.TestKit.csproj", "{E28D4F3C-6C34-497B-BDC8-F2B3EA8BA309}"
 EndProject
@@ -41,6 +41,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Hosting.API.Tests", "src\Akka.Hosting.API.Tests\Akka.Hosting.API.Tests.csproj", "{410065E0-6636-4F34-85AE-4C4BA413ADB4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting.Tests", "src\Akka.Remote.Hosting.Tests\Akka.Remote.Hosting.Tests.csproj", "{11062839-0674-4DF9-AB8B-B7901A564ADC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -104,6 +106,10 @@ Global
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11062839-0674-4DF9-AB8B-B7901A564ADC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -111,6 +117,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
+		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
