@@ -6,6 +6,7 @@
 
 using System;
 using System.Text;
+using Akka.Actor;
 using Akka.Configuration;
 using Akka.Hosting;
 
@@ -47,6 +48,17 @@ namespace Akka.Persistence.Hosting
         ///     <b>Default</b>: <c>null</c>
         /// </summary>
         public string? Serializer { get; set; }
+        
+        /// <summary>
+        /// <para>
+        /// Supervisor strategy for the snapshot-store actor.
+        /// It needs to be a subclass of Akka.Actor.SupervisorStrategyConfigurator and have a parameterless constructor.
+        /// </para>
+        /// <para>
+        /// By default, it restarts the snapshot-store when it crashed.
+        /// </para>
+        /// </summary>
+        public SupervisorStrategyConfigurator? SupervisorStrategy { get; set; }
         
         /// <summary>
         ///     <para>
@@ -91,6 +103,10 @@ namespace Akka.Persistence.Hosting
             sb.Insert(0, $"{PluginId} {{{Environment.NewLine}");
             sb.AppendLine($"serializer = {Serializer.ToHocon()}");
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
+
+            if (SupervisorStrategy is not null)
+                sb.AppendLine($"supervisor-strategy = {SupervisorStrategy.GetType().AssemblyQualifiedName.ToHocon()}");
+            
             sb.AppendLine("}");
             
             if (IsDefaultPlugin)

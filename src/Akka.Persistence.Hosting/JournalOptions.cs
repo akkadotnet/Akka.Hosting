@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Akka.Actor;
 using Akka.Annotations;
 using Akka.Configuration;
 using Akka.Hosting;
@@ -52,6 +53,17 @@ namespace Akka.Persistence.Hosting
         ///     <b>Default</b>: <c>null</c>
         /// </summary>
         public string? Serializer { get; set; }
+        
+        /// <summary>
+        /// <para>
+        /// Supervisor strategy for the journal actor.
+        /// It needs to be a subclass of Akka.Actor.SupervisorStrategyConfigurator and have a parameterless constructor.
+        /// </para>
+        /// <para>
+        /// By default, it restarts the journal when it crashed.
+        /// </para>
+        /// </summary>
+        public SupervisorStrategyConfigurator? SupervisorStrategy { get; set; }
         
         /// <summary>
         ///     <para>
@@ -102,6 +114,10 @@ namespace Akka.Persistence.Hosting
             sb.Insert(0, $"{PluginId} {{{Environment.NewLine}");
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
             sb.AppendLine($"serializer = {Serializer.ToHocon()}");
+
+            if (SupervisorStrategy is not null)
+                sb.AppendLine($"supervisor-strategy = {SupervisorStrategy.GetType().AssemblyQualifiedName.ToHocon()}");
+            
             Adapters.AppendAdapters(sb);
             sb.AppendLine("}");
             
