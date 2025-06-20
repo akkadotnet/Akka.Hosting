@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+        <PackageReference Include="Akka.Persistence.TestKit" Version="$(AkkaVersion)" />
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
         <PackageReference Include="xunit" Version="$(XunitVersion)" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
@@ -18,6 +19,7 @@
     
     <ItemGroup>
       <ProjectReference Include="..\Akka.Hosting\Akka.Hosting.csproj" />
+      <ProjectReference Include="..\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj" />
     </ItemGroup>
 
 </Project>
