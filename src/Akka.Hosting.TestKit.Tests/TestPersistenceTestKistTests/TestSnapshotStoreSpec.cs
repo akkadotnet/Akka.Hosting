@@ -7,110 +7,104 @@
 
 using Xunit.Abstractions;
 
-namespace Akka.Hosting.TestKit.Tests.TestPersistenceTestKistTests
+namespace Akka.Hosting.TestKit.Tests.TestPersistenceTestKistTests;
+
+using Actor;
+using Akka.Persistence;
+using Akka.Persistence.TestKit;
+using Akka.Persistence.TestKit.Tests;
+using Akka.TestKit;
+using System;
+using System.Threading.Tasks;
+using Xunit;
+
+public sealed class TestSnapshotStoreSpec : PersistenceTestKit
 {
-    using Actor;
-    using Akka.Persistence;
-    using Akka.Persistence.TestKit;
-    using Akka.Persistence.TestKit.Tests;
-    using Akka.TestKit;
-    using System;
-    using System.Threading.Tasks;
-    using Xunit;
-
-    public sealed class TestSnapshotStoreSpec : PersistenceTestKit
+    public TestSnapshotStoreSpec(ITestOutputHelper output) : base(nameof(TestSnapshotStoreSpec), output: output)
     {
-        public TestSnapshotStoreSpec(ITestOutputHelper output) : base(nameof(TestSnapshotStoreSpec), output: output)
-        {
-        }
+    }
 
-        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
-        {
-            base.ConfigureAkka(builder, provider);
-            builder.WithActors((system, registry) =>
-            {
-                probe = CreateTestProbe();
-                var echo = system.ActorOf(Props.Create(() => new SnapshotActor(probe)));
-                registry.Register<SnapshotActor>(echo);
-            });
-        }
+    protected override Task BeforeTestStart()
+    {
+        _probe = CreateTestProbe();
+        return Task.CompletedTask;
+    }
 
-        private TestProbe? probe;
+    private TestProbe _probe = null!;
 
-        [Fact]
-        public async Task send_ack_after_load_interceptor_is_set()
-        {
-            SnapshotsActorRef!.Tell(new TestSnapshotStore.UseLoadInterceptor(null), TestActor);
-            await ExpectMsgAsync<TestSnapshotStore.Ack>();
-        }
+    [Fact]
+    public async Task send_ack_after_load_interceptor_is_set()
+    {
+        SnapshotsActorRef.Tell(new TestSnapshotStore.UseLoadInterceptor(null), TestActor);
+        await ExpectMsgAsync<TestSnapshotStore.Ack>();
+    }
 
-        [Fact]
-        public async Task send_ack_after_save_interceptor_is_set()
-        {
-            SnapshotsActorRef!.Tell(new TestSnapshotStore.UseSaveInterceptor(null), TestActor);
-            await ExpectMsgAsync<TestSnapshotStore.Ack>();
-        }
+    [Fact]
+    public async Task send_ack_after_save_interceptor_is_set()
+    {
+        SnapshotsActorRef.Tell(new TestSnapshotStore.UseSaveInterceptor(null), TestActor);
+        await ExpectMsgAsync<TestSnapshotStore.Ack>();
+    }
 
-        [Fact]
-        public async Task send_ack_after_delete_interceptor_is_set()
-        {
-            SnapshotsActorRef!.Tell(new TestSnapshotStore.UseDeleteInterceptor(null), TestActor);
-            await ExpectMsgAsync<TestSnapshotStore.Ack>();
-        }
+    [Fact]
+    public async Task send_ack_after_delete_interceptor_is_set()
+    {
+        SnapshotsActorRef.Tell(new TestSnapshotStore.UseDeleteInterceptor(null), TestActor);
+        await ExpectMsgAsync<TestSnapshotStore.Ack>();
+    }
 
-        [Fact]
-        public async Task after_load_behavior_was_executed_store_is_back_to_pass_mode()
+    [Fact]
+    public async Task after_load_behavior_was_executed_store_is_back_to_pass_mode()
+    {
+        // create snapshot
+        var actor = ActorOf(() => new SnapshotActor(_probe));
+        actor.Tell("save");
+        await _probe.ExpectMsgAsync<SaveSnapshotSuccess>();
+        await actor.GracefulStop(TimeSpan.FromSeconds(3));
+
+        await WithSnapshotLoad(load => load.Fail(), async () =>
         {
-            // create snapshot
-            var actor = ActorRegistry.Get<SnapshotActor>();
+            ActorOf(() => new SnapshotActor(_probe));
+            await _probe.ExpectMsgAsync<SnapshotActor.RecoveryFailure>();
+        });
+
+        ActorOf(() => new SnapshotActor(_probe));
+        await _probe.ExpectMsgAsync<SnapshotOffer>();
+    }
+
+    [Fact]
+    public async Task after_save_behavior_was_executed_store_is_back_to_pass_mode()
+    {
+        // create snapshot
+        var actor = ActorOf(() => new SnapshotActor(_probe));
+
+        await WithSnapshotSave(save => save.Fail(), async () =>
+        {
             actor.Tell("save");
-            await probe!.ExpectMsgAsync<SaveSnapshotSuccess>();
-            await actor.GracefulStop(TimeSpan.FromSeconds(3));
+            await _probe.ExpectMsgAsync<SaveSnapshotFailure>();
+        });
 
-            await WithSnapshotLoad(load => load.Fail(), async () =>
-            {
-                ActorOf(() => new SnapshotActor(probe!));
-                await probe!.ExpectMsgAsync<SnapshotActor.RecoveryFailure>();
-            });
+        actor.Tell("save");
+        await _probe.ExpectMsgAsync<SaveSnapshotSuccess>();
+    }
 
-            ActorOf(() => new SnapshotActor(probe!));
-            await probe!.ExpectMsgAsync<SnapshotOffer>();
-        }
+    [Fact]
+    public async Task after_delete_behavior_was_executed_store_is_back_to_pass_mode()
+    {
+        // create snapshot
+        var actor = ActorOf(() => new SnapshotActor(_probe));
+        actor.Tell("save");
 
-        [Fact]
-        public async Task after_save_behavior_was_executed_store_is_back_to_pass_mode()
+        var success = await _probe.ExpectMsgAsync<SaveSnapshotSuccess>();
+        var nr = success.Metadata.SequenceNr;
+
+        await WithSnapshotDelete(del => del.Fail(), async () =>
         {
-            // create snapshot
-            var actor = ActorRegistry.Get<SnapshotActor>();
-
-            await WithSnapshotSave(save => save.Fail(), async () =>
-            {
-                actor.Tell("save");
-                await probe!.ExpectMsgAsync<SaveSnapshotFailure>();
-            });
-
-            actor.Tell("save");
-            await probe!.ExpectMsgAsync<SaveSnapshotSuccess>();
-        }
-
-        [Fact]
-        public async Task after_delete_behavior_was_executed_store_is_back_to_pass_mode()
-        {
-            // create snapshot
-            var actor = ActorRegistry.Get<SnapshotActor>();
-            actor.Tell("save");
-
-            var success = await probe!.ExpectMsgAsync<SaveSnapshotSuccess>();
-            var nr = success.Metadata.SequenceNr;
-
-            await WithSnapshotDelete(del => del.Fail(), async () =>
-            {
-                actor.Tell(new SnapshotActor.DeleteOne(nr), TestActor);
-                await probe!.ExpectMsgAsync<DeleteSnapshotFailure>();
-            });
-
             actor.Tell(new SnapshotActor.DeleteOne(nr), TestActor);
-            await probe!.ExpectMsgAsync<DeleteSnapshotSuccess>();
-        }
+            await _probe.ExpectMsgAsync<DeleteSnapshotFailure>();
+        });
+
+        actor.Tell(new SnapshotActor.DeleteOne(nr), TestActor);
+        await _probe.ExpectMsgAsync<DeleteSnapshotSuccess>();
     }
 }
