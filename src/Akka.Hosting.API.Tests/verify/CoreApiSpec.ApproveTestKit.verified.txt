@@ -22,6 +22,26 @@ namespace Akka.Hosting.TestKit.Internals
 }
 namespace Akka.Hosting.TestKit
 {
+    public abstract class PersistenceTestKit : Akka.Hosting.TestKit.TestKit
+    {
+        public PersistenceTestKit(Akka.Configuration.Config? config = null, string? actorSystemName = null, Xunit.Abstractions.ITestOutputHelper? output = null) { }
+        protected override Akka.Configuration.Config? Config { get; }
+        public Akka.Persistence.TestKit.ITestJournal? Journal { get; set; }
+        public Akka.Actor.IActorRef? JournalActorRef { get; set; }
+        public Akka.Persistence.TestKit.ITestSnapshotStore? Snapshots { get; set; }
+        public Akka.Actor.IActorRef? SnapshotsActorRef { get; set; }
+        protected override void ConfigureAkka(Akka.Hosting.AkkaConfigurationBuilder builder, System.IServiceProvider provider) { }
+        public System.Threading.Tasks.Task WithJournalRecovery(System.Func<Akka.Persistence.TestKit.JournalRecoveryBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Action execution) { }
+        public System.Threading.Tasks.Task WithJournalRecovery(System.Func<Akka.Persistence.TestKit.JournalRecoveryBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Func<System.Threading.Tasks.Task> execution) { }
+        public System.Threading.Tasks.Task WithJournalWrite(System.Func<Akka.Persistence.TestKit.JournalWriteBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Action execution) { }
+        public System.Threading.Tasks.Task WithJournalWrite(System.Func<Akka.Persistence.TestKit.JournalWriteBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Func<System.Threading.Tasks.Task> execution) { }
+        public System.Threading.Tasks.Task WithSnapshotDelete(System.Func<Akka.Persistence.TestKit.SnapshotStoreDeleteBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Action execution) { }
+        public System.Threading.Tasks.Task WithSnapshotDelete(System.Func<Akka.Persistence.TestKit.SnapshotStoreDeleteBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Func<System.Threading.Tasks.Task> execution) { }
+        public System.Threading.Tasks.Task WithSnapshotLoad(System.Func<Akka.Persistence.TestKit.SnapshotStoreLoadBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Action execution) { }
+        public System.Threading.Tasks.Task WithSnapshotLoad(System.Func<Akka.Persistence.TestKit.SnapshotStoreLoadBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Func<System.Threading.Tasks.Task> execution) { }
+        public System.Threading.Tasks.Task WithSnapshotSave(System.Func<Akka.Persistence.TestKit.SnapshotStoreSaveBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Action execution) { }
+        public System.Threading.Tasks.Task WithSnapshotSave(System.Func<Akka.Persistence.TestKit.SnapshotStoreSaveBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Func<System.Threading.Tasks.Task> execution) { }
+    }
     public abstract class TestKit : Akka.TestKit.TestKitBase, Xunit.IAsyncLifetime
     {
         protected TestKit(string? actorSystemName = null, Xunit.Abstractions.ITestOutputHelper? output = null, System.TimeSpan? startupTimeout = default, Microsoft.Extensions.Logging.LogLevel logLevel = 2) { }
