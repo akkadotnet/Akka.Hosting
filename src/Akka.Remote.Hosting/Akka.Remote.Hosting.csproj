@@ -13,5 +13,6 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Remote" Version="$(AkkaVersion)" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" />
   </ItemGroup>
 </Project>
