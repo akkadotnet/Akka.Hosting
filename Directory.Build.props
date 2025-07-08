@@ -21,10 +21,10 @@
     <LibraryFramework>netstandard2.0</LibraryFramework>
     <NetLibraryFramework>net6.0</NetLibraryFramework>
     <TestsNetCoreFramework>net8.0</TestsNetCoreFramework>
-    <XunitVersion>2.8.1</XunitVersion>
-    <TestSdkVersion>17.11.1</TestSdkVersion>
-    <CoverletVersion>6.0.3</CoverletVersion>
-    <XunitRunneVisualstudio>2.8.1</XunitRunneVisualstudio>
+    <XunitVersion>2.9.3</XunitVersion>
+    <TestSdkVersion>17.14.1</TestSdkVersion>
+    <CoverletVersion>6.0.4</CoverletVersion>
+    <XunitRunneVisualstudio>3.1.1</XunitRunneVisualstudio>
     <AkkaVersion>1.5.45</AkkaVersion>
     <MicrosoftExtensionsVersion>[6.0.0,)</MicrosoftExtensionsVersion>
     <SystemTextJsonVersion>[6.0.10,)</SystemTextJsonVersion>
