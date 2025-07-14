@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Akka.Cluster.Hosting\Akka.Cluster.Hosting.csproj" />
+    <ProjectReference Include="..\src\Akka.Hosting\Akka.Hosting.csproj" />
+    <ProjectReference Include="..\src\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj" />
+    <ProjectReference Include="..\src\Akka.Remote.Hosting\Akka.Remote.Hosting.csproj" />
+  </ItemGroup>
+
+</Project>
