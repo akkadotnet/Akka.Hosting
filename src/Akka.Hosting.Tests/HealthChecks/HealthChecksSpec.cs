@@ -109,8 +109,8 @@ public class HealthChecksSpec : TestKit.TestKit
         fooActor.Tell(PoisonPill.Instance);
         await ExpectTerminatedAsync(fooActor);
 
-        // found in the registry, but non-responsive
-        await InvokeHealthCheck(HealthStatus.Unhealthy);
+        // found in the registry, but dead
+        await InvokeHealthCheck(HealthStatus.Unhealthy, 3000);
         return;
 
         async Task InvokeHealthCheck(HealthStatus expectedStatus, int waitMilliseconds = 1)
