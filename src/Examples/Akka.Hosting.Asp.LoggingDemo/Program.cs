@@ -8,6 +8,8 @@ using Akka.Remote.Hosting;
 using LogLevel = Akka.Event.LogLevel;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHealthChecks();
+
 builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider) =>
 {
     configurationBuilder
@@ -52,5 +54,7 @@ app.MapGet("/", async (context) =>
     var body = await echo.Ask<string>(context.TraceIdentifier, context.RequestAborted).ConfigureAwait(false);
     await context.Response.WriteAsync(body);
 });
+
+app.MapHealthChecks("/healthz");
 
 app.Run();
