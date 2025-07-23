@@ -256,5 +256,21 @@ namespace Akka.Hosting
         {
             return builder.StartActors(actorStarter);
         }
+
+        /// <summary>
+        /// Registers a named <see cref="IAkkaHealthCheck"/> instance.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="name">The unique name for this health check.</param>
+        /// <param name="healthCheck">The health check implementation.</param>
+        /// <remarks>
+        /// If you need more detailed configuration for a health check, such as tags or default failure status,
+        /// please use the <see cref="AkkaConfigurationBuilder.WithHealthCheck(AkkaHealthCheckRegistration)"/> method.
+        /// </remarks>
+        public static AkkaConfigurationBuilder WithHealthCheck(this AkkaConfigurationBuilder builder, string name, IAkkaHealthCheck healthCheck)
+        {
+            var registration = new AkkaHealthCheckRegistration(name, healthCheck, null, null);
+            return  builder.WithHealthCheck(registration);
+        }
     }
 }

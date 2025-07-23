@@ -407,8 +407,8 @@ namespace Akka.Hosting
         {
             var actorSystemHealthCheck = new AkkaHealthCheckRegistration("ActorSystem Available",
                 new ActorSystemLivenessCheck(), HealthStatus.Unhealthy, null);
-            
-            HealthChecks.Add(actorSystemHealthCheck);
+
+            WithHealthCheck(actorSystemHealthCheck);
         }
         
         private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
