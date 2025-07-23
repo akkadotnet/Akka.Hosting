@@ -27,7 +27,7 @@ public class RemoteConfigurationSpecs
         {
             services.AddAkka("RemoteSys", (builder, provider) =>
             {
-                builder.WithRemoting();
+                builder.WithRemoting(port:0);
             });
         }).Build();
 
@@ -45,7 +45,7 @@ public class RemoteConfigurationSpecs
         adapters[0].Should().Be("akka.remote.dot-netty.tcp");
         
         tcpConfig.GetString("hostname").Should().BeEmpty();
-        tcpConfig.GetInt("port").Should().Be(2552);
+        tcpConfig.GetInt("port").Should().Be(0);
         tcpConfig.GetString("public-hostname").Should().BeEmpty();
         tcpConfig.GetInt("public-port").Should().Be(0);
         tcpConfig.GetByteSize("send-buffer-size").Should().Be(256000);
@@ -73,7 +73,7 @@ public class RemoteConfigurationSpecs
         {
             services.AddAkka("RemoteSys", (builder, provider) =>
             {
-                builder.WithRemoting(new RemoteOptions());
+                builder.WithRemoting(new RemoteOptions(){ Port = 0});
             });
         }).Build();
 
@@ -91,7 +91,7 @@ public class RemoteConfigurationSpecs
         adapters[0].Should().Be("akka.remote.dot-netty.tcp");
         
         tcpConfig.GetString("hostname").Should().BeEmpty();
-        tcpConfig.GetInt("port").Should().Be(2552);
+        tcpConfig.GetInt("port").Should().Be(0);
         tcpConfig.GetString("public-hostname").Should().BeEmpty();
         tcpConfig.GetInt("public-port").Should().Be(0);
         tcpConfig.GetByteSize("send-buffer-size").Should().Be(256000);
@@ -217,7 +217,7 @@ public class RemoteConfigurationSpecs
         {
             services.AddAkka("RemoteSys", (builder, provider) =>
             {
-                builder.WithRemoting(publicHostname: "localhost", publicPort:12345);
+                builder.WithRemoting(publicHostname: "localhost", publicPort:12345, port:0);
             });
         }).Build();
 
@@ -233,7 +233,7 @@ public class RemoteConfigurationSpecs
         adapters[0].Should().Be("akka.remote.dot-netty.tcp");
         
         tcpConfig.GetString("hostname").Should().BeEmpty();
-        tcpConfig.GetInt("port").Should().Be(2552);
+        tcpConfig.GetInt("port").Should().Be(0);
         tcpConfig.GetString("public-hostname").Should().Be("localhost");
         tcpConfig.GetInt("public-port").Should().Be(12345);
     }
