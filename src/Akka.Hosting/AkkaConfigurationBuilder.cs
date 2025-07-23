@@ -84,6 +84,7 @@ namespace Akka.Hosting
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new();
+        internal readonly HashSet<AkkaHealthCheckRegistration> HealthChecks = new();
         internal readonly List<Type> Extensions = new();
 
         /// <summary>
