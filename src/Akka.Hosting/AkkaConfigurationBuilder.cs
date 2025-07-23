@@ -9,11 +9,13 @@ using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
 using Akka.DependencyInjection;
+using Akka.Hosting.HealthChecks;
 using Akka.Hosting.Logging;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
@@ -334,6 +336,10 @@ namespace Akka.Hosting
             return this;
         }
 
+        /// <summary>
+        /// Registers an <see cref="AkkaHealthCheckRegistration"/> with the <see cref="AkkaConfigurationBuilder"/>.
+        /// </summary>
+        /// <param name="registration">The health check registration.</param>
         public AkkaConfigurationBuilder WithHealthCheck(AkkaHealthCheckRegistration registration)
         {
             HealthChecks.Add(registration);
@@ -393,6 +399,17 @@ namespace Akka.Hosting
                 $"akka.extensions = [{string.Join(", ", Extensions.Select(s => $"\"{s.AssemblyQualifiedName}\""))}]", 
                 HoconAddMode.Prepend);
         }
+
+        /// <summary>
+        /// Add any default health checks that ship in a totally vanilla Akka.NET installation.
+        /// </summary>
+        private void AddBuiltInHealthChecks()
+        {
+            var actorSystemHealthCheck = new AkkaHealthCheckRegistration("ActorSystem Available",
+                new ActorSystemLivenessCheck(), HealthStatus.Unhealthy, null);
+            
+            HealthChecks.Add(actorSystemHealthCheck);
+        }
         
         private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()
         {
@@ -406,6 +423,7 @@ namespace Akka.Hosting
                 
                 // Add auto-started akka extensions, if any.
                 config.AddExtensions();
+                config.AddBuiltInHealthChecks();
                 
                 // check to see if we need a LoggerSetup
                 var hasLoggerSetup = config.Setups.Any(c => c is LoggerFactorySetup);
