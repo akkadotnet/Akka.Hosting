@@ -44,6 +44,12 @@ namespace Akka.Hosting.Configuration
             var sanitized = (normalizeKeys ? config.Key.ToLowerInvariant() : config.Key).Replace("_", "-");
             var keys = sanitized.SplitDottedPathHonouringQuotes().ToList();
 
+            // HOCON does not support objects with empty key name.
+            // The most probable source for this is a double underscore prefixed environment variable, which
+            // confuses MS.EXT.Configuration.EnvironmentVariables. Just create a temporary name for it.
+            if(keys.Count == 0)
+                return parent.GetOrCreateKey("__");
+            
             // No need to expand the chain
             if (keys.Count == 1)
             {

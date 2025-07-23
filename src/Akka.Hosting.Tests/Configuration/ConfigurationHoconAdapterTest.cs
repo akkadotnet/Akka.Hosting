@@ -67,6 +67,13 @@ public class ConfigurationHoconAdapterTest: IAsyncLifetime
         Environment.SetEnvironmentVariable("akka__test_value_4__1", "one");
         Environment.SetEnvironmentVariable("akka__actor__serialization_bindings2__\"System.Object\"", "hyperion");
         
+        // Issue #631
+        // Double underscore cases
+        Environment.SetEnvironmentVariable("__MISE_SESSION", "some-random-string");
+        // Quadruple underscore cases
+        Environment.SetEnvironmentVariable("MISE____SESSION", "some-random-string");
+        Environment.SetEnvironmentVariable("____MISE_SESSION", "some-random-string");
+        
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ConfigSource));
         _root = new ConfigurationBuilder()
             .AddJsonStream(stream)
@@ -95,6 +102,10 @@ public class ConfigurationHoconAdapterTest: IAsyncLifetime
         Environment.SetEnvironmentVariable("akka__test_value_4__22", null);
         Environment.SetEnvironmentVariable("akka__test_value_4__1", null);
         Environment.SetEnvironmentVariable("akka__actor__serialization_bindings2__\"System.Object\"", null);
+        
+        Environment.SetEnvironmentVariable("__MISE_SESSION", null);
+        Environment.SetEnvironmentVariable("MISE____SESSION", null);
+        Environment.SetEnvironmentVariable("____MISE_SESSION", null);
         
         return Task.CompletedTask;
     }
@@ -139,6 +150,11 @@ public class ConfigurationHoconAdapterTest: IAsyncLifetime
         bindings.ContainsKey("System.Object").Should().BeFalse();
         bindings.ContainsKey("system.object").Should().BeTrue();
         bindings["system.object"].GetString().Should().Be("hyperion");
+        
+        // empty string keyed objects should be accessible by using "__"
+        config.GetString("__.mise-session").Should().Be("some-random-string");
+        config.GetString("mise.__.session").Should().Be("some-random-string");
+        config.GetString("__.__.mise-session").Should().Be("some-random-string");
     }
 
     [Fact(DisplayName = "Non-normalized adaptor should read environment variable sourced configuration correctly")]
@@ -179,6 +195,11 @@ public class ConfigurationHoconAdapterTest: IAsyncLifetime
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         bindings.ContainsKey("System.Object").Should().BeTrue();
         bindings["System.Object"].GetString().Should().Be("hyperion");
+        
+        // empty string keyed objects should be accessible by using "__"
+        config.GetString("__.MISE-SESSION").Should().Be("some-random-string");
+        config.GetString("MISE.__.SESSION").Should().Be("some-random-string");
+        config.GetString("__.__.MISE-SESSION").Should().Be("some-random-string");
     }
 
     [Fact(DisplayName = "Non-normalized Adaptor should read quote enclosed key inside JSON settings correctly")]
