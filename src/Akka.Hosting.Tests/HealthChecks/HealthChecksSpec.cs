@@ -7,11 +7,15 @@ using Akka.Hosting.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Akka.Hosting.Tests.HealthChecks;
 
 public class HealthChecksSpec : TestKit.TestKit
 {
+    public HealthChecksSpec(ITestOutputHelper output) 
+        : base(output: output){ }
+    
     private class FooActor : UntypedActor
     {
         protected override void OnReceive(object message)
@@ -36,16 +40,18 @@ public class HealthChecksSpec : TestKit.TestKit
 
                 try
                 {
-                    await fooActor.Ask<ActorIdentity>(new Identify("foo"), cancellationToken: cancellationToken);
+                    var r = await fooActor.Ask<ActorIdentity>(new Identify("foo"), cancellationToken: cancellationToken);
+                    if (r.Subject.IsNobody())
+                        return HealthCheckResult.Unhealthy("FooActor was alive but is now dead");
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    return HealthCheckResult.Degraded("fooActor found but non-responsive");
+                    return HealthCheckResult.Degraded("FooActor found but non-responsive", e);
                 }
             }
-            catch (Exception)
+            catch (Exception e2)
             {
-                return HealthCheckResult.Unhealthy("fooActor not found in registry");
+                return HealthCheckResult.Unhealthy("FooActor not found in registry", e2);
             }
 
             return HealthCheckResult.Healthy("fooActor found and responsive");
@@ -73,5 +79,47 @@ public class HealthChecksSpec : TestKit.TestKit
         
         // assert - system is alive, health check should be healthy
         Assert.Equal(HealthStatus.Healthy, healthCheckResult.Status);
+    }
+    
+    [Fact]
+    public async Task ShouldReturnAppropriateResults()
+    {
+        // arrange
+        var configurationBuilder = Host.Services.GetRequiredService<AkkaConfigurationBuilder>();
+
+        // act
+        var customActorHealthCheck =
+            configurationBuilder.HealthChecks.Single(c => c.HealthCheck is DelegateHealthCheck);
+        
+        var akkaHealthCheckContext = new AkkaHealthCheckContext(Sys)
+            { Registration = customActorHealthCheck.ToHealthCheckRegistration() };
+        
+        // should fail - target actor is not alive
+        await InvokeHealthCheck(HealthStatus.Unhealthy);
+
+        // start the actor and register it
+        var fooActor = Sys.ActorOf(Props.Create(() => new FooActor()), "foo");
+        ActorRegistry.Register<FooActor>(fooActor);
+
+        // should succeed - target actor is around
+        await InvokeHealthCheck(HealthStatus.Healthy, 3000);
+        
+        // kill the target actor
+        await WatchAsync(fooActor);
+        fooActor.Tell(PoisonPill.Instance);
+        await ExpectTerminatedAsync(fooActor);
+
+        // found in the registry, but non-responsive
+        await InvokeHealthCheck(HealthStatus.Unhealthy);
+        return;
+
+        async Task InvokeHealthCheck(HealthStatus expectedStatus, int waitMilliseconds = 1)
+        {
+            using var fastCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(waitMilliseconds));
+            var healthCheckResult = await customActorHealthCheck.HealthCheck.CheckHealthAsync(akkaHealthCheckContext, fastCts.Token);
+            if(healthCheckResult.Description != null)
+                Output?.WriteLine(healthCheckResult.Description);
+            Assert.Equal(expectedStatus, healthCheckResult.Status);
+        }
     }
 }
