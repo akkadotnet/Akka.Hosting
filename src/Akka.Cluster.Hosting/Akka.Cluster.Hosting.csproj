@@ -13,5 +13,6 @@
   <ItemGroup>
     <PackageReference Include="Akka.Cluster.Sharding" Version="$(AkkaVersion)" />
     <PackageReference Include="Akka.DistributedData" Version="$(AkkaVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.7" />
   </ItemGroup>
 </Project>
