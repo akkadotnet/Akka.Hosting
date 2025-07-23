@@ -125,6 +125,7 @@ namespace Akka.Hosting
         {
             ServiceCollection = serviceCollection;
             ActorSystemName = actorSystemName;
+            AddBuiltInHealthChecks();
         }
 
         internal AkkaConfigurationBuilder AddSetup(Setup setup)
@@ -369,13 +370,22 @@ namespace Akka.Hosting
             ServiceCollection.AddSingleton(typeof(IRequiredActor<>), typeof(RequiredActor<>));
 
             // Automatically register all Akka.NET health checks with the HealthCheckServiceOptions
-            ServiceCollection.Configure<HealthCheckServiceOptions>(options =>
-            {
-                foreach (var registration in HealthChecks.Select(c => c.ToHealthCheckRegistration()))
+            // ServiceCollection.Configure<HealthCheckServiceOptions>(options =>
+            // {
+            //     foreach (var registration in HealthChecks.Select(c => c.ToHealthCheckRegistration()))
+            //     {
+            //         options.Registrations.Add(registration);
+            //     }
+            // });
+            
+            ServiceCollection.AddOptions<HealthCheckServiceOptions>()   // creates an OptionsBuilder
+                .PostConfigure<AkkaConfigurationBuilder>((opts, akka) =>
                 {
-                    options.Registrations.Add(registration);
-                }
-            });
+                    // Ensure the user’s builder delegate has run
+                    // and health checks are available on `akka`
+                    foreach (var reg in akka.HealthChecks.Select(h => h.ToHealthCheckRegistration()))
+                        opts.Registrations.Add(reg);
+                });
         }
 
         /// <summary>
@@ -432,7 +442,6 @@ namespace Akka.Hosting
                 
                 // Add auto-started akka extensions, if any.
                 config.AddExtensions();
-                config.AddBuiltInHealthChecks();
                 
                 // check to see if we need a LoggerSetup
                 var hasLoggerSetup = config.Setups.Any(c => c is LoggerFactorySetup);
