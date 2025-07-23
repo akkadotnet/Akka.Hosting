@@ -333,6 +333,12 @@ namespace Akka.Hosting
 
             return this;
         }
+
+        public AkkaConfigurationBuilder WithHealthCheck(AkkaHealthCheckRegistration registration)
+        {
+            HealthChecks.Add(registration);
+            return this;
+        }
         
         internal void Bind()
         {
