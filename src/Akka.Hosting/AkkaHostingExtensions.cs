@@ -1,13 +1,17 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.DependencyInjection;
 using Akka.Hosting.Configuration;
+using Akka.Hosting.HealthChecks;
 using Akka.Streams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 
 namespace Akka.Hosting
@@ -271,6 +275,23 @@ namespace Akka.Hosting
         {
             var registration = new AkkaHealthCheckRegistration(name, healthCheck, null, null);
             return  builder.WithHealthCheck(registration);
+        }
+
+        /// <summary>
+        /// Registers a named <see cref="IAkkaHealthCheck"/> instance.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="name">The unique name for this health check.</param>
+        /// <param name="healthCheck">A health checking function.</param>
+        /// <remarks>
+        /// If you need more detailed configuration for a health check, such as tags or default failure status,
+        /// please use the <see cref="AkkaConfigurationBuilder.WithHealthCheck(AkkaHealthCheckRegistration)"/> method.
+        /// </remarks>
+        public static AkkaConfigurationBuilder WithHealthCheck(this AkkaConfigurationBuilder builder, string name,
+            Func<ActorSystem, ActorRegistry, CancellationToken, Task<HealthCheckResult>> healthCheck)
+        {
+            var healthCheckImpl = new DelegateHealthCheck(healthCheck);
+            return builder.WithHealthCheck(name, healthCheckImpl);
         }
     }
 }

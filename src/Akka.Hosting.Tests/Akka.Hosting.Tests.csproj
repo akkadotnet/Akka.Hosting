@@ -33,8 +33,4 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="HealthChecks\" />
-  </ItemGroup>
 </Project>

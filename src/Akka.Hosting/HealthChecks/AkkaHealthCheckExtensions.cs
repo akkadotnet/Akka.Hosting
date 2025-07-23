@@ -13,7 +13,7 @@ internal static class AkkaHealthCheckExtensions
     /// Converts an <see cref="AkkaHealthCheckRegistration"/> to a <see cref="HealthCheckRegistration"/>
     /// </summary>
     /// <param name="registration">the original Akka.NET health check registration.</param>
-    public static HealthCheckRegistration ToHealthCheckRegistration(AkkaHealthCheckRegistration registration)
+    public static HealthCheckRegistration ToHealthCheckRegistration(this AkkaHealthCheckRegistration registration)
     {
         // func for lazily instantiating the health check registration
         Func<IServiceProvider, IHealthCheck> adapter = provider =>
