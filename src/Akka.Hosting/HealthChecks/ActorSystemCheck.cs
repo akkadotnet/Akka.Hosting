@@ -11,16 +11,9 @@ namespace Akka.Hosting.HealthChecks;
 /// </summary>
 internal sealed class ActorSystemLivenessCheck : IAkkaHealthCheck
 {
-    private readonly ActorSystem _system;
-
-    public ActorSystemLivenessCheck(ActorSystem system)
-    {
-        _system = system ?? throw new ArgumentNullException(nameof(system));
-    }
-
     public Task<HealthCheckResult> CheckHealthAsync(AkkaHealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        if (_system.WhenTerminated.IsCompleted)
+        if (context.ActorSystem.WhenTerminated.IsCompleted)
         {
             return Task.FromResult(new HealthCheckResult(status: context.Registration.FailureStatus, description: "ActorSystem has terminated."));
         }
