@@ -11,12 +11,12 @@ internal static class ClusterHealthCheckHelpers
 {
     public static IReadOnlyDictionary<string, object> DumpClusterState(this ClusterEvent.CurrentClusterState state)
     {
-        return
-        [
-            new KeyValuePair<string, object>("cluster.members", state.Members.Count),
-            new KeyValuePair<string, object>("cluster.unreachable", state.Unreachable.Count),
-            new KeyValuePair<string, object>("cluster.leader", state.Leader.ToString())
-        ];
+        return new Dictionary<string, object>
+        {
+            {"cluster.members", state.Members.Count},
+            {"cluster.unreachable", state.Unreachable.Count},
+            {"cluster.leader", state.Leader.ToString()}
+        };
     }
 }
 
@@ -153,7 +153,7 @@ public sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
                 break;
             case (true, not null) when ShouldTriggerFailure(DateTime.UtcNow):
                 // time to signal failure publicly, which might have repercussions
-                return Task.FromResult(HealthCheckResult.Unhealthy(
+                return Task.FromResult(new HealthCheckResult(context.Registration.FailureStatus,
                     $"Cluster has been unhealthy for [{DateTime.UtcNow - _failureInitiallyTriggered:g}]",
                     data: cluster.State.DumpClusterState()));
         }

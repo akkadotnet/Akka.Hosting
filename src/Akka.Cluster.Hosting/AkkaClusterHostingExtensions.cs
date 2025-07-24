@@ -19,6 +19,7 @@ using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
 using Akka.Remote.Hosting;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Akka.Cluster.Hosting
 {
@@ -634,6 +635,10 @@ namespace Akka.Cluster.Hosting
 
             // prepend the composed configuration
             builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+
+            // add the default cluster readiness check
+            builder.WithHealthCheck(new AkkaHealthCheckRegistration("cluster.join", new AkkaClusterReadinessCheck(),
+                HealthStatus.Unhealthy, ["ready", "akka.cluster"]));
 
             options.SplitBrainResolver?.Apply(builder);
 
