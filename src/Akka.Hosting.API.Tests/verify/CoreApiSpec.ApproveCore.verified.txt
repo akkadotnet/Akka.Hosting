@@ -89,6 +89,7 @@ namespace Akka.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder AddSetup(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup setup) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActorAskTimeout(this Akka.Hosting.AkkaConfigurationBuilder builder, System.TimeSpan timeout) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActorRefProvider(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.ProviderSelection providerSelection) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithActorSystemLivenessCheck(this Akka.Hosting.AkkaConfigurationBuilder builder) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Hosting.ActorStarter actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Hosting.ActorStarterWithResolver actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry> actorStarter) { }
@@ -236,6 +237,14 @@ namespace Akka.Hosting.Coordination
         public abstract System.Type Class { get; }
         public abstract string ConfigPath { get; }
         public abstract void Apply(Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup? setup = null);
+    }
+}
+namespace Akka.Hosting.HealthChecks
+{
+    public sealed class ActorSystemLivenessCheck : Akka.Hosting.IAkkaHealthCheck
+    {
+        public ActorSystemLivenessCheck() { }
+        public System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(Akka.Hosting.AkkaHealthCheckContext context, System.Threading.CancellationToken cancellationToken = default) { }
     }
 }
 namespace Akka.Hosting.Logging
