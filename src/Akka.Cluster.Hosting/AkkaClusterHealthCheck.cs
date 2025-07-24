@@ -166,9 +166,10 @@ internal sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
 }
 
 /// <summary>
-/// Checks to see if we've joined a cluster.
+/// Checks to see if we've joined a cluster and have been marked as <see cref="MemberStatus.Up"/>
+/// or <see cref="MemberStatus.WeaklyUp"/>
 /// </summary>
-internal sealed class AkkaClusterReadinessCheck : IAkkaHealthCheck
+public sealed class AkkaClusterReadinessCheck : IAkkaHealthCheck
 {
     /// <summary>
     /// Have we successfully joined the cluster?
@@ -182,8 +183,8 @@ internal sealed class AkkaClusterReadinessCheck : IAkkaHealthCheck
     public HealthCheckResult HealthyResult(DateTime finishedJoining) => HealthCheckResult.Healthy(
         $"Observed successful cluster join after [{finishedJoining - BeganJoining:g}] - actual join duration was probably faster, but this is how quickly the health check observed it.");
 
-    public HealthCheckResult UnhealthyResult(DateTime now) =>
-        HealthCheckResult.Unhealthy($"Have not yet joined Akka.NET cluster [{now - BeganJoining:g}] elapsed");
+    public HealthCheckResult UnhealthyResult(DateTime now, HealthStatus failureStatus) =>
+        new HealthCheckResult(failureStatus, $"Have not yet joined Akka.NET cluster [{now - BeganJoining:g}] elapsed");
 
     public Task<HealthCheckResult> CheckHealthAsync(AkkaHealthCheckContext context,
         CancellationToken cancellationToken = default)
@@ -192,7 +193,7 @@ internal sealed class AkkaClusterReadinessCheck : IAkkaHealthCheck
             return Task.FromResult(HealthyResult(FinishedJoining.Value));
 
         var cluster = Cluster.Get(context.ActorSystem);
-        WeHaveJoined = cluster.SelfMember.Status > MemberStatus.Joining;
+        WeHaveJoined = cluster.SelfMember.Status is MemberStatus.Up or MemberStatus.WeaklyUp;
 
         if (WeHaveJoined)
         {
@@ -200,6 +201,6 @@ internal sealed class AkkaClusterReadinessCheck : IAkkaHealthCheck
             return Task.FromResult(HealthyResult(FinishedJoining.Value));
         }
 
-        return Task.FromResult(UnhealthyResult(DateTime.UtcNow));
+        return Task.FromResult(UnhealthyResult(DateTime.UtcNow, context.Registration.FailureStatus));
     }
 }
