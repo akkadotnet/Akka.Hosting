@@ -128,7 +128,9 @@ internal sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
         {
             // satisfy "ARE WE UP?" criteria
             var selfMember = cluster.SelfMember;
-            _weHaveJoined = selfMember.Status > MemberStatus.Joining;
+            
+            // only two acceptable transitions for passing this check are Up or WeaklyUp
+            _weHaveJoined = selfMember.Status is MemberStatus.Up or MemberStatus.WeaklyUp;
         }
 
         if (!_evaluationConditionSatisfied)
