@@ -49,6 +49,22 @@ public sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
                                                         (now - _failureInitiallyTriggered) >=
                                                         TriggerHealthCheckFailureThreshold;
 
+    /// <summary>
+    /// Creates a new <see cref="AkkaClusterHealthCheck"/> configuration.
+    /// </summary>
+    /// <param name="unhealthyWhenTrue">The predicate function that RETURNS TRUE when the cluster is NOT HEALTHY.</param>
+    public AkkaClusterHealthCheck(Predicate<ClusterEvent.CurrentClusterState> unhealthyWhenTrue)
+        : this(unhealthyWhenTrue, DefaultFailureEvaluationThreshold, true, null)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="AkkaClusterHealthCheck"/> configuration.
+    /// </summary>
+    /// <param name="unhealthyWhenTrue">The predicate function that RETURNS TRUE when the cluster is NOT HEALTHY.</param>
+    /// <param name="triggerHealthCheckFailureThreshold">Failure checking threshold - the <see cref="UnhealthyWhenTrue"/> function needs to be true for this amount of time.</param>
+    /// <param name="dontEvaluateUntilWeHaveJoined">Don't start evaluating failure conditions until we join the cluster.</param>
+    /// <param name="dontEvaluateUntil">Optional. Don't start evaluating failure conditions until this pre-condition is met.</param>
     public AkkaClusterHealthCheck(Predicate<ClusterEvent.CurrentClusterState> unhealthyWhenTrue,
         TimeSpan triggerHealthCheckFailureThreshold, bool dontEvaluateUntilWeHaveJoined,
         Predicate<ClusterEvent.CurrentClusterState>? dontEvaluateUntil)
@@ -103,7 +119,8 @@ public sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
     /// </summary>
     public TimeSpan TriggerHealthCheckFailureThreshold { get; }
 
-    public Task<HealthCheckResult> CheckHealthAsync(AkkaHealthCheckContext context, CancellationToken cancellationToken = default)
+    public Task<HealthCheckResult> CheckHealthAsync(AkkaHealthCheckContext context,
+        CancellationToken cancellationToken = default)
     {
         var cluster = Cluster.Get(context.ActorSystem);
 
@@ -122,7 +139,7 @@ public sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
 
 
         if (!CanEvaluateFailure) return Task.FromResult(HealthCheckResult.Healthy());
-        
+
         var areInFailure = UnhealthyWhenTrue(cluster.State);
         switch (areInFailure, _failureInitiallyTriggered)
         {
@@ -130,19 +147,19 @@ public sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
                 // we were in failure; now we are not
                 _failureInitiallyTriggered = null; // clear the status
                 break;
-            case (true , null):
+            case (true, null):
                 // first time entering failure
                 _failureInitiallyTriggered = DateTime.UtcNow;
                 break;
             case (true, not null) when ShouldTriggerFailure(DateTime.UtcNow):
                 // time to signal failure publicly, which might have repercussions
                 return Task.FromResult(HealthCheckResult.Unhealthy(
-                    $"Cluster has been unhealthy for [{DateTime.UtcNow - _failureInitiallyTriggered:g}]"));
+                    $"Cluster has been unhealthy for [{DateTime.UtcNow - _failureInitiallyTriggered:g}]",
+                    data: cluster.State.DumpClusterState()));
         }
 
         // don't know enough
-        return Task.FromResult(HealthCheckResult.Healthy());
-
+        return Task.FromResult(HealthCheckResult.Healthy(data: cluster.State.DumpClusterState()));
     }
 }
 
