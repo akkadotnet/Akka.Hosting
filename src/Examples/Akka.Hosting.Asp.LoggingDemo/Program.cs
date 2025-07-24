@@ -34,6 +34,8 @@ builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider
             Roles = ["myRole"], 
             SeedNodes = ["akka.tcp://MyActorSystem@localhost:8110"]
         })
+        .WithActorSystemLivenessCheck()
+        .WithAkkaClusterReadinessCheck()
         .WithActors((system, registry) =>
         {
             var echo = system.ActorOf(act =>
