@@ -636,10 +636,6 @@ namespace Akka.Cluster.Hosting
             // prepend the composed configuration
             builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
 
-            // add the default cluster readiness check
-            builder.WithHealthCheck(new AkkaHealthCheckRegistration("cluster.join", new AkkaClusterReadinessCheck(),
-                HealthStatus.Unhealthy, ["ready", "akka.cluster"]));
-
             options.SplitBrainResolver?.Apply(builder);
 
             // populate all of the possible Clustering default HOCON configurations here
@@ -667,6 +663,10 @@ namespace Akka.Cluster.Hosting
             ClusterOptions? options = null)
         {
             var hoconBuilder = BuildClusterHocon(builder, options);
+            
+            // add the default cluster readiness check
+            builder.WithHealthCheck(new AkkaHealthCheckRegistration("cluster.join", new AkkaClusterReadinessCheck(),
+                HealthStatus.Unhealthy, ["ready", "akka.cluster"]));
 
             if (builder.ActorRefProvider.HasValue)
             {
