@@ -9,7 +9,7 @@ namespace Akka.Hosting.HealthChecks;
 /// <summary>
 /// Checks to see if the <see cref="ActorSystem"/> is alive or not.
 /// </summary>
-internal sealed class ActorSystemLivenessCheck : IAkkaHealthCheck
+public sealed class ActorSystemLivenessCheck : IAkkaHealthCheck
 {
     public Task<HealthCheckResult> CheckHealthAsync(AkkaHealthCheckContext context, CancellationToken cancellationToken = default)
     {

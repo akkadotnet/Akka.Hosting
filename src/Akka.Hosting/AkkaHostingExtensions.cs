@@ -293,5 +293,20 @@ namespace Akka.Hosting
             var healthCheckImpl = new DelegateHealthCheck(healthCheck);
             return builder.WithHealthCheck(name, healthCheckImpl);
         }
+
+        /// <summary>
+        /// Default health check for the <see cref="ActorSystem"/> liveness - if the <see cref="ActorSystem"/> is
+        /// terminated, this check will return an unhealthy status.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="ActorSystemLivenessCheck"/> for more details on how this check works. You can create a custom
+        /// <see cref="AkkaHealthCheckRegistration"/> if you want to customize this.
+        /// </remarks>
+        public static AkkaConfigurationBuilder WithActorSystemLivenessCheck(this AkkaConfigurationBuilder builder)
+        {
+            var actorSystemHealthCheck = new AkkaHealthCheckRegistration("akka.actorsystem",
+                new ActorSystemLivenessCheck(), HealthStatus.Unhealthy, null);
+            return builder.WithHealthCheck(actorSystemHealthCheck);
+        }
     }
 }

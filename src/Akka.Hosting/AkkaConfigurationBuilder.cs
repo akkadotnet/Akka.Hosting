@@ -125,7 +125,6 @@ namespace Akka.Hosting
         {
             ServiceCollection = serviceCollection;
             ActorSystemName = actorSystemName;
-            AddBuiltInHealthChecks();
         }
 
         internal AkkaConfigurationBuilder AddSetup(Setup setup)
@@ -409,17 +408,6 @@ namespace Akka.Hosting
             AddHoconConfiguration(
                 $"akka.extensions = [{string.Join(", ", Extensions.Select(s => $"\"{s.AssemblyQualifiedName}\""))}]", 
                 HoconAddMode.Prepend);
-        }
-
-        /// <summary>
-        /// Add any default health checks that ship in a totally vanilla Akka.NET installation.
-        /// </summary>
-        private void AddBuiltInHealthChecks()
-        {
-            var actorSystemHealthCheck = new AkkaHealthCheckRegistration("akka.actorsystem",
-                new ActorSystemLivenessCheck(), HealthStatus.Unhealthy, null);
-
-            WithHealthCheck(actorSystemHealthCheck);
         }
         
         private static Func<IServiceProvider, ActorSystem> ActorSystemFactory()

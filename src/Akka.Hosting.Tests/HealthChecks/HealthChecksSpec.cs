@@ -25,11 +25,13 @@ public class HealthChecksSpec : TestKit.TestKit
 
     protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        builder.WithHealthCheck("FooActor alive", async (system, registry, cancellationToken) =>
+        builder
+            .WithActorSystemLivenessCheck() // have to opt-in to the built-in health check
+            .WithHealthCheck("FooActor alive", async (system, registry, cancellationToken) =>
         {
             /*
              * N.B. CancellationToken is set by the call to MSFT.EXT.DIAGNOSTICS.HEALTHCHECK,
-             * so that value could be "inifite" by default.
+             * so that value could be "infinite" by default.
              *
              * Therefore, it might be a really, really good idea to guard this with a non-infinite
              * timeout via a LinkedCancellationToken here.
