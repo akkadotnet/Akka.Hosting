@@ -35,7 +35,10 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
     {
         var cluster = Cluster.Get(Sys);
         await cluster.JoinAsync(cluster.SelfAddress);
-        cluster.State.Members.Count(m => m.Status == MemberStatus.Up).Should().Be(1);
+        await AwaitAssertAsync(() => 
+                cluster.State.Members.Count(m => m.Status == MemberStatus.Up).Should().Be(1),
+            interval: TimeSpan.FromMilliseconds(200),
+            duration: TimeSpan.FromSeconds(10));
         
         var settings = ReplicatorSettings.Create(Sys);
         var coordinatorName = settings.RestartReplicatorOnFailure ? $"{ReplicatorName}Supervisor" : ReplicatorName;
