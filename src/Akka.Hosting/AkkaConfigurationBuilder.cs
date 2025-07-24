@@ -370,14 +370,6 @@ namespace Akka.Hosting
             ServiceCollection.AddSingleton(typeof(IRequiredActor<>), typeof(RequiredActor<>));
 
             // Automatically register all Akka.NET health checks with the HealthCheckServiceOptions
-            // ServiceCollection.Configure<HealthCheckServiceOptions>(options =>
-            // {
-            //     foreach (var registration in HealthChecks.Select(c => c.ToHealthCheckRegistration()))
-            //     {
-            //         options.Registrations.Add(registration);
-            //     }
-            // });
-            
             ServiceCollection.AddOptions<HealthCheckServiceOptions>()   // creates an OptionsBuilder
                 .PostConfigure<AkkaConfigurationBuilder>((opts, akka) =>
                 {
