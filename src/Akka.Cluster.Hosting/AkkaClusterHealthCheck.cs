@@ -178,7 +178,7 @@ internal sealed class AkkaClusterReadinessCheck : IAkkaHealthCheck
     public DateTime? FinishedJoining { get; private set; }
 
     public HealthCheckResult HealthyResult(DateTime finishedJoining) => HealthCheckResult.Healthy(
-        $"Successfully joined Akka.NET cluster after [{finishedJoining - BeganJoining:g}].");
+        $"Observed successful cluster join after [{finishedJoining - BeganJoining:g}] - actual join duration was probably faster, but this is how quickly the health check observed it.");
 
     public HealthCheckResult UnhealthyResult(DateTime now) =>
         HealthCheckResult.Unhealthy($"Have not yet joined Akka.NET cluster [{now - BeganJoining:g}] elapsed");
