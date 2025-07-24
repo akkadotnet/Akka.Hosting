@@ -665,7 +665,7 @@ namespace Akka.Cluster.Hosting
             var hoconBuilder = BuildClusterHocon(builder, options);
             
             // add the default cluster readiness check
-            builder.WithHealthCheck(new AkkaHealthCheckRegistration("cluster.join", new AkkaClusterReadinessCheck(),
+            builder.WithHealthCheck(new AkkaHealthCheckRegistration("akka.cluster.join", new AkkaClusterReadinessCheck(),
                 HealthStatus.Unhealthy, ["ready", "akka.cluster"]));
 
             if (builder.ActorRefProvider.HasValue)

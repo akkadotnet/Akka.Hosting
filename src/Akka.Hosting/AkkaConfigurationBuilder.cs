@@ -416,7 +416,7 @@ namespace Akka.Hosting
         /// </summary>
         private void AddBuiltInHealthChecks()
         {
-            var actorSystemHealthCheck = new AkkaHealthCheckRegistration("ActorSystem Available",
+            var actorSystemHealthCheck = new AkkaHealthCheckRegistration("akka.actorsystem",
                 new ActorSystemLivenessCheck(), HealthStatus.Unhealthy, null);
 
             WithHealthCheck(actorSystemHealthCheck);
