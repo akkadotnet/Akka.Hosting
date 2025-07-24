@@ -72,7 +72,7 @@ public class HealthChecksSpec : TestKit.TestKit
         Assert.Equal(2, configurationBuilder.HealthChecks.Count); // 1 built-in, 1 custom
         
         // find the built-in implementation
-        var actorSystemHealthCheckRegistration = configurationBuilder.HealthChecks.Single(c => c.HealthCheck is ActorSystemLivenessCheck);
+        var actorSystemHealthCheckRegistration = configurationBuilder.HealthChecks.Values.Single(c => c.HealthCheck is ActorSystemLivenessCheck);
         var akkaHealthCheckContext = new AkkaHealthCheckContext(Sys)
             { Registration = actorSystemHealthCheckRegistration.ToHealthCheckRegistration() };
         
@@ -91,7 +91,7 @@ public class HealthChecksSpec : TestKit.TestKit
 
         // act
         var customActorHealthCheck =
-            configurationBuilder.HealthChecks.Single(c => c.HealthCheck is DelegateHealthCheck);
+            configurationBuilder.HealthChecks.Values.Single(c => c.HealthCheck is DelegateHealthCheck);
         
         var akkaHealthCheckContext = new AkkaHealthCheckContext(Sys)
             { Registration = customActorHealthCheck.ToHealthCheckRegistration() };

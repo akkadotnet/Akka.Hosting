@@ -86,7 +86,9 @@ namespace Akka.Hosting
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new();
-        internal readonly HashSet<AkkaHealthCheckRegistration> HealthChecks = new();
+        
+        // we use a name / registration dictionary to make health check registrations unique by name
+        internal readonly Dictionary<string, AkkaHealthCheckRegistration> HealthChecks = new();
         internal readonly List<Type> Extensions = new();
 
         /// <summary>
@@ -342,7 +344,7 @@ namespace Akka.Hosting
         /// <param name="registration">The health check registration.</param>
         public AkkaConfigurationBuilder WithHealthCheck(AkkaHealthCheckRegistration registration)
         {
-            HealthChecks.Add(registration);
+            HealthChecks[registration.Name] = registration;
             return this;
         }
         
@@ -374,7 +376,7 @@ namespace Akka.Hosting
                 {
                     // Ensure the user’s builder delegate has run
                     // and health checks are available on `akka`
-                    foreach (var reg in akka.HealthChecks.Select(h => h.ToHealthCheckRegistration()))
+                    foreach (var reg in akka.HealthChecks.Select(h => h.Value.ToHealthCheckRegistration()))
                         opts.Registrations.Add(reg);
                 });
         }
