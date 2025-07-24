@@ -30,7 +30,7 @@ internal static class ClusterHealthCheckHelpers
 /// This component is useful for scenarios where you want to trigger node-death when your cluster is missing enough
 /// nodes to fulfill its duties and can't really function anyway.
 /// </summary>
-public sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
+internal sealed class AkkaClusterHealthCheck : IAkkaHealthCheck
 {
     /// <summary>
     /// The default value for <see cref="TriggerHealthCheckFailureThreshold"/>. 20 seconds.

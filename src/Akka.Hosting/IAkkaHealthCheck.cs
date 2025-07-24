@@ -98,10 +98,6 @@ public sealed class AkkaHealthCheckRegistration
     /// </summary>
     public HealthStatus FailureStatus { get; set; }
     
-    
-    
-    public TimeSpan? Period { get; set; }
-    
      /// <summary>
     /// Gets or sets the timeout used for the test.
     /// </summary>
