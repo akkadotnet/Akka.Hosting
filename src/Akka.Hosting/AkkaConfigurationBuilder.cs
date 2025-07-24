@@ -9,11 +9,13 @@ using Akka.Actor.Setup;
 using Akka.Annotations;
 using Akka.Configuration;
 using Akka.DependencyInjection;
+using Akka.Hosting.HealthChecks;
 using Akka.Hosting.Logging;
 using Akka.Serialization;
 using Akka.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
 namespace Akka.Hosting
@@ -84,6 +86,9 @@ namespace Akka.Hosting
         internal readonly string ActorSystemName;
         internal readonly IServiceCollection ServiceCollection;
         internal readonly HashSet<SerializerRegistration> Serializers = new();
+        
+        // we use a name / registration dictionary to make health check registrations unique by name
+        internal readonly Dictionary<string, AkkaHealthCheckRegistration> HealthChecks = new();
         internal readonly List<Type> Extensions = new();
 
         /// <summary>
@@ -332,6 +337,16 @@ namespace Akka.Hosting
 
             return this;
         }
+
+        /// <summary>
+        /// Registers an <see cref="AkkaHealthCheckRegistration"/> with the <see cref="AkkaConfigurationBuilder"/>.
+        /// </summary>
+        /// <param name="registration">The health check registration.</param>
+        public AkkaConfigurationBuilder WithHealthCheck(AkkaHealthCheckRegistration registration)
+        {
+            HealthChecks[registration.Name] = registration;
+            return this;
+        }
         
         internal void Bind()
         {
@@ -354,6 +369,16 @@ namespace Akka.Hosting
             });
 
             ServiceCollection.AddSingleton(typeof(IRequiredActor<>), typeof(RequiredActor<>));
+
+            // Automatically register all Akka.NET health checks with the HealthCheckServiceOptions
+            ServiceCollection.AddOptions<HealthCheckServiceOptions>()   // creates an OptionsBuilder
+                .PostConfigure<AkkaConfigurationBuilder>((opts, akka) =>
+                {
+                    // Ensure the user’s builder delegate has run
+                    // and health checks are available on `akka`
+                    foreach (var reg in akka.HealthChecks.Select(h => h.Value.ToHealthCheckRegistration()))
+                        opts.Registrations.Add(reg);
+                });
         }
 
         /// <summary>

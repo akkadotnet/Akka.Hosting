@@ -19,8 +19,8 @@ using Akka.Hosting;
 using Akka.Hosting.Coordination;
 using Akka.Persistence.Hosting;
 using Akka.Remote.Hosting;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-#nullable enable
 namespace Akka.Cluster.Hosting
 {
     /// <summary>
@@ -123,6 +123,15 @@ namespace Akka.Cluster.Hosting
         ///     </para>
         /// </summary>
         public PhiAccrualFailureDetectorOptions? FailureDetector { get; set; }
+        
+        /// <summary>
+        /// Enables a <see cref="AkkaClusterReadinessCheck"/> to be attached to Microsoft.Extensions.Diagnostics.HealthChecks
+        /// by default. This will check the cluster state and ensure that the cluster is ready.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to <c>false</c>.
+        /// </remarks>
+        public bool ClusterReadyCheck { get; set; }
     }
 
     public sealed class ClusterSingletonOptions
@@ -664,6 +673,11 @@ namespace Akka.Cluster.Hosting
         {
             var hoconBuilder = BuildClusterHocon(builder, options);
 
+            if (options is { ClusterReadyCheck: true })
+            {
+                builder.WithAkkaClusterReadinessCheck();
+            }
+
             if (builder.ActorRefProvider.HasValue)
             {
                 switch (builder.ActorRefProvider.Value)
@@ -675,6 +689,23 @@ namespace Akka.Cluster.Hosting
             }
 
             return hoconBuilder.WithActorRefProvider(ProviderSelection.Cluster.Instance);
+        }
+        
+        /// <summary>
+        /// Adds a <see cref="AkkaClusterReadinessCheck"/> to the <see cref="AkkaConfigurationBuilder"/>,
+        /// which will return `Unhealthy` until we have successfully joined a cluster. Used to prevent nodes
+        /// from accepting load-balancer traffic until we have access to the cluster.
+        /// </summary>
+        /// <remarks>
+        /// If you need to customize the readiness check, you can use <see cref="AkkaConfigurationBuilder.WithHealthCheck(AkkaHealthCheckRegistration)"/> to
+        /// register your own <see cref="AkkaHealthCheckRegistration"/> with the <see cref="AkkaClusterReadinessCheck"/>.
+        /// </remarks>
+        public static AkkaConfigurationBuilder WithAkkaClusterReadinessCheck(
+            this AkkaConfigurationBuilder builder)
+        {
+            // add the default cluster readiness check
+            return builder.WithHealthCheck(new AkkaHealthCheckRegistration("akka.cluster.join", new AkkaClusterReadinessCheck(),
+                HealthStatus.Unhealthy, ["ready", "akka.cluster"]));
         }
 
         public static AkkaConfigurationBuilder WithDistributedData(
