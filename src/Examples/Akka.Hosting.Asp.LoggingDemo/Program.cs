@@ -50,7 +50,7 @@ builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider
 
 var app = builder.Build();
 
-app.MapGet("/", async (context) =>
+app.MapGet("/", async context =>
 {
     var echo = context.RequestServices.GetRequiredService<ActorRegistry>().Get<Echo>();
     var body = await echo.Ask<string>(context.TraceIdentifier, context.RequestAborted).ConfigureAwait(false);
@@ -79,7 +79,7 @@ app.MapHealthChecks("/healthz", new HealthCheckOptions
             })
         };
 
-        await ctx.Response.WriteAsync(JsonSerializer.Serialize(payload));
+        await ctx.Response.WriteAsync(JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
         // or in .NET 8+: await ctx.Response.WriteAsJsonAsync(payload);
     }
 });
