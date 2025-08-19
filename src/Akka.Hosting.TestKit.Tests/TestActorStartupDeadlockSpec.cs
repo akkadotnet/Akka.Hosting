@@ -61,7 +61,7 @@ public class TestActorStartupDeadlockSpec
         var startTimeout   = TimeSpan.FromSeconds(7); // pre-fix should trip this quickly
         var expectTimeout  = TimeSpan.FromSeconds(5);
         var stopTimeout    = TimeSpan.FromSeconds(5);
-        var concurrentHosts = Environment.ProcessorCount * 2;
+        var concurrentHosts = 40;
 
         // Spin up N independent hosts concurrently inside the same theory
         var runners = Enumerable.Range(0, concurrentHosts)
@@ -77,7 +77,7 @@ public class TestActorStartupDeadlockSpec
 
             // --- START (bounded) ---
             var startTask = kit.StartAsync();
-            var startDone = await Task.WhenAny(startTask, Task.Delay(startTimeout)).ConfigureAwait(false);
+            var startDone = await Task.WhenAny(startTask, Task.Delay(startTimeout));
             if (startDone != startTask)
             {
                 // Fail fast with a clear message rather than timing out the entire test method
@@ -86,25 +86,35 @@ public class TestActorStartupDeadlockSpec
                     "This indicates the known startup deadlock (TestKit initialized inline on the startup thread).");
             }
             // propagate any exception from StartAsync (e.g., watchdog TimeoutException)
-            await startTask.ConfigureAwait(false);
+            try
+            {
+                await startTask;
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.StartsWith("Timeout waiting for test actor"))
+                    _output.WriteLine($"Original issue detected: {ex.Message}");
+                
+                throw;
+            }
 
             try
             {
                 // --- EXPECT (bounded) ---
                 var expectTask = kit.ExpectStartupAsync(expectTimeout);
-                var expectDone = await Task.WhenAny(expectTask, Task.Delay(expectTimeout)).ConfigureAwait(false);
+                var expectDone = await Task.WhenAny(expectTask, Task.Delay(expectTimeout));
                 if (expectDone != expectTask)
                     Assert.Fail($"Did not receive startup ping within {expectTimeout}.");
 
-                await expectTask.ConfigureAwait(false);
+                await expectTask;
             }
             finally
             {
                 // --- STOP (bounded) ---
                 var stopTask = kit.StopAsync();
-                var stopDone = await Task.WhenAny(stopTask, Task.Delay(stopTimeout)).ConfigureAwait(false);
+                var stopDone = await Task.WhenAny(stopTask, Task.Delay(stopTimeout));
                 if (stopDone == stopTask)
-                    await stopTask.ConfigureAwait(false);
+                    await stopTask;
                 // else: swallow to avoid hanging the test process on shutdown in pre-fix scenarios
             }
         }
