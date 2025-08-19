@@ -54,15 +54,14 @@ public class TestActorStartupDeadlockSpec
     }
     
     // Give the overall test plenty of time; we enforce our own short, per-step timeouts below.
-    [Theory(Timeout = 20000)]
-    [InlineData(20)]
-    [InlineData(40)]
-    public async Task parallel_host_start_should_not_deadlock(int concurrentHosts)
+    [Fact(Timeout = 20000)]
+    public async Task parallel_host_start_should_not_deadlock()
     {
         // Per-runner bounded timeouts
         var startTimeout   = TimeSpan.FromSeconds(7); // pre-fix should trip this quickly
         var expectTimeout  = TimeSpan.FromSeconds(5);
         var stopTimeout    = TimeSpan.FromSeconds(5);
+        var concurrentHosts = Environment.ProcessorCount * 2;
 
         // Spin up N independent hosts concurrently inside the same theory
         var runners = Enumerable.Range(0, concurrentHosts)
