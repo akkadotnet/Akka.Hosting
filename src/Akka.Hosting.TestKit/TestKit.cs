@@ -102,19 +102,6 @@ namespace Akka.Hosting.TestKit
                     });
                 }
 
-                builder.StartActors((system, registry) =>
-                {
-                    try
-                    {
-                        base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
-                        registry.Register<TestProbe>(TestActor);
-                    }
-                    catch (Exception e)
-                    {
-                        _initialized.SetException(e);
-                    }
-                });
-
                 ConfigureAkka(builder, provider);
 
                 builder.AddStartup((_, _) =>
@@ -171,6 +158,11 @@ namespace Akka.Hosting.TestKit
             }
 
             await _initialized.Task;
+            
+            var system = _host.Services.GetRequiredService<ActorSystem>();
+            var registry = _host.Services.GetRequiredService<ActorRegistry>();
+            base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
+            registry.Register<TestProbe>(TestActor);
             
             if (this is not INoImplicitSender && InternalCurrentActorCellKeeper.Current is null)
                 InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
