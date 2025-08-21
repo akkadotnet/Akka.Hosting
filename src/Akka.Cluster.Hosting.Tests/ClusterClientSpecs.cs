@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using Akka.Actor;
 using Akka.Cluster.Tools.Client;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 namespace Akka.Cluster.Hosting.Tests;
@@ -16,8 +14,8 @@ public class ClusterClientSpecs
             .GetConfig("akka.cluster.client.receptionist");
         var settings = ClusterReceptionistSettings.Create(config);
 
-        config.GetString("name").Should().Be("customName");
-        settings.Role.Should().Be("customRole");
+        Assert.Equal("customName", config.GetString("name"));
+        Assert.Equal("customRole", settings.Role);
     }
 
     [Fact(DisplayName = "ClusterClientSettings should be set correctly")]
@@ -34,6 +32,6 @@ public class ClusterClientSpecs
             ClusterClientReceptionist.DefaultConfig(),
             contacts);
 
-        settings.InitialContacts.Should().BeEquivalentTo(contacts);
+        Assert.Equal(contacts, settings.InitialContacts);
     }
 }
