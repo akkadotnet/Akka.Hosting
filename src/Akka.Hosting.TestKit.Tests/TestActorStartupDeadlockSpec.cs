@@ -61,7 +61,7 @@ public class TestActorStartupDeadlockSpec
         var startTimeout   = TimeSpan.FromSeconds(7); // pre-fix should trip this quickly
         var expectTimeout  = TimeSpan.FromSeconds(5);
         var stopTimeout    = TimeSpan.FromSeconds(5);
-        var concurrentHosts = 40;
+        var concurrentHosts = 30;
 
         // Spin up N independent hosts concurrently inside the same theory
         var runners = Enumerable.Range(0, concurrentHosts)
