@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -7,6 +9,7 @@ using Akka.Hosting;
 using Akka.Remote.Hosting;
 using Akka.TestKit.Xunit2.Internals;
 using Microsoft.Extensions.Hosting;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Akka.Cluster.Hosting.Tests;
@@ -71,4 +74,9 @@ public static class TestHelper
     
     public static TimeSpan Milliseconds(this int value)
         => TimeSpan.FromMilliseconds(value);
+
+    public static void CollectionEquals<T>(this IEnumerable<T> list1, IEnumerable<T> list2)
+    {
+        Assert.Equal(list1.OrderBy(a => a), list2.OrderBy(a => a));
+    }
 }

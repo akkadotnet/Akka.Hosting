@@ -32,6 +32,6 @@ public class ClusterClientSpecs
             ClusterClientReceptionist.DefaultConfig(),
             contacts);
 
-        Assert.Equal(contacts, settings.InitialContacts);
+        contacts.CollectionEquals(settings.InitialContacts);
     }
 }

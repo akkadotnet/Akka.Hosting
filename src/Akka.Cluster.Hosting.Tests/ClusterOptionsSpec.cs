@@ -83,7 +83,7 @@ public class ClusterOptionsSpec
         Assert.True(builder.Configuration.HasValue);
         var settings = new ClusterSettings(builder.Configuration.Value, "");
 
-        Assert.Equal(new[] { "front-end", "back-end" }, settings.Roles);
+        new[] { "front-end", "back-end" }.CollectionEquals(settings.Roles);
         
         Assert.Single(settings.MinNrOfMembersOfRole);
         Assert.True(settings.MinNrOfMembersOfRole.ContainsKey("back-end"));
@@ -154,7 +154,7 @@ public class ClusterOptionsSpec
         Assert.True(builder.Configuration.HasValue);
         var settings = new ClusterSettings(builder.Configuration.Value, "");
 
-        Assert.Equal(new[] { "front-end", "back-end" }, settings.Roles);
+        new[] { "front-end", "back-end" }.CollectionEquals(settings.Roles);
         
         Assert.Single(settings.MinNrOfMembersOfRole);
         Assert.True(settings.MinNrOfMembersOfRole.ContainsKey("back-end"));
