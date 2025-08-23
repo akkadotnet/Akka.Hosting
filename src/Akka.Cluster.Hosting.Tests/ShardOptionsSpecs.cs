@@ -11,8 +11,6 @@ using Akka.DistributedData;
 using Akka.Hosting;
 using Akka.Persistence.Hosting;
 using Akka.Remote.Hosting;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
@@ -92,50 +90,64 @@ public class ShardOptionsSpecs
 
         #region ClusterShardingSettings validation
 
-        shardingSettings.Role.Should().BeNull();
-        shardingSettings.RememberEntities.Should().Be(shardingConfig.GetBoolean("remember-entities"));
-        shardingSettings.JournalPluginId.Should().Be(shardingConfig.GetString("journal-plugin-id"));
-        shardingSettings.SnapshotPluginId.Should().Be(shardingConfig.GetString("snapshot-plugin-id"));
-        shardingSettings.StateStoreMode.Should().Be(Enum.Parse<StateStoreMode>(shardingConfig.GetString("state-store-mode"), true));
-        shardingSettings.RememberEntitiesStore.Should().Be(Enum.Parse<RememberEntitiesStore>(shardingConfig.GetString("remember-entities-store"), true));
-        shardingSettings.ShardRegionQueryTimeout.Should().Be(shardingConfig.GetTimeSpan("shard-region-query-timeout"));
-        shardingSettings.PassivateIdleEntityAfter.Should().Be(shardingConfig.GetTimeSpan("passivate-idle-entity-after"));
-        appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition").Should().Be(shardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"));
+        Assert.Null(shardingSettings.Role);
+        Assert.Equal(shardingConfig.GetBoolean("remember-entities"), shardingSettings.RememberEntities);
+        Assert.Equal(shardingConfig.GetString("journal-plugin-id"), shardingSettings.JournalPluginId);
+        Assert.Equal(shardingConfig.GetString("snapshot-plugin-id"), shardingSettings.SnapshotPluginId);
+        Assert.Equal(Enum.Parse<StateStoreMode>(shardingConfig.GetString("state-store-mode"), true), shardingSettings.StateStoreMode);
+        Assert.Equal(Enum.Parse<RememberEntitiesStore>(shardingConfig.GetString("remember-entities-store"), true), shardingSettings.RememberEntitiesStore);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-region-query-timeout"), shardingSettings.ShardRegionQueryTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("passivate-idle-entity-after"), shardingSettings.PassivateIdleEntityAfter);
+        Assert.Equal(shardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"),
+            appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"));
         
-        shardingSettings.TuningParameters.CoordinatorFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("coordinator-failure-backoff"));
-        shardingSettings.TuningParameters.RetryInterval.Should().Be(shardingConfig.GetTimeSpan("retry-interval"));
-        shardingSettings.TuningParameters.BufferSize.Should().Be(shardingConfig.GetInt("buffer-size"));
-        shardingSettings.TuningParameters.HandOffTimeout.Should().Be(shardingConfig.GetTimeSpan("handoff-timeout"));
-        shardingSettings.TuningParameters.ShardStartTimeout.Should().Be(shardingConfig.GetTimeSpan("shard-start-timeout"));
-        shardingSettings.TuningParameters.ShardFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("shard-failure-backoff"));
-        shardingSettings.TuningParameters.EntityRestartBackoff.Should().Be(shardingConfig.GetTimeSpan("entity-restart-backoff"));
-        shardingSettings.TuningParameters.RebalanceInterval.Should().Be(shardingConfig.GetTimeSpan("rebalance-interval"));
-        shardingSettings.TuningParameters.SnapshotAfter.Should().Be(shardingConfig.GetInt("snapshot-after"));
-        shardingSettings.TuningParameters.KeepNrOfBatches.Should().Be(shardingConfig.GetInt("keep-nr-of-batches"));
-        shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"));
-        shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"));
-        shardingSettings.TuningParameters.WaitingForStateTimeout.Should().Be(shardingConfig.GetTimeSpan("waiting-for-state-timeout"));
-        shardingSettings.TuningParameters.UpdatingStateTimeout.Should().Be(shardingConfig.GetTimeSpan("updating-state-timeout"));
-        shardingSettings.TuningParameters.EntityRecoveryStrategy.Should().Be(shardingConfig.GetString("entity-recovery-strategy"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency.Should().Be(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities.Should().Be(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"));
-        shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"));
-        shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"));
-        shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"));
-        shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit.Should().Be(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"));
+        Assert.Equal(shardingConfig.GetTimeSpan("coordinator-failure-backoff"), shardingSettings.TuningParameters.CoordinatorFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("retry-interval"), shardingSettings.TuningParameters.RetryInterval);
+        Assert.Equal(shardingConfig.GetInt("buffer-size"), shardingSettings.TuningParameters.BufferSize);
+        Assert.Equal(shardingConfig.GetTimeSpan("handoff-timeout"), shardingSettings.TuningParameters.HandOffTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-start-timeout"), shardingSettings.TuningParameters.ShardStartTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-failure-backoff"), shardingSettings.TuningParameters.ShardFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-restart-backoff"), shardingSettings.TuningParameters.EntityRestartBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("rebalance-interval"), shardingSettings.TuningParameters.RebalanceInterval);
+        Assert.Equal(shardingConfig.GetInt("snapshot-after"), shardingSettings.TuningParameters.SnapshotAfter);
+        Assert.Equal(shardingConfig.GetInt("keep-nr-of-batches"), shardingSettings.TuningParameters.KeepNrOfBatches);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"), shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"), shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance);
+        Assert.Equal(shardingConfig.GetTimeSpan("waiting-for-state-timeout"), shardingSettings.TuningParameters.WaitingForStateTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("updating-state-timeout"), shardingSettings.TuningParameters.UpdatingStateTimeout);
+        Assert.Equal(shardingConfig.GetString("entity-recovery-strategy"), shardingSettings.TuningParameters.EntityRecoveryStrategy);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency);
+        Assert.Equal(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"), shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit);
+        Assert.Equal(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"), shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit);
 
         var singletonConfig = ClusterSingleton.DefaultConfig().GetConfig("akka.cluster.singleton");
-        shardingSettings.CoordinatorSingletonSettings.SingletonName.Should().Be(singletonConfig.GetString("singleton-name"));
-        shardingSettings.CoordinatorSingletonSettings.Role.Should().BeNull();
+        Assert.Equal(singletonConfig.GetString("singleton-name"), shardingSettings.CoordinatorSingletonSettings.SingletonName);
+        Assert.Null(shardingSettings.CoordinatorSingletonSettings.Role);
         // https://github.com/akkadotnet/akka.net/blob/4ae47927da9f2539742c336acfa8ae0037fabbb7/src/contrib/cluster/Akka.Cluster.Tools/Singleton/ClusterSingletonManagerSettings.cs#L58
-        shardingSettings.CoordinatorSingletonSettings.RemovalMargin.Should().Be(TimeSpan.Zero);
-        shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval.Should().Be(singletonConfig.GetTimeSpan("hand-over-retry-interval"));
-        shardingSettings.CoordinatorSingletonSettings.LeaseSettings.Should().Be(GetLeaseUsageSettings(shardingConfig));
+        Assert.Equal(TimeSpan.Zero, shardingSettings.CoordinatorSingletonSettings.RemovalMargin);
+        Assert.Equal(singletonConfig.GetTimeSpan("hand-over-retry-interval"), shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval);
+        {
+            var expectedLease = GetLeaseUsageSettings(shardingConfig);
+            var actualLease = shardingSettings.CoordinatorSingletonSettings.LeaseSettings;
+            if (expectedLease is null)
+            {
+                Assert.Null(actualLease);
+            }
+            else
+            {
+                Assert.NotNull(actualLease);
+                Assert.Equal(expectedLease.LeaseImplementation, actualLease.LeaseImplementation);
+                Assert.Equal(expectedLease.LeaseRetryInterval, actualLease.LeaseRetryInterval);
+            }
+        }
 #pragma warning disable CS0618 // Type or member is obsolete
-        shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion.Should().Be(singletonConfig.GetBoolean("consider-app-version"));
+        Assert.Equal(singletonConfig.GetBoolean("consider-app-version"), shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        shardingSettings.LeaseSettings.Should().BeNull();
+        Assert.Null(shardingSettings.LeaseSettings);
 
         #endregion
 
@@ -143,20 +155,20 @@ public class ShardOptionsSpecs
         var repConfig = shardingConfig.GetConfig("distributed-data")
             .WithFallback(DistributedData.DistributedData.DefaultConfig().GetConfig("akka.cluster.distributed-data"));
 
-        replicatorSettings.Role.Should().Be(repConfig.GetString("role"));
-        replicatorSettings.GossipInterval.Should().Be(repConfig.GetTimeSpan("gossip-interval"));
-        replicatorSettings.NotifySubscribersInterval.Should().Be(repConfig.GetTimeSpan("notify-subscribers-interval"));
-        replicatorSettings.MaxDeltaElements.Should().Be(repConfig.GetInt("max-delta-elements"));
-        replicatorSettings.Dispatcher.Should().Be("akka.actor.internal-dispatcher");
-        replicatorSettings.PruningInterval.Should().Be(repConfig.GetTimeSpan("pruning-interval"));
-        replicatorSettings.MaxPruningDissemination.Should().Be(repConfig.GetTimeSpan("max-pruning-dissemination"));
-        replicatorSettings.DurableKeys.Should().BeEmpty();
-        replicatorSettings.PruningMarkerTimeToLive.Should().Be(repConfig.GetTimeSpan("pruning-marker-time-to-live"));
-        replicatorSettings.DurableStoreProps.Should().NotBeNull();
-        replicatorSettings.MaxDeltaSize.Should().Be(repConfig.GetInt("delta-crdt.max-delta-size"));
-        replicatorSettings.RestartReplicatorOnFailure.Should().Be(repConfig.GetBoolean("recreate-on-failure"));
-        replicatorSettings.PreferOldest.Should().Be(repConfig.GetBoolean("prefer-oldest"));
-        replicatorSettings.VerboseDebugLogging.Should().Be(repConfig.GetBoolean("verbose-debug-logging"));
+        Assert.Equal(repConfig.GetString("role"), replicatorSettings.Role);
+        Assert.Equal(repConfig.GetTimeSpan("gossip-interval"), replicatorSettings.GossipInterval);
+        Assert.Equal(repConfig.GetTimeSpan("notify-subscribers-interval"), replicatorSettings.NotifySubscribersInterval);
+        Assert.Equal(repConfig.GetInt("max-delta-elements"), replicatorSettings.MaxDeltaElements);
+        Assert.Equal("akka.actor.internal-dispatcher", replicatorSettings.Dispatcher);
+        Assert.Equal(repConfig.GetTimeSpan("pruning-interval"), replicatorSettings.PruningInterval);
+        Assert.Equal(repConfig.GetTimeSpan("max-pruning-dissemination"), replicatorSettings.MaxPruningDissemination);
+        Assert.Empty(replicatorSettings.DurableKeys);
+        Assert.Equal(repConfig.GetTimeSpan("pruning-marker-time-to-live"), replicatorSettings.PruningMarkerTimeToLive);
+        Assert.NotNull(replicatorSettings.DurableStoreProps);
+        Assert.Equal(repConfig.GetInt("delta-crdt.max-delta-size"), replicatorSettings.MaxDeltaSize);
+        Assert.Equal(repConfig.GetBoolean("recreate-on-failure"), replicatorSettings.RestartReplicatorOnFailure);
+        Assert.Equal(repConfig.GetBoolean("prefer-oldest"), replicatorSettings.PreferOldest);
+        Assert.Equal(repConfig.GetBoolean("verbose-debug-logging"), replicatorSettings.VerboseDebugLogging);
 
         #endregion
     }
@@ -209,50 +221,64 @@ public class ShardOptionsSpecs
 
         #region ClusterShardingSettings validation
 
-        shardingSettings.Role.Should().BeNull();
-        shardingSettings.RememberEntities.Should().BeTrue();
-        shardingSettings.RememberEntitiesStore.Should().Be(RememberEntitiesStore.DData);
-        shardingSettings.JournalPluginId.Should().Be(shardingConfig.GetString("journal-plugin-id"));
-        shardingSettings.SnapshotPluginId.Should().Be(shardingConfig.GetString("snapshot-plugin-id"));
-        shardingSettings.StateStoreMode.Should().Be(Enum.Parse<StateStoreMode>(shardingConfig.GetString("state-store-mode"), true));
-        shardingSettings.ShardRegionQueryTimeout.Should().Be(shardingConfig.GetTimeSpan("shard-region-query-timeout"));
-        shardingSettings.PassivateIdleEntityAfter.Should().Be(shardingConfig.GetTimeSpan("passivate-idle-entity-after"));
-        appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition").Should().Be(shardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"));
+        Assert.Null(shardingSettings.Role);
+        Assert.True(shardingSettings.RememberEntities);
+        Assert.Equal(RememberEntitiesStore.DData, shardingSettings.RememberEntitiesStore);
+        Assert.Equal(shardingConfig.GetString("journal-plugin-id"), shardingSettings.JournalPluginId);
+        Assert.Equal(shardingConfig.GetString("snapshot-plugin-id"), shardingSettings.SnapshotPluginId);
+        Assert.Equal(Enum.Parse<StateStoreMode>(shardingConfig.GetString("state-store-mode"), true), shardingSettings.StateStoreMode);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-region-query-timeout"), shardingSettings.ShardRegionQueryTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("passivate-idle-entity-after"), shardingSettings.PassivateIdleEntityAfter);
+        Assert.Equal(shardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"),
+            appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"));
         
-        shardingSettings.TuningParameters.CoordinatorFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("coordinator-failure-backoff"));
-        shardingSettings.TuningParameters.RetryInterval.Should().Be(shardingConfig.GetTimeSpan("retry-interval"));
-        shardingSettings.TuningParameters.BufferSize.Should().Be(shardingConfig.GetInt("buffer-size"));
-        shardingSettings.TuningParameters.HandOffTimeout.Should().Be(shardingConfig.GetTimeSpan("handoff-timeout"));
-        shardingSettings.TuningParameters.ShardStartTimeout.Should().Be(shardingConfig.GetTimeSpan("shard-start-timeout"));
-        shardingSettings.TuningParameters.ShardFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("shard-failure-backoff"));
-        shardingSettings.TuningParameters.EntityRestartBackoff.Should().Be(shardingConfig.GetTimeSpan("entity-restart-backoff"));
-        shardingSettings.TuningParameters.RebalanceInterval.Should().Be(shardingConfig.GetTimeSpan("rebalance-interval"));
-        shardingSettings.TuningParameters.SnapshotAfter.Should().Be(shardingConfig.GetInt("snapshot-after"));
-        shardingSettings.TuningParameters.KeepNrOfBatches.Should().Be(shardingConfig.GetInt("keep-nr-of-batches"));
-        shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"));
-        shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"));
-        shardingSettings.TuningParameters.WaitingForStateTimeout.Should().Be(shardingConfig.GetTimeSpan("waiting-for-state-timeout"));
-        shardingSettings.TuningParameters.UpdatingStateTimeout.Should().Be(shardingConfig.GetTimeSpan("updating-state-timeout"));
-        shardingSettings.TuningParameters.EntityRecoveryStrategy.Should().Be(shardingConfig.GetString("entity-recovery-strategy"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency.Should().Be(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities.Should().Be(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"));
-        shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"));
-        shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"));
-        shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"));
-        shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit.Should().Be(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"));
+        Assert.Equal(shardingConfig.GetTimeSpan("coordinator-failure-backoff"), shardingSettings.TuningParameters.CoordinatorFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("retry-interval"), shardingSettings.TuningParameters.RetryInterval);
+        Assert.Equal(shardingConfig.GetInt("buffer-size"), shardingSettings.TuningParameters.BufferSize);
+        Assert.Equal(shardingConfig.GetTimeSpan("handoff-timeout"), shardingSettings.TuningParameters.HandOffTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-start-timeout"), shardingSettings.TuningParameters.ShardStartTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-failure-backoff"), shardingSettings.TuningParameters.ShardFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-restart-backoff"), shardingSettings.TuningParameters.EntityRestartBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("rebalance-interval"), shardingSettings.TuningParameters.RebalanceInterval);
+        Assert.Equal(shardingConfig.GetInt("snapshot-after"), shardingSettings.TuningParameters.SnapshotAfter);
+        Assert.Equal(shardingConfig.GetInt("keep-nr-of-batches"), shardingSettings.TuningParameters.KeepNrOfBatches);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"), shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"), shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance);
+        Assert.Equal(shardingConfig.GetTimeSpan("waiting-for-state-timeout"), shardingSettings.TuningParameters.WaitingForStateTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("updating-state-timeout"), shardingSettings.TuningParameters.UpdatingStateTimeout);
+        Assert.Equal(shardingConfig.GetString("entity-recovery-strategy"), shardingSettings.TuningParameters.EntityRecoveryStrategy);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency);
+        Assert.Equal(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"), shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit);
+        Assert.Equal(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"), shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit);
 
         var singletonConfig = ClusterSingleton.DefaultConfig().GetConfig("akka.cluster.singleton");
-        shardingSettings.CoordinatorSingletonSettings.SingletonName.Should().Be(singletonConfig.GetString("singleton-name"));
-        shardingSettings.CoordinatorSingletonSettings.Role.Should().BeNull();
+        Assert.Equal(singletonConfig.GetString("singleton-name"), shardingSettings.CoordinatorSingletonSettings.SingletonName);
+        Assert.Null(shardingSettings.CoordinatorSingletonSettings.Role);
         // https://github.com/akkadotnet/akka.net/blob/4ae47927da9f2539742c336acfa8ae0037fabbb7/src/contrib/cluster/Akka.Cluster.Tools/Singleton/ClusterSingletonManagerSettings.cs#L58
-        shardingSettings.CoordinatorSingletonSettings.RemovalMargin.Should().Be(TimeSpan.Zero);
-        shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval.Should().Be(singletonConfig.GetTimeSpan("hand-over-retry-interval"));
-        shardingSettings.CoordinatorSingletonSettings.LeaseSettings.Should().Be(GetLeaseUsageSettings(shardingConfig));
+        Assert.Equal(TimeSpan.Zero, shardingSettings.CoordinatorSingletonSettings.RemovalMargin);
+        Assert.Equal(singletonConfig.GetTimeSpan("hand-over-retry-interval"), shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval);
+        {
+            var expectedLease = GetLeaseUsageSettings(shardingConfig);
+            var actualLease = shardingSettings.CoordinatorSingletonSettings.LeaseSettings;
+            if (expectedLease is null)
+            {
+                Assert.Null(actualLease);
+            }
+            else
+            {
+                Assert.NotNull(actualLease);
+                Assert.Equal(expectedLease.LeaseImplementation, actualLease.LeaseImplementation);
+                Assert.Equal(expectedLease.LeaseRetryInterval, actualLease.LeaseRetryInterval);
+            }
+        }
 #pragma warning disable CS0618 // Type or member is obsolete
-        shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion.Should().Be(singletonConfig.GetBoolean("consider-app-version"));
+        Assert.Equal(singletonConfig.GetBoolean("consider-app-version"), shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        shardingSettings.LeaseSettings.Should().BeNull();
+        Assert.Null(shardingSettings.LeaseSettings);
 
         #endregion
 
@@ -260,20 +286,20 @@ public class ShardOptionsSpecs
         var repConfig = shardingConfig.GetConfig("distributed-data")
             .WithFallback(DistributedData.DistributedData.DefaultConfig().GetConfig("akka.cluster.distributed-data"));
 
-        replicatorSettings.Role.Should().Be(repConfig.GetString("role"));
-        replicatorSettings.GossipInterval.Should().Be(repConfig.GetTimeSpan("gossip-interval"));
-        replicatorSettings.NotifySubscribersInterval.Should().Be(repConfig.GetTimeSpan("notify-subscribers-interval"));
-        replicatorSettings.MaxDeltaElements.Should().Be(repConfig.GetInt("max-delta-elements"));
-        replicatorSettings.Dispatcher.Should().Be("akka.actor.internal-dispatcher");
-        replicatorSettings.PruningInterval.Should().Be(repConfig.GetTimeSpan("pruning-interval"));
-        replicatorSettings.MaxPruningDissemination.Should().Be(repConfig.GetTimeSpan("max-pruning-dissemination"));
-        replicatorSettings.DurableKeys.Should().BeEquivalentTo("shard-*");
-        replicatorSettings.PruningMarkerTimeToLive.Should().Be(repConfig.GetTimeSpan("pruning-marker-time-to-live"));
-        replicatorSettings.DurableStoreProps.Should().NotBeNull();
-        replicatorSettings.MaxDeltaSize.Should().Be(repConfig.GetInt("delta-crdt.max-delta-size"));
-        replicatorSettings.RestartReplicatorOnFailure.Should().Be(repConfig.GetBoolean("recreate-on-failure"));
-        replicatorSettings.PreferOldest.Should().Be(repConfig.GetBoolean("prefer-oldest"));
-        replicatorSettings.VerboseDebugLogging.Should().Be(repConfig.GetBoolean("verbose-debug-logging"));
+        Assert.Equal(repConfig.GetString("role"), replicatorSettings.Role);
+        Assert.Equal(repConfig.GetTimeSpan("gossip-interval"), replicatorSettings.GossipInterval);
+        Assert.Equal(repConfig.GetTimeSpan("notify-subscribers-interval"), replicatorSettings.NotifySubscribersInterval);
+        Assert.Equal(repConfig.GetInt("max-delta-elements"), replicatorSettings.MaxDeltaElements);
+        Assert.Equal("akka.actor.internal-dispatcher", replicatorSettings.Dispatcher);
+        Assert.Equal(repConfig.GetTimeSpan("pruning-interval"), replicatorSettings.PruningInterval);
+        Assert.Equal(repConfig.GetTimeSpan("max-pruning-dissemination"), replicatorSettings.MaxPruningDissemination);
+        Assert.Single(replicatorSettings.DurableKeys, "shard-*");
+        Assert.Equal(repConfig.GetTimeSpan("pruning-marker-time-to-live"), replicatorSettings.PruningMarkerTimeToLive);
+        Assert.NotNull(replicatorSettings.DurableStoreProps);
+        Assert.Equal(repConfig.GetInt("delta-crdt.max-delta-size"), replicatorSettings.MaxDeltaSize);
+        Assert.Equal(repConfig.GetBoolean("recreate-on-failure"), replicatorSettings.RestartReplicatorOnFailure);
+        Assert.Equal(repConfig.GetBoolean("prefer-oldest"), replicatorSettings.PreferOldest);
+        Assert.Equal(repConfig.GetBoolean("verbose-debug-logging"), replicatorSettings.VerboseDebugLogging);
 
         #endregion
     }
@@ -290,7 +316,7 @@ public class ShardOptionsSpecs
             JournalPluginId = "custom-journal", 
             SnapshotPluginId = "custom-snapshot-store", 
             LeaseImplementation = new TestLeaseOption(), 
-            LeaseRetryInterval = 1.Seconds(), 
+            LeaseRetryInterval = TimeSpan.FromSeconds(1), 
             HandOffStopMessage = StopMessage.Instance, // can't be tested, assigned directly
             FailOnInvalidEntityStateTransition = true, 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -302,8 +328,8 @@ public class ShardOptionsSpecs
             },
 #pragma warning restore CS0618 // Type or member is obsolete
             ShouldPassivateIdleEntities = false, 
-            ShardRegionQueryTimeout = 2.Seconds(), 
-            PassivateIdleEntityAfter = 3.Seconds(), 
+            ShardRegionQueryTimeout = TimeSpan.FromSeconds(2), 
+            PassivateIdleEntityAfter = TimeSpan.FromSeconds(3), 
         };
         
         using var host = Host.CreateDefaultBuilder()
@@ -315,7 +341,7 @@ public class ShardOptionsSpecs
                         .WithRemoting()
                         .WithClustering(new ClusterOptions
                         {
-                            Roles = new[] {"test"}
+                            Roles = ["test"]
                         })
                         .WithShardRegion<MyEntityActor>(
                             typeName: "entities", 
@@ -336,7 +362,7 @@ public class ShardOptionsSpecs
                             VerboseDebugLogging = true, 
                             Durable = new DurableOptions
                             {
-                                Keys = new[] {"custom-*"},
+                                Keys = ["custom-*"],
                                 Lmdb = new LmdbOptions
                                 {
                                     Directory = "lmdb",
@@ -368,52 +394,67 @@ public class ShardOptionsSpecs
 
         #region ClusterShardingSettings validation
 
-        shardingSettings.Role.Should().Be("test");
-        shardingSettings.RememberEntities.Should().BeTrue();
-        shardingSettings.JournalPluginId.Should().Be("custom-journal");
-        shardingSettings.SnapshotPluginId.Should().Be("custom-snapshot-store");
-        shardingSettings.StateStoreMode.Should().Be(StateStoreMode.DData);
-        shardingSettings.RememberEntitiesStore.Should().Be(RememberEntitiesStore.Eventsourced);
-        shardingSettings.ShardRegionQueryTimeout.Should().Be(2.Seconds());
-        shardingSettings.PassivateIdleEntityAfter.Should().Be(default);
+        Assert.Equal("test", shardingSettings.Role);
+        Assert.True(shardingSettings.RememberEntities);
+        Assert.Equal("custom-journal", shardingSettings.JournalPluginId);
+        Assert.Equal("custom-snapshot-store", shardingSettings.SnapshotPluginId);
+        Assert.Equal(StateStoreMode.DData, shardingSettings.StateStoreMode);
+        Assert.Equal(RememberEntitiesStore.Eventsourced, shardingSettings.RememberEntitiesStore);
+        Assert.Equal(TimeSpan.FromSeconds(2), shardingSettings.ShardRegionQueryTimeout);
+        Assert.Equal(TimeSpan.Zero, shardingSettings.PassivateIdleEntityAfter);
         
-        appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition").Should().BeTrue();
-        appliedShardingConfig.GetInt("distributed-data.majority-min-cap").Should().Be(1);
+        Assert.True(appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"));
+        Assert.Equal(1, appliedShardingConfig.GetInt("distributed-data.majority-min-cap"));
         
-        shardingSettings.TuningParameters.CoordinatorFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("coordinator-failure-backoff"));
-        shardingSettings.TuningParameters.RetryInterval.Should().Be(shardingConfig.GetTimeSpan("retry-interval"));
-        shardingSettings.TuningParameters.BufferSize.Should().Be(shardingConfig.GetInt("buffer-size"));
-        shardingSettings.TuningParameters.HandOffTimeout.Should().Be(shardingConfig.GetTimeSpan("handoff-timeout"));
-        shardingSettings.TuningParameters.ShardStartTimeout.Should().Be(shardingConfig.GetTimeSpan("shard-start-timeout"));
-        shardingSettings.TuningParameters.ShardFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("shard-failure-backoff"));
-        shardingSettings.TuningParameters.EntityRestartBackoff.Should().Be(shardingConfig.GetTimeSpan("entity-restart-backoff"));
-        shardingSettings.TuningParameters.RebalanceInterval.Should().Be(shardingConfig.GetTimeSpan("rebalance-interval"));
-        shardingSettings.TuningParameters.SnapshotAfter.Should().Be(shardingConfig.GetInt("snapshot-after"));
-        shardingSettings.TuningParameters.KeepNrOfBatches.Should().Be(shardingConfig.GetInt("keep-nr-of-batches"));
-        shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"));
-        shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"));
-        shardingSettings.TuningParameters.WaitingForStateTimeout.Should().Be(shardingConfig.GetTimeSpan("waiting-for-state-timeout"));
-        shardingSettings.TuningParameters.UpdatingStateTimeout.Should().Be(shardingConfig.GetTimeSpan("updating-state-timeout"));
-        shardingSettings.TuningParameters.EntityRecoveryStrategy.Should().Be(shardingConfig.GetString("entity-recovery-strategy"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency.Should().Be(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities.Should().Be(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"));
-        shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"));
-        shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"));
-        shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"));
-        shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit.Should().Be(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"));
+        Assert.Equal(shardingConfig.GetTimeSpan("coordinator-failure-backoff"), shardingSettings.TuningParameters.CoordinatorFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("retry-interval"), shardingSettings.TuningParameters.RetryInterval);
+        Assert.Equal(shardingConfig.GetInt("buffer-size"), shardingSettings.TuningParameters.BufferSize);
+        Assert.Equal(shardingConfig.GetTimeSpan("handoff-timeout"), shardingSettings.TuningParameters.HandOffTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-start-timeout"), shardingSettings.TuningParameters.ShardStartTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-failure-backoff"), shardingSettings.TuningParameters.ShardFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-restart-backoff"), shardingSettings.TuningParameters.EntityRestartBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("rebalance-interval"), shardingSettings.TuningParameters.RebalanceInterval);
+        Assert.Equal(shardingConfig.GetInt("snapshot-after"), shardingSettings.TuningParameters.SnapshotAfter);
+        Assert.Equal(shardingConfig.GetInt("keep-nr-of-batches"), shardingSettings.TuningParameters.KeepNrOfBatches);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"), shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"), shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance);
+        Assert.Equal(shardingConfig.GetTimeSpan("waiting-for-state-timeout"), shardingSettings.TuningParameters.WaitingForStateTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("updating-state-timeout"), shardingSettings.TuningParameters.UpdatingStateTimeout);
+        Assert.Equal(shardingConfig.GetString("entity-recovery-strategy"), shardingSettings.TuningParameters.EntityRecoveryStrategy);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency);
+        Assert.Equal(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"), shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit);
+        Assert.Equal(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"), shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit);
 
         var singletonConfig = ClusterSingleton.DefaultConfig().GetConfig("akka.cluster.singleton");
-        shardingSettings.CoordinatorSingletonSettings.SingletonName.Should().Be(singletonConfig.GetString("singleton-name"));
-        shardingSettings.CoordinatorSingletonSettings.Role.Should().BeNull();
+        Assert.Equal(singletonConfig.GetString("singleton-name"), shardingSettings.CoordinatorSingletonSettings.SingletonName);
+        Assert.Null(shardingSettings.CoordinatorSingletonSettings.Role);
         // https://github.com/akkadotnet/akka.net/blob/4ae47927da9f2539742c336acfa8ae0037fabbb7/src/contrib/cluster/Akka.Cluster.Tools/Singleton/ClusterSingletonManagerSettings.cs#L58
-        shardingSettings.CoordinatorSingletonSettings.RemovalMargin.Should().Be(TimeSpan.Zero);
-        shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval.Should().Be(singletonConfig.GetTimeSpan("hand-over-retry-interval"));
-        shardingSettings.CoordinatorSingletonSettings.LeaseSettings.Should().Be(GetLeaseUsageSettings(shardingConfig));
+        Assert.Equal(TimeSpan.Zero, shardingSettings.CoordinatorSingletonSettings.RemovalMargin);
+        Assert.Equal(singletonConfig.GetTimeSpan("hand-over-retry-interval"), shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval);
+        {
+            var expectedLease = GetLeaseUsageSettings(shardingConfig);
+            var actualLease = shardingSettings.CoordinatorSingletonSettings.LeaseSettings;
+            if (expectedLease is null)
+            {
+                Assert.Null(actualLease);
+            }
+            else
+            {
+                Assert.NotNull(actualLease);
+                Assert.Equal(expectedLease.LeaseImplementation, actualLease.LeaseImplementation);
+                Assert.Equal(expectedLease.LeaseRetryInterval, actualLease.LeaseRetryInterval);
+            }
+        }
 #pragma warning disable CS0618 // Type or member is obsolete
-        shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion.Should().Be(singletonConfig.GetBoolean("consider-app-version"));
+        Assert.Equal(singletonConfig.GetBoolean("consider-app-version"), shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        shardingSettings.LeaseSettings.Should().BeEquivalentTo(new LeaseUsageSettings("test-lease", 1.Seconds()));
+        Assert.NotNull(shardingSettings.LeaseSettings);
+        Assert.Equal("test-lease", shardingSettings.LeaseSettings!.LeaseImplementation);
+        Assert.Equal(1.Seconds(), shardingSettings.LeaseSettings.LeaseRetryInterval);
 
         #endregion
 
@@ -421,24 +462,28 @@ public class ShardOptionsSpecs
         var repConfig = shardingConfig.GetConfig("distributed-data")
             .WithFallback(DistributedData.DistributedData.DefaultConfig().GetConfig("akka.cluster.distributed-data"));
 
-        appliedShardingConfig.GetString("distributed-data.name").Should().NotBe("wrong-name").And.Be("customReplicator");
-        replicatorSettings.Role.Should().NotBe("wrong-role").And.Be("test");
-        replicatorSettings.GossipInterval.Should().Be(repConfig.GetTimeSpan("gossip-interval"));
-        replicatorSettings.NotifySubscribersInterval.Should().Be(repConfig.GetTimeSpan("notify-subscribers-interval"));
-        replicatorSettings.MaxDeltaElements.Should().Be(2);
-        replicatorSettings.Dispatcher.Should().Be("akka.actor.internal-dispatcher");
-        replicatorSettings.PruningInterval.Should().Be(repConfig.GetTimeSpan("pruning-interval"));
-        replicatorSettings.MaxPruningDissemination.Should().Be(repConfig.GetTimeSpan("max-pruning-dissemination"));
-        replicatorSettings.DurableKeys.Should().BeEmpty();
-        replicatorSettings.PruningMarkerTimeToLive.Should().Be(repConfig.GetTimeSpan("pruning-marker-time-to-live"));
-        replicatorSettings.DurableStoreProps.Should().NotBeNull();
-        replicatorSettings.MaxDeltaSize.Should().Be(repConfig.GetInt("delta-crdt.max-delta-size"));
-        replicatorSettings.RestartReplicatorOnFailure.Should().BeTrue();
-        replicatorSettings.PreferOldest.Should().BeFalse();
-        replicatorSettings.VerboseDebugLogging.Should().BeTrue();
+        Assert.NotEqual("wrong-name", appliedShardingConfig.GetString("distributed-data.name"));
+        Assert.Equal("customReplicator", appliedShardingConfig.GetString("distributed-data.name"));
 
-        appliedShardingConfig.GetString("distributed-data.durable.lmdb.dir").Should().Be("lmdb");
-        appliedShardingConfig.GetLong("distributed-data.durable.lmdb.map-size").Should().Be(1024 * 1024);
+        Assert.NotEqual("wrong-role", replicatorSettings.Role);
+        Assert.Equal("test", replicatorSettings.Role);
+
+        Assert.Equal(repConfig.GetTimeSpan("gossip-interval"), replicatorSettings.GossipInterval);
+        Assert.Equal(repConfig.GetTimeSpan("notify-subscribers-interval"), replicatorSettings.NotifySubscribersInterval);
+        Assert.Equal(2, replicatorSettings.MaxDeltaElements);
+        Assert.Equal("akka.actor.internal-dispatcher", replicatorSettings.Dispatcher);
+        Assert.Equal(repConfig.GetTimeSpan("pruning-interval"), replicatorSettings.PruningInterval);
+        Assert.Equal(repConfig.GetTimeSpan("max-pruning-dissemination"), replicatorSettings.MaxPruningDissemination);
+        Assert.Empty(replicatorSettings.DurableKeys);
+        Assert.Equal(repConfig.GetTimeSpan("pruning-marker-time-to-live"), replicatorSettings.PruningMarkerTimeToLive);
+        Assert.NotNull(replicatorSettings.DurableStoreProps);
+        Assert.Equal(repConfig.GetInt("delta-crdt.max-delta-size"), replicatorSettings.MaxDeltaSize);
+        Assert.True(replicatorSettings.RestartReplicatorOnFailure);
+        Assert.False(replicatorSettings.PreferOldest);
+        Assert.True(replicatorSettings.VerboseDebugLogging);
+
+        Assert.Equal("lmdb", appliedShardingConfig.GetString("distributed-data.durable.lmdb.dir"));
+        Assert.Equal(1024 * 1024, appliedShardingConfig.GetLong("distributed-data.durable.lmdb.map-size"));
         
         #endregion
     }
@@ -455,7 +500,7 @@ public class ShardOptionsSpecs
             JournalPluginId = "custom-journal", 
             SnapshotPluginId = "custom-snapshot-store", 
             LeaseImplementation = new TestLeaseOption(), 
-            LeaseRetryInterval = 1.Seconds(), 
+            LeaseRetryInterval = TimeSpan.FromSeconds(1), 
             HandOffStopMessage = StopMessage.Instance, // can't be tested, assigned directly
             FailOnInvalidEntityStateTransition = true, 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -467,8 +512,8 @@ public class ShardOptionsSpecs
             },
 #pragma warning restore CS0618 // Type or member is obsolete
             ShouldPassivateIdleEntities = false, 
-            ShardRegionQueryTimeout = 2.Seconds(), 
-            PassivateIdleEntityAfter = 3.Seconds(), 
+            ShardRegionQueryTimeout = TimeSpan.FromSeconds(2), 
+            PassivateIdleEntityAfter = TimeSpan.FromSeconds(3), 
         };
         
         using var host = Host.CreateDefaultBuilder()
@@ -480,7 +525,7 @@ public class ShardOptionsSpecs
                         .WithRemoting()
                         .WithClustering(new ClusterOptions
                         {
-                            Roles = new[] {"test"}
+                            Roles = ["test"]
                         })
                         .WithShardRegion<MyEntityActor>(
                             typeName: "entities", 
@@ -501,7 +546,7 @@ public class ShardOptionsSpecs
                             VerboseDebugLogging = true, 
                             Durable = new DurableOptions
                             {
-                                Keys = new[] {"custom-*"},
+                                Keys = ["custom-*"],
                                 Lmdb = new LmdbOptions
                                 {
                                     Directory = "lmdb",
@@ -533,52 +578,67 @@ public class ShardOptionsSpecs
 
         #region ClusterShardingSettings validation
 
-        shardingSettings.Role.Should().Be("test");
-        shardingSettings.RememberEntities.Should().BeTrue();
-        shardingSettings.JournalPluginId.Should().Be("custom-journal");
-        shardingSettings.SnapshotPluginId.Should().Be("custom-snapshot-store");
-        shardingSettings.StateStoreMode.Should().Be(StateStoreMode.DData);
-        shardingSettings.RememberEntitiesStore.Should().Be(RememberEntitiesStore.DData);
-        shardingSettings.ShardRegionQueryTimeout.Should().Be(2.Seconds());
-        shardingSettings.PassivateIdleEntityAfter.Should().Be(default);
+        Assert.Equal("test", shardingSettings.Role);
+        Assert.True(shardingSettings.RememberEntities);
+        Assert.Equal("custom-journal", shardingSettings.JournalPluginId);
+        Assert.Equal("custom-snapshot-store", shardingSettings.SnapshotPluginId);
+        Assert.Equal(StateStoreMode.DData, shardingSettings.StateStoreMode);
+        Assert.Equal(RememberEntitiesStore.DData, shardingSettings.RememberEntitiesStore);
+        Assert.Equal(2.Seconds(), shardingSettings.ShardRegionQueryTimeout);
+        Assert.Equal(TimeSpan.Zero, shardingSettings.PassivateIdleEntityAfter);
         
-        appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition").Should().BeTrue();
-        appliedShardingConfig.GetInt("distributed-data.majority-min-cap").Should().Be(1);
+        Assert.True(appliedShardingConfig.GetBoolean("fail-on-invalid-entity-state-transition"));
+        Assert.Equal(1, appliedShardingConfig.GetInt("distributed-data.majority-min-cap"));
         
-        shardingSettings.TuningParameters.CoordinatorFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("coordinator-failure-backoff"));
-        shardingSettings.TuningParameters.RetryInterval.Should().Be(shardingConfig.GetTimeSpan("retry-interval"));
-        shardingSettings.TuningParameters.BufferSize.Should().Be(shardingConfig.GetInt("buffer-size"));
-        shardingSettings.TuningParameters.HandOffTimeout.Should().Be(shardingConfig.GetTimeSpan("handoff-timeout"));
-        shardingSettings.TuningParameters.ShardStartTimeout.Should().Be(shardingConfig.GetTimeSpan("shard-start-timeout"));
-        shardingSettings.TuningParameters.ShardFailureBackoff.Should().Be(shardingConfig.GetTimeSpan("shard-failure-backoff"));
-        shardingSettings.TuningParameters.EntityRestartBackoff.Should().Be(shardingConfig.GetTimeSpan("entity-restart-backoff"));
-        shardingSettings.TuningParameters.RebalanceInterval.Should().Be(shardingConfig.GetTimeSpan("rebalance-interval"));
-        shardingSettings.TuningParameters.SnapshotAfter.Should().Be(shardingConfig.GetInt("snapshot-after"));
-        shardingSettings.TuningParameters.KeepNrOfBatches.Should().Be(shardingConfig.GetInt("keep-nr-of-batches"));
-        shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"));
-        shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"));
-        shardingSettings.TuningParameters.WaitingForStateTimeout.Should().Be(shardingConfig.GetTimeSpan("waiting-for-state-timeout"));
-        shardingSettings.TuningParameters.UpdatingStateTimeout.Should().Be(shardingConfig.GetTimeSpan("updating-state-timeout"));
-        shardingSettings.TuningParameters.EntityRecoveryStrategy.Should().Be(shardingConfig.GetString("entity-recovery-strategy"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency.Should().Be(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"));
-        shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities.Should().Be(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"));
-        shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"));
-        shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus.Should().Be(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"));
-        shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit.Should().Be(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"));
-        shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit.Should().Be(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"));
+        Assert.Equal(shardingConfig.GetTimeSpan("coordinator-failure-backoff"), shardingSettings.TuningParameters.CoordinatorFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("retry-interval"), shardingSettings.TuningParameters.RetryInterval);
+        Assert.Equal(shardingConfig.GetInt("buffer-size"), shardingSettings.TuningParameters.BufferSize);
+        Assert.Equal(shardingConfig.GetTimeSpan("handoff-timeout"), shardingSettings.TuningParameters.HandOffTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-start-timeout"), shardingSettings.TuningParameters.ShardStartTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("shard-failure-backoff"), shardingSettings.TuningParameters.ShardFailureBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-restart-backoff"), shardingSettings.TuningParameters.EntityRestartBackoff);
+        Assert.Equal(shardingConfig.GetTimeSpan("rebalance-interval"), shardingSettings.TuningParameters.RebalanceInterval);
+        Assert.Equal(shardingConfig.GetInt("snapshot-after"), shardingSettings.TuningParameters.SnapshotAfter);
+        Assert.Equal(shardingConfig.GetInt("keep-nr-of-batches"), shardingSettings.TuningParameters.KeepNrOfBatches);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-threshold"), shardingSettings.TuningParameters.LeastShardAllocationRebalanceThreshold);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.max-simultaneous-rebalance"), shardingSettings.TuningParameters.LeastShardAllocationMaxSimultaneousRebalance);
+        Assert.Equal(shardingConfig.GetTimeSpan("waiting-for-state-timeout"), shardingSettings.TuningParameters.WaitingForStateTimeout);
+        Assert.Equal(shardingConfig.GetTimeSpan("updating-state-timeout"), shardingSettings.TuningParameters.UpdatingStateTimeout);
+        Assert.Equal(shardingConfig.GetString("entity-recovery-strategy"), shardingSettings.TuningParameters.EntityRecoveryStrategy);
+        Assert.Equal(shardingConfig.GetTimeSpan("entity-recovery-constant-rate-strategy.frequency"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyFrequency);
+        Assert.Equal(shardingConfig.GetInt("entity-recovery-constant-rate-strategy.number-of-entities"), shardingSettings.TuningParameters.EntityRecoveryConstantRateStrategyNumberOfEntities);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.write-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateWriteMajorityPlus);
+        Assert.Equal(ConfigMajorityPlus(shardingConfig, "coordinator-state.read-majority-plus"), shardingSettings.TuningParameters.CoordinatorStateReadMajorityPlus);
+        Assert.Equal(shardingConfig.GetInt("least-shard-allocation-strategy.rebalance-absolute-limit"), shardingSettings.TuningParameters.LeastShardAllocationAbsoluteLimit);
+        Assert.Equal(shardingConfig.GetDouble("least-shard-allocation-strategy.rebalance-relative-limit"), shardingSettings.TuningParameters.LeastShardAllocationRelativeLimit);
 
         var singletonConfig = ClusterSingleton.DefaultConfig().GetConfig("akka.cluster.singleton");
-        shardingSettings.CoordinatorSingletonSettings.SingletonName.Should().Be(singletonConfig.GetString("singleton-name"));
-        shardingSettings.CoordinatorSingletonSettings.Role.Should().BeNull();
+        Assert.Equal(singletonConfig.GetString("singleton-name"), shardingSettings.CoordinatorSingletonSettings.SingletonName);
+        Assert.Null(shardingSettings.CoordinatorSingletonSettings.Role);
         // https://github.com/akkadotnet/akka.net/blob/4ae47927da9f2539742c336acfa8ae0037fabbb7/src/contrib/cluster/Akka.Cluster.Tools/Singleton/ClusterSingletonManagerSettings.cs#L58
-        shardingSettings.CoordinatorSingletonSettings.RemovalMargin.Should().Be(TimeSpan.Zero);
-        shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval.Should().Be(singletonConfig.GetTimeSpan("hand-over-retry-interval"));
-        shardingSettings.CoordinatorSingletonSettings.LeaseSettings.Should().Be(GetLeaseUsageSettings(shardingConfig));
+        Assert.Equal(TimeSpan.Zero, shardingSettings.CoordinatorSingletonSettings.RemovalMargin);
+        Assert.Equal(singletonConfig.GetTimeSpan("hand-over-retry-interval"), shardingSettings.CoordinatorSingletonSettings.HandOverRetryInterval);
+        {
+            var expectedLease = GetLeaseUsageSettings(shardingConfig);
+            var actualLease = shardingSettings.CoordinatorSingletonSettings.LeaseSettings;
+            if (expectedLease is null)
+            {
+                Assert.Null(actualLease);
+            }
+            else
+            {
+                Assert.NotNull(actualLease);
+                Assert.Equal(expectedLease.LeaseImplementation, actualLease.LeaseImplementation);
+                Assert.Equal(expectedLease.LeaseRetryInterval, actualLease.LeaseRetryInterval);
+            }
+        }
 #pragma warning disable CS0618 // Type or member is obsolete
-        shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion.Should().Be(singletonConfig.GetBoolean("consider-app-version"));
+        Assert.Equal(singletonConfig.GetBoolean("consider-app-version"), shardingSettings.CoordinatorSingletonSettings.ConsiderAppVersion);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        shardingSettings.LeaseSettings.Should().BeEquivalentTo(new LeaseUsageSettings("test-lease", 1.Seconds()));
+        Assert.NotNull(shardingSettings.LeaseSettings);
+        Assert.Equal("test-lease", shardingSettings.LeaseSettings!.LeaseImplementation);
+        Assert.Equal(TimeSpan.FromSeconds(1), shardingSettings.LeaseSettings.LeaseRetryInterval);
 
         #endregion
 
@@ -586,24 +646,28 @@ public class ShardOptionsSpecs
         var repConfig = shardingConfig.GetConfig("distributed-data")
             .WithFallback(DistributedData.DistributedData.DefaultConfig().GetConfig("akka.cluster.distributed-data"));
 
-        appliedShardingConfig.GetString("distributed-data.name").Should().NotBe("wrong-name").And.Be("customReplicator");
-        replicatorSettings.Role.Should().NotBe("wrong-role").And.Be("test");
-        replicatorSettings.GossipInterval.Should().Be(repConfig.GetTimeSpan("gossip-interval"));
-        replicatorSettings.NotifySubscribersInterval.Should().Be(repConfig.GetTimeSpan("notify-subscribers-interval"));
-        replicatorSettings.MaxDeltaElements.Should().Be(2);
-        replicatorSettings.Dispatcher.Should().Be("akka.actor.internal-dispatcher");
-        replicatorSettings.PruningInterval.Should().Be(repConfig.GetTimeSpan("pruning-interval"));
-        replicatorSettings.MaxPruningDissemination.Should().Be(repConfig.GetTimeSpan("max-pruning-dissemination"));
-        replicatorSettings.DurableKeys.Should().BeEquivalentTo("custom-*");
-        replicatorSettings.PruningMarkerTimeToLive.Should().Be(repConfig.GetTimeSpan("pruning-marker-time-to-live"));
-        replicatorSettings.DurableStoreProps.Should().NotBeNull();
-        replicatorSettings.MaxDeltaSize.Should().Be(repConfig.GetInt("delta-crdt.max-delta-size"));
-        replicatorSettings.RestartReplicatorOnFailure.Should().BeTrue();
-        replicatorSettings.PreferOldest.Should().BeFalse();
-        replicatorSettings.VerboseDebugLogging.Should().BeTrue();
+        Assert.NotEqual("wrong-name", appliedShardingConfig.GetString("distributed-data.name"));
+        Assert.Equal("customReplicator", appliedShardingConfig.GetString("distributed-data.name"));
 
-        appliedShardingConfig.GetString("distributed-data.durable.lmdb.dir").Should().Be("lmdb");
-        appliedShardingConfig.GetLong("distributed-data.durable.lmdb.map-size").Should().Be(1024 * 1024);
+        Assert.NotEqual("wrong-role", replicatorSettings.Role);
+        Assert.Equal("test", replicatorSettings.Role);
+
+        Assert.Equal(repConfig.GetTimeSpan("gossip-interval"), replicatorSettings.GossipInterval);
+        Assert.Equal(repConfig.GetTimeSpan("notify-subscribers-interval"), replicatorSettings.NotifySubscribersInterval);
+        Assert.Equal(2, replicatorSettings.MaxDeltaElements);
+        Assert.Equal("akka.actor.internal-dispatcher", replicatorSettings.Dispatcher);
+        Assert.Equal(repConfig.GetTimeSpan("pruning-interval"), replicatorSettings.PruningInterval);
+        Assert.Equal(repConfig.GetTimeSpan("max-pruning-dissemination"), replicatorSettings.MaxPruningDissemination);
+        Assert.Single(replicatorSettings.DurableKeys, "custom-*");
+        Assert.Equal(repConfig.GetTimeSpan("pruning-marker-time-to-live"), replicatorSettings.PruningMarkerTimeToLive);
+        Assert.NotNull(replicatorSettings.DurableStoreProps);
+        Assert.Equal(repConfig.GetInt("delta-crdt.max-delta-size"), replicatorSettings.MaxDeltaSize);
+        Assert.True(replicatorSettings.RestartReplicatorOnFailure);
+        Assert.False(replicatorSettings.PreferOldest);
+        Assert.True(replicatorSettings.VerboseDebugLogging);
+
+        Assert.Equal("lmdb", appliedShardingConfig.GetString("distributed-data.durable.lmdb.dir"));
+        Assert.Equal(1024 * 1024, appliedShardingConfig.GetLong("distributed-data.durable.lmdb.map-size"));
         
         #endregion
     }
@@ -652,7 +716,7 @@ public class ShardOptionsSpecs
             .WithFallback(system.Settings.Config.GetConfig("akka.cluster.distributed-data"));
         var configuredSettings = ReplicatorSettings.Create(config);
         var settingsWithRoles = configuredSettings.WithRole(shardingSettings.Role);
-        if (shardingSettings.RememberEntities && shardingSettings.RememberEntitiesStore == RememberEntitiesStore.DData)
+        if (shardingSettings is { RememberEntities: true, RememberEntitiesStore: RememberEntitiesStore.DData })
             return settingsWithRoles; // only enable durable keys when using DData for remember-entities
         else
             return settingsWithRoles.WithDurableKeys(ImmutableHashSet<string>.Empty);

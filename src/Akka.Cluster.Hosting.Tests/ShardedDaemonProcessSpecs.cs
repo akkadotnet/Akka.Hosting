@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Cluster.Sharding;
 using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
 using Akka.TestKit;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -113,8 +108,7 @@ public class ShardedDaemonProcessSpecs: Akka.Hosting.TestKit.TestKit
     {
         _cluster = Cluster.Get(Sys);
         
-        await AwaitAssertAsync(() => _cluster.SelfMember.Status.Should().Be(MemberStatus.Up),
-            TimeSpan.FromSeconds(3));
+        await AwaitAssertAsync(() => Assert.Equal(MemberStatus.Up, _cluster.SelfMember.Status), 3.Seconds());
     }
 
     [Fact]
@@ -126,8 +120,8 @@ public class ShardedDaemonProcessSpecs: Akka.Hosting.TestKit.TestKit
             started.Add(await ExpectMsgAsync<Started>());
         }
         
-        started.Count.Should().Be(5);
-        started.Select(s => s.Id).ToList().Should().BeEquivalentTo(new []{0, 1, 2, 3, 4});
+        Assert.Equal(5, started.Count);
+        Assert.Equal([0, 1, 2, 3, 4], started.Select(s => s.Id).OrderBy(s => s));
         await ExpectNoMsgAsync(1.Seconds());
     }
 
@@ -140,8 +134,8 @@ public class ShardedDaemonProcessSpecs: Akka.Hosting.TestKit.TestKit
             startMessages.Add(await ExpectMsgAsync<Started>());
         }
         
-        startMessages.Count.Should().Be(5);
-        startMessages.Select(s => s.Id).ToList().Should().BeEquivalentTo(new []{0, 1, 2, 3, 4});
+        Assert.Equal(5, startMessages.Count);
+        Assert.Equal([0, 1, 2, 3, 4], startMessages.Select(s => s.Id).OrderBy(s => s));
 
         // Stop all entities
         foreach (var start in startMessages)
@@ -156,8 +150,8 @@ public class ShardedDaemonProcessSpecs: Akka.Hosting.TestKit.TestKit
             startMessages.Add(await ExpectMsgAsync<Started>());
         }
         
-        startMessages.Count.Should().Be(5);
-        startMessages.Select(s => s.Id).ToList().Should().BeEquivalentTo(new []{0, 1, 2, 3, 4});
+        Assert.Equal(5, startMessages.Count);
+        Assert.Equal([0, 1, 2, 3, 4], startMessages.Select(s => s.Id).OrderBy(s => s));
     }
 }
 
@@ -188,7 +182,7 @@ public class ShardedDaemonProcessFailureSpecs : Akka.Hosting.TestKit.TestKit
     public async Task ShardedDaemonProcess_must_not_run_if_the_role_does_not_match_node_role()
     {
         var registry = Host.Services.GetRequiredService<ActorRegistry>();
-        registry.TryGet<ShardedDaemonProcessSpecs.ShardedDaemonRouter>(out _).Should().BeFalse();
+        Assert.False(registry.TryGet<ShardedDaemonProcessSpecs.ShardedDaemonRouter>(out _));
 
         await ExpectNoMsgAsync(1.Seconds());
     }

@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Cluster.Hosting.SBR;
 using Akka.Cluster.Hosting.Tests.Lease;
 using Akka.Cluster.Sharding;
 using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.Hosting;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -112,8 +108,8 @@ public class ClusterShardingSpecs
             await shardRegion.Ask<IActorRef>(new MyEntityActor.GetSourceRef("foo"), TimeSpan.FromSeconds(3));
 
         // assert
-        id.Should().Be("foo");
-        sourceRef.Should().Be(actorRegistry.Get<MyTopLevelActor>());
+        Assert.Equal("foo", id);
+        Assert.Equal(actorRegistry.Get<MyTopLevelActor>(), sourceRef);
     }
 
     [Fact(DisplayName = "ShardOptions with different values should generate valid ClusterShardSettings")]
@@ -132,16 +128,18 @@ public class ClusterShardingSpecs
             LeaseRetryInterval = 2.Seconds(),
             ShardRegionQueryTimeout = 3.Seconds(),
         });
-        settings1.RememberEntities.Should().BeTrue();
-        settings1.StateStoreMode.Should().Be(StateStoreMode.Persistence);
-        settings1.RememberEntitiesStore.Should().Be(RememberEntitiesStore.Eventsourced);
-        settings1.Role.Should().Be("first");
-        settings1.PassivateIdleEntityAfter.Should().Be(1.Seconds());
-        settings1.SnapshotPluginId.Should().Be("firstSnapshot");
-        settings1.JournalPluginId.Should().Be("firstJournal");
-        settings1.LeaseSettings.LeaseImplementation.Should().Be("test-lease");
-        settings1.LeaseSettings.LeaseRetryInterval.Should().Be(2.Seconds());
-        settings1.ShardRegionQueryTimeout.Should().Be(3.Seconds());
+
+        Assert.True(settings1.RememberEntities);
+        Assert.Equal(StateStoreMode.Persistence, settings1.StateStoreMode);
+        Assert.Equal(RememberEntitiesStore.Eventsourced, settings1.RememberEntitiesStore);
+        Assert.Equal("first", settings1.Role);
+        Assert.Equal(1.Seconds(), settings1.PassivateIdleEntityAfter);
+        Assert.Equal("firstSnapshot", settings1.SnapshotPluginId);
+        Assert.Equal("firstJournal", settings1.JournalPluginId);
+        Assert.NotNull(settings1.LeaseSettings);
+        Assert.Equal("test-lease", settings1.LeaseSettings!.LeaseImplementation);
+        Assert.Equal(2.Seconds(), settings1.LeaseSettings.LeaseRetryInterval);
+        Assert.Equal(3.Seconds(), settings1.ShardRegionQueryTimeout);
         
         var settings2 = ToSettings(new ShardOptions
         {
@@ -154,15 +152,16 @@ public class ClusterShardingSpecs
             JournalPluginId = "secondJournal", 
             ShardRegionQueryTimeout = 5.Seconds(),
         });
-        settings2.RememberEntities.Should().BeFalse();
-        settings2.StateStoreMode.Should().Be(StateStoreMode.DData);
-        settings2.RememberEntitiesStore.Should().Be(RememberEntitiesStore.DData);
-        settings2.Role.Should().Be("second");
-        settings2.PassivateIdleEntityAfter.Should().Be(4.Seconds());
-        settings2.JournalPluginId.Should().Be("secondJournal");
-        settings2.SnapshotPluginId.Should().Be("secondSnapshot");
-        settings2.LeaseSettings.Should().BeNull();
-        settings2.ShardRegionQueryTimeout.Should().Be(5.Seconds());
+
+        Assert.False(settings2.RememberEntities);
+        Assert.Equal(StateStoreMode.DData, settings2.StateStoreMode);
+        Assert.Equal(RememberEntitiesStore.DData, settings2.RememberEntitiesStore);
+        Assert.Equal("second", settings2.Role);
+        Assert.Equal(4.Seconds(), settings2.PassivateIdleEntityAfter);
+        Assert.Equal("secondJournal", settings2.JournalPluginId);
+        Assert.Equal("secondSnapshot", settings2.SnapshotPluginId);
+        Assert.Null(settings2.LeaseSettings);
+        Assert.Equal(5.Seconds(), settings2.ShardRegionQueryTimeout);
     }
 
     private static ClusterShardingSettings ToSettings(ShardOptions shardOptions)

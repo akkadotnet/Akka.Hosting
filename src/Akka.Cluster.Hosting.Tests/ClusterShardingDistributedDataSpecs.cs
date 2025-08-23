@@ -5,7 +5,6 @@ using Akka.Actor;
 using Akka.DistributedData;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
-using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -36,7 +35,7 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
         var cluster = Cluster.Get(Sys);
         await cluster.JoinAsync(cluster.SelfAddress);
         await AwaitAssertAsync(() => 
-                cluster.State.Members.Count(m => m.Status == MemberStatus.Up).Should().Be(1),
+                Assert.Equal(1, cluster.State.Members.Count(m => m.Status == MemberStatus.Up)),
             interval: TimeSpan.FromMilliseconds(200),
             duration: TimeSpan.FromSeconds(10));
         
@@ -54,7 +53,7 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
             // * This actor is created inside DistributedData extension .ctor
             // * Marks that the extension is running
             // * We can't use DistributedData.Get() because that defeats the purpose.
-            identity.Subject.Should().NotBeNull();
+            Assert.NotNull(identity.Subject);
         });
     }
 }
