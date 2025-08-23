@@ -6,7 +6,6 @@ using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -33,25 +32,23 @@ public class DistributedPubSubSpecs : IAsyncLifetime
     {
         _helper = helper;
         _specBuilder = _ => { };
-        _clusterOptions = new ClusterOptions { Roles = new[] { "my-host" } };
+        _clusterOptions = new ClusterOptions { Roles = ["my-host"] };
     }
     
     // Issue #55 https://github.com/akkadotnet/Akka.Hosting/issues/55
     [Fact]
-    public Task Should_launch_distributed_pub_sub_with_roles()
+    public async Task Should_launch_distributed_pub_sub_with_roles()
     {
         var testProbe = _testKit!.CreateTestProbe(_system);
 
         // act
         testProbe.Send(_mediator, new Subscribe("testSub", testProbe));
-        var response = testProbe.ExpectMsg<SubscribeAck>();
+        var response = await testProbe.ExpectMsgAsync<SubscribeAck>();
 
         // assert
-        _system!.Settings.Config.GetString("akka.cluster.pub-sub.role").Should().Be("my-host");
-        response.Subscribe.Topic.Should().Be("testSub");
-        response.Subscribe.Ref.Should().Be(testProbe);
-
-        return Task.CompletedTask;
+        Assert.Equal("my-host", _system!.Settings.Config.GetString("akka.cluster.pub-sub.role"));
+        Assert.Equal("testSub", response.Subscribe.Topic);
+        Assert.Equal(testProbe, response.Subscribe.Ref);
     }
     
     [Fact]
@@ -107,8 +104,8 @@ public class DistributedPubSubSpecs : IAsyncLifetime
 
         // Lifetime should be healthy
         var lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
-        lifetime.ApplicationStopped.IsCancellationRequested.Should().BeFalse();
-        lifetime.ApplicationStopping.IsCancellationRequested.Should().BeFalse();
+        Assert.False(lifetime.ApplicationStopped.IsCancellationRequested);
+        Assert.False(lifetime.ApplicationStopping.IsCancellationRequested);
         
         // Join cluster
         var myAddress = _cluster!.SelfAddress;

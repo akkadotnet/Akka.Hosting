@@ -2,12 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Hosting;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Cluster.Hosting.Tests;
 
@@ -47,7 +44,7 @@ public class ClusterSingletonSpecs
         var respond = await singletonProxy.Ask<string>("hit", TimeSpan.FromSeconds(3));
 
         // assert
-        respond.Should().Be("hit");
+        Assert.Equal("hit", respond);
 
         await host.StopAsync();
     }
@@ -77,7 +74,7 @@ public class ClusterSingletonSpecs
 
         await AssertSingletonSelectionAsync(singletonSelector);
 
-        singletonProxy.Path.ToString().Should().Be("akka://TestSys/user/my-singleton-proxy");
+        Assert.Equal("akka://TestSys/user/my-singleton-proxy", singletonProxy.Path.ToString());
 
         await host.StopAsync();
     }
@@ -86,7 +83,10 @@ public class ClusterSingletonSpecs
     {
         var startTime = DateTime.UtcNow;
         var timeout = TimeSpan.FromSeconds(3);
-        await Awaiting(async () =>
+        await Test();
+        return;
+
+        async Task Test()
         {
             // might take multiple tries to resolve the singleton if it hasn't been created yet
             while (DateTime.UtcNow - startTime < timeout)
@@ -94,7 +94,7 @@ public class ClusterSingletonSpecs
                 try
                 {
                     var identify = await singletonSelector.ResolveOne(100.Milliseconds());
-                    identify.Should().NotBe(ActorRefs.Nobody);
+                    Assert.NotEqual(ActorRefs.Nobody, identify);
                     return;
                 }
                 catch (Exception)
@@ -104,7 +104,7 @@ public class ClusterSingletonSpecs
             }
             
             throw new AskTimeoutException("Failed to resolve singleton within timeout");
-        }).Should().NotThrowAsync();
+        }
     }
 
     [Fact(DisplayName = "Should launch singleton manager and proxy at the appropriate path (no manager name, actor factory)")]
@@ -132,7 +132,7 @@ public class ClusterSingletonSpecs
 
         await AssertSingletonSelectionAsync(singletonSelector);
 
-        singletonProxy.Path.ToString().Should().Be("akka://TestSys/user/my-singleton-proxy");
+        Assert.Equal("akka://TestSys/user/my-singleton-proxy", singletonProxy.Path.ToString());
 
         await host.StopAsync();
     }
@@ -163,7 +163,7 @@ public class ClusterSingletonSpecs
 
         await AssertSingletonSelectionAsync(singletonSelector);
 
-        singletonProxy.Path.ToString().Should().Be("akka://TestSys/user/singleton-proxy");
+        Assert.Equal("akka://TestSys/user/singleton-proxy", singletonProxy.Path.ToString());
 
         await host.StopAsync();
     }
@@ -194,7 +194,7 @@ public class ClusterSingletonSpecs
 
         await AssertSingletonSelectionAsync(singletonSelector);
 
-        singletonProxy.Path.ToString().Should().Be("akka://TestSys/user/singleton-proxy");
+        Assert.Equal("akka://TestSys/user/singleton-proxy", singletonProxy.Path.ToString());
 
         await host.StopAsync();
     }
@@ -225,7 +225,7 @@ public class ClusterSingletonSpecs
         var respond = await singletonProxy.Ask<string>("hit", TimeSpan.FromSeconds(3));
 
         // assert
-        respond.Should().Be("hit");
+        Assert.Equal("hit", respond);
 
         await Task.WhenAll(singletonHost.StopAsync(), singletonProxyHost.StopAsync());
     }
@@ -277,7 +277,7 @@ public class ClusterSingletonSpecs
         var respond = await singletonProxy.Ask<string>("hit", 3.Seconds());
 
         // assert
-        respond.Should().Be("hit");
+        Assert.Equal("hit", respond);
 
         await Task.WhenAll(singletonHost.StopAsync(), singletonProxyHost.StopAsync());
     }
