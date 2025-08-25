@@ -19,8 +19,9 @@ namespace Akka.Hosting.TestKit.Internals
                 case InitializeLogger init:
                     InternalLogger.Info($"{nameof(TestKitLoggerFactoryLogger)} started");
                     ((EventStream)init.LoggingBus).Subscribe<LogEvent>(Self);
-                    // Don't send LoggerInitialized back as it interferes with TestActor messages
-                    // The logger is initialized regardless
+                    // Only reply if there's an actual sender waiting (not NoSender)
+                    if (!Sender.Equals(ActorRefs.NoSender))
+                        Sender.Tell(new LoggerInitialized());
                     return true;
                 
                 default:

@@ -116,7 +116,24 @@ namespace Akka.Hosting.TestKit
                         await LoggerHook(system, registry);
                     });
                 }
+                
+                // Register TestProbe using StartActors (not AddStartup) so it runs BEFORE user's WithActors
+                // This ensures TestProbe is available for any actors that depend on IRequiredActor<TestProbe>
+                builder.StartActors((actorSystem, actorRegistry) =>
+                {
+                    // Initialize TestActor here to ensure it's available before user actors start
+                    base.InitializeTest(actorSystem, (ActorSystemSetup)null!, null, null);
+                    actorRegistry.Register<TestProbe>(TestActor);
+                    
+                    // Set implicit sender on initialization thread
+                    if (this is not INoImplicitSender)
+                    {
+                        InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
+                    }
+                });
 
+                // User configuration comes AFTER TestProbe registration
+                // Their WithActors/StartActors will be added after ours
                 ConfigureAkka(builder, provider);
 
                 builder.AddStartup((_, _) =>
@@ -133,7 +150,7 @@ namespace Akka.Hosting.TestKit
             var logger = extSystem.SystemActorOf(Props.Create(() => new TestKitLoggerFactoryLogger()), loggerName);
             // Fire and forget the logger initialization to avoid blocking
             // The logger will eventually initialize itself
-            logger.Tell(new InitializeLogger(system.EventStream));
+            logger.Tell(new InitializeLogger(system.EventStream), ActorRefs.NoSender);
             return Task.CompletedTask;
         }
 
@@ -178,19 +195,13 @@ namespace Akka.Hosting.TestKit
 
             await _initialized.Task;
             
-            var system = _host.Services.GetRequiredService<ActorSystem>();
-            var registry = _host.Services.GetRequiredService<ActorRegistry>();
-            
-            // Initialize TestActor directly without synchronization context posting
-            // The implicit sender will be set on the current thread after initialization
-            base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
-            
-            registry.Register<TestProbe>(TestActor);
+            // TestActor initialization and registration now happens in AddStartup
+            // before user actors are created, preventing race conditions
             
             // ALWAYS set the implicit sender context on the current thread after initialization
             // This ensures it's available on the thread where tests will run
             // This is critical for tests using DI-created actors
-            if (this is not INoImplicitSender)
+            if (this is not INoImplicitSender && TestActor != null)
             {
                 InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
             }
