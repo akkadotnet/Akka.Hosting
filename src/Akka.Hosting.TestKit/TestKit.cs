@@ -43,11 +43,26 @@ namespace Akka.Hosting.TestKit
             {
                 if(_host is null)
                     throw new XunitException("Test has not been initialized yet");
+                    
+                // Ensure implicit sender is set on current thread when accessing Host
+                EnsureImplicitSender();
                 return _host;
             }
         }
 
         public ActorRegistry ActorRegistry => Host.Services.GetRequiredService<ActorRegistry>();
+        
+        /// <summary>
+        /// Ensures the implicit sender is set on the current thread.
+        /// Called automatically when accessing Host or Sys.
+        /// </summary>
+        private void EnsureImplicitSender()
+        {
+            if (this is not INoImplicitSender && TestActor != null)
+            {
+                InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
+            }
+        }
         
         public TimeSpan StartupTimeout { get; }
         public string ActorSystemName { get; }
@@ -193,8 +208,13 @@ namespace Akka.Hosting.TestKit
             
             registry.Register<TestProbe>(TestActor);
             
-            if (this is not INoImplicitSender && InternalCurrentActorCellKeeper.Current is null)
+            // ALWAYS set the implicit sender context on the current thread after initialization
+            // This ensures it's available on the thread where tests will run
+            // This is critical for tests using DI-created actors
+            if (this is not INoImplicitSender)
+            {
                 InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
+            }
             
             await BeforeTestStart();
         }
@@ -203,9 +223,28 @@ namespace Akka.Hosting.TestKit
         {
             // no-op, deferring InitializeTest after Host have ran
         }
+        
+        /// <summary>
+        /// Override Sys property to ensure implicit sender is set when accessing the actor system
+        /// </summary>
+        public new ActorSystem Sys 
+        { 
+            get 
+            {
+                EnsureImplicitSender();
+                return base.Sys;
+            }
+        }
 
         protected virtual Task BeforeTestStart()
         {
+            // Ensure the implicit sender is set on the current thread before each test
+            // This is critical because tests may run on different threads than initialization
+            if (this is not INoImplicitSender)
+            {
+                InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
+            }
+            
             return Task.CompletedTask;
         }
         
