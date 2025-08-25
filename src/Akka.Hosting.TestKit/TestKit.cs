@@ -115,7 +115,8 @@ namespace Akka.Hosting.TestKit
         {
             var extSystem = (ExtendedActorSystem)system;
             var logger = extSystem.SystemActorOf(Props.Create(() => new TestKitLoggerFactoryLogger()), "log-test");
-            await logger.Ask<LoggerInitialized>(new InitializeLogger(system.EventStream));
+            // Add timeout to prevent deadlock when multiple tests run in parallel
+            await logger.Ask<LoggerInitialized>(new InitializeLogger(system.EventStream), TimeSpan.FromSeconds(5));
         }
 
         protected virtual Config? Config { get; } = null;
@@ -161,7 +162,35 @@ namespace Akka.Hosting.TestKit
             
             var system = _host.Services.GetRequiredService<ActorSystem>();
             var registry = _host.Services.GetRequiredService<ActorRegistry>();
-            base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
+            
+            // Initialize TestActor on the current synchronization context to preserve
+            // the implicit sender thread context (fixes #458)
+            // We need to capture the current synchronization context before any await
+            var currentContext = SynchronizationContext.Current;
+            if (currentContext != null)
+            {
+                // Post the initialization to the current context to ensure it runs on the correct thread
+                var tcs = new TaskCompletionSource<bool>();
+                currentContext.Post(_ =>
+                {
+                    try
+                    {
+                        base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
+                        tcs.SetResult(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        tcs.SetException(ex);
+                    }
+                }, null);
+                await tcs.Task;
+            }
+            else
+            {
+                // No synchronization context, run directly
+                base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
+            }
+            
             registry.Register<TestProbe>(TestActor);
             
             if (this is not INoImplicitSender && InternalCurrentActorCellKeeper.Current is null)
