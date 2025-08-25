@@ -8,6 +8,7 @@ using System;
 using Akka.Actor;
 using Akka.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
@@ -20,9 +21,9 @@ public class DiPropsFailTest: TestKit
     public DiPropsFailTest(ITestOutputHelper output) : base(nameof(DiPropsFailTest), output)
     {}
     
-    protected override void ConfigureServices(IServiceCollection services)
+    protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
-        base.ConfigureServices(services);
+        base.ConfigureServices(context, services);
         services.AddLogging();
     }
     
