@@ -126,12 +126,15 @@ namespace Akka.Hosting.TestKit
             });
         }
 
-        internal virtual async Task LoggerHook(ActorSystem system, IActorRegistry registry)
+        internal virtual Task LoggerHook(ActorSystem system, IActorRegistry registry)
         {
             var extSystem = (ExtendedActorSystem)system;
-            var logger = extSystem.SystemActorOf(Props.Create(() => new TestKitLoggerFactoryLogger()), "log-test");
-            // Add timeout to prevent deadlock when multiple tests run in parallel
-            await logger.Ask<LoggerInitialized>(new InitializeLogger(system.EventStream), TimeSpan.FromSeconds(5));
+            var loggerName = $"log-test-{Guid.NewGuid():N}";
+            var logger = extSystem.SystemActorOf(Props.Create(() => new TestKitLoggerFactoryLogger()), loggerName);
+            // Fire and forget the logger initialization to avoid blocking
+            // The logger will eventually initialize itself
+            logger.Tell(new InitializeLogger(system.EventStream));
+            return Task.CompletedTask;
         }
 
         protected virtual Config? Config { get; } = null;
@@ -178,33 +181,9 @@ namespace Akka.Hosting.TestKit
             var system = _host.Services.GetRequiredService<ActorSystem>();
             var registry = _host.Services.GetRequiredService<ActorRegistry>();
             
-            // Initialize TestActor on the current synchronization context to preserve
-            // the implicit sender thread context (fixes #458)
-            // We need to capture the current synchronization context before any await
-            var currentContext = SynchronizationContext.Current;
-            if (currentContext != null)
-            {
-                // Post the initialization to the current context to ensure it runs on the correct thread
-                var tcs = new TaskCompletionSource<bool>();
-                currentContext.Post(_ =>
-                {
-                    try
-                    {
-                        base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
-                        tcs.SetResult(true);
-                    }
-                    catch (Exception ex)
-                    {
-                        tcs.SetException(ex);
-                    }
-                }, null);
-                await tcs.Task;
-            }
-            else
-            {
-                // No synchronization context, run directly
-                base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
-            }
+            // Initialize TestActor directly without synchronization context posting
+            // The implicit sender will be set on the current thread after initialization
+            base.InitializeTest(system, (ActorSystemSetup)null!, null, null);
             
             registry.Register<TestProbe>(TestActor);
             
