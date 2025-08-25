@@ -52,6 +52,7 @@ namespace Akka.Hosting.TestKit
         public Microsoft.Extensions.Logging.LogLevel LogLevel { get; }
         public Xunit.Abstractions.ITestOutputHelper? Output { get; }
         public System.TimeSpan StartupTimeout { get; }
+        public new Akka.Actor.ActorSystem Sys { get; }
         protected static Akka.TestKit.Xunit2.XunitAssertions Assertions { get; }
         protected virtual System.Threading.Tasks.Task AfterAllAsync() { }
         protected virtual System.Threading.Tasks.Task BeforeTestStart() { }
