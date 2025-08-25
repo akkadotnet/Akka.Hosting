@@ -7,6 +7,7 @@
 using System;
 using Akka.Actor;
 using Akka.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
@@ -19,20 +20,26 @@ public class DiPropsFailTest: TestKit
     public DiPropsFailTest(ITestOutputHelper output) : base(nameof(DiPropsFailTest), output)
     {}
     
+    protected override void ConfigureServices(IServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        services.AddLogging();
+    }
+    
     protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     { }
 
     [Fact]
     public void DiTest()
     {
-        var actor = Sys.ActorOf(NonRootActorWithDi.Props());
+        var actor = Sys.ActorOf(NonRootActorWithDi.Props(Sys));
         actor.Tell("test");
         ExpectMsg<string>("test");
     }
     
     private class NonRootActorWithDi: ReceiveActor
     {
-        public static Props Props() => DependencyResolver.For(Context.System).Props<NonRootActorWithDi>();
+        public static Props Props(ActorSystem system) => DependencyResolver.For(system).Props<NonRootActorWithDi>();
         
         public NonRootActorWithDi(ILogger<NonRootActorWithDi> log)
         {
