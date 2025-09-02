@@ -3,6 +3,7 @@ namespace Akka.Cluster.Hosting
 {
     public static class AkkaClusterHostingExtensions
     {
+        public static Akka.Hosting.AkkaConfigurationBuilder WithAkkaClusterReadinessCheck(this Akka.Hosting.AkkaConfigurationBuilder builder) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<string> initialContacts) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IList<Akka.Actor.ActorPath> initialContacts) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithClusterClient<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Collections.Generic.IEnumerable<Akka.Actor.Address> initialContactAddresses, string receptionistActorName = "receptionist") { }
@@ -41,6 +42,16 @@ namespace Akka.Cluster.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithSingletonProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonManagerName, string singletonName, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithSingletonProxy<TKey>(this Akka.Hosting.AkkaConfigurationBuilder builder, string singletonName, Akka.Cluster.Hosting.ClusterSingletonOptions? options = null, string? singletonManagerPath = null) { }
     }
+    public sealed class AkkaClusterReadinessCheck : Akka.Hosting.IAkkaHealthCheck
+    {
+        public AkkaClusterReadinessCheck() { }
+        public System.DateTime BeganJoining { get; }
+        public System.DateTime? FinishedJoining { get; }
+        public bool WeHaveJoined { get; }
+        public System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(Akka.Hosting.AkkaHealthCheckContext context, System.Threading.CancellationToken cancellationToken = default) { }
+        public Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult HealthyResult(System.DateTime finishedJoining) { }
+        public Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult UnhealthyResult(System.DateTime now, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus failureStatus) { }
+    }
     public sealed class ClusterClientDiscoveryOptions
     {
         public ClusterClientDiscoveryOptions() { }
@@ -65,6 +76,7 @@ namespace Akka.Cluster.Hosting
     {
         public ClusterOptions() { }
         public string? AppVersion { get; set; }
+        public bool ClusterReadyCheck { get; set; }
         public Akka.Remote.Hosting.PhiAccrualFailureDetectorOptions? FailureDetector { get; set; }
         public bool? LogInfo { get; set; }
         public bool? LogInfoVerbose { get; set; }

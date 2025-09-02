@@ -45,6 +45,24 @@ namespace Akka.Hosting
         public Akka.Hosting.AkkaConfigurationBuilder WithExtension<T>()
             where T : Akka.Actor.IExtensionId { }
         public Akka.Hosting.AkkaConfigurationBuilder WithExtensions(params System.Type[] extensions) { }
+        public Akka.Hosting.AkkaConfigurationBuilder WithHealthCheck(Akka.Hosting.AkkaHealthCheckRegistration registration) { }
+    }
+    public sealed class AkkaHealthCheckContext
+    {
+        public AkkaHealthCheckContext(Akka.Actor.ActorSystem actorSystem) { }
+        public Akka.Hosting.ActorRegistry ActorRegistry { get; }
+        public Akka.Actor.ActorSystem ActorSystem { get; }
+        public Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration Registration { get; set; }
+    }
+    public sealed class AkkaHealthCheckRegistration
+    {
+        public AkkaHealthCheckRegistration(string name, Akka.Hosting.IAkkaHealthCheck instance, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus, System.Collections.Generic.IEnumerable<string>? tags) { }
+        public AkkaHealthCheckRegistration(string name, Akka.Hosting.IAkkaHealthCheck instance, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus, System.Collections.Generic.IEnumerable<string>? tags, System.TimeSpan? timeout) { }
+        public Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus FailureStatus { get; set; }
+        public Akka.Hosting.IAkkaHealthCheck HealthCheck { get; set; }
+        public string Name { get; set; }
+        public System.Collections.Generic.ISet<string> Tags { get; }
+        public System.TimeSpan Timeout { get; set; }
     }
     [Akka.Annotations.InternalApi]
     public class AkkaHostedService : Microsoft.Extensions.Hosting.IHostedService
@@ -71,10 +89,13 @@ namespace Akka.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder AddSetup(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup setup) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActorAskTimeout(this Akka.Hosting.AkkaConfigurationBuilder builder, System.TimeSpan timeout) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActorRefProvider(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.ProviderSelection providerSelection) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithActorSystemLivenessCheck(this Akka.Hosting.AkkaConfigurationBuilder builder) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Hosting.ActorStarter actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Hosting.ActorStarterWithResolver actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry> actorStarter) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithActors(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Actor.ActorSystem, Akka.Hosting.IActorRegistry, Akka.DependencyInjection.IDependencyResolver> actorStarter) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithHealthCheck(this Akka.Hosting.AkkaConfigurationBuilder builder, string name, Akka.Hosting.IAkkaHealthCheck healthCheck) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithHealthCheck(this Akka.Hosting.AkkaConfigurationBuilder builder, string name, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.ActorRegistry, System.Threading.CancellationToken, System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>> healthCheck) { }
     }
     public class DeadLetterOptions
     {
@@ -130,6 +151,10 @@ namespace Akka.Hosting
         void Register<TKey>(Akka.Actor.IActorRef actor, bool overwrite = false);
         bool TryRegister(System.Type key, Akka.Actor.IActorRef actor, bool overwrite = false);
         bool TryRegister<TKey>(Akka.Actor.IActorRef actor, bool overwrite = false);
+    }
+    public interface IAkkaHealthCheck
+    {
+        System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(Akka.Hosting.AkkaHealthCheckContext context, System.Threading.CancellationToken cancellationToken = default);
     }
     public interface IDiscoveryOptions : Akka.Hosting.IHoconOption { }
     public interface IHoconOption
@@ -212,6 +237,14 @@ namespace Akka.Hosting.Coordination
         public abstract System.Type Class { get; }
         public abstract string ConfigPath { get; }
         public abstract void Apply(Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Actor.Setup.Setup? setup = null);
+    }
+}
+namespace Akka.Hosting.HealthChecks
+{
+    public sealed class ActorSystemLivenessCheck : Akka.Hosting.IAkkaHealthCheck
+    {
+        public ActorSystemLivenessCheck() { }
+        public System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(Akka.Hosting.AkkaHealthCheckContext context, System.Threading.CancellationToken cancellationToken = default) { }
     }
 }
 namespace Akka.Hosting.Logging

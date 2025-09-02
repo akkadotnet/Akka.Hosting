@@ -1,7 +1,96 @@
-#### 1.5.48 August 22nd 2025 ####
+#### 1.5.48.1 September 2nd 2025 ####
 
-This release does not include the new healthcheck feature introduced in Akka.Hosting 1.5.47-beta1.
+Introduces new health check functionality and completey replaces [Akka.HealthChecks](https://github.com/petabridge/akkadotnet-healthcheck)
 
-* [Bump AkkaVersion from 1.5.46 to 1.5.48](https://github.com/akkadotnet/akka.net/releases/tag/1.5.48)
-* [Fix IndexOutOfRangeException bug in ConfigurationHoconAdapter](https://github.com/akkadotnet/Akka.Hosting/pull/632)
-* [Fix Akka.Hosting.TestKit deadlock on parallel unit test execution](https://github.com/akkadotnet/Akka.Hosting/pull/643)
+### Problems with Akka.HealthChecks
+
+There are a few major problems with Akka.HealthChecks:
+
+1. **Hair triggers that can inadvertently nuke an otherwise functioning Akka.NET cluster**: see https://github.com/petabridge/akkadotnet-healthcheck/issues/278 and https://github.com/petabridge/akkadotnet-healthcheck/issues/237 - we have had to do constant firefighting to get these right over the years. The fundamental problem is that Akka.HealthChecks tries to do too much and doesn't give the underlying systems time to recover, resulting in wild swings in availability. The new design approaches these things much more carefully and, generally, tries to use fewer, more meaningful health checks.
+2. **Clunky and awkward to configure** - you have to configure health checks in three places, you have to install several different NuGet packages, and there are a lot of settings + moving parts involved. A lot of this is legacy baggage from before Microsoft.Extensions.Diagnostics.HealthChecks existed.
+3. **Difficult to customize** - writing custom health checks with Akka.HealthCheck is... arduous, to say the least.
+
+### How This Feature Solves Them
+
+1. **No additional packages** - Akka.Hosting now takes a direct dependency on Microsoft.Extensions.Diagnostics.HealthChecks and exposes APIs for configuring Akka.NET-specific health checks that will be registered with the `HealthCheckService`.
+2. **Automatic registration of health checks with `HealthCheckService`** - if you call any of the `WithHealthCheck` overloads on the `AkkaConfigurationBuilder`, those types will automatically be registered with the `Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckService` and they will "just work." No additional API calls required - happens automatically.
+3. **Automatic health checks for core Akka and Akka.Cluster** - we ship with two built in checks out of the box: an `ActorSystem` liveness check - if it's dead, the check fails. And an Akka.Cluster "have we joined the cluster yet?" readiness check. 
+
+**These are not enabled by default - you have to opt-in to turning them on.**
+
+You can see what the outputs of this look like by running:
+
+```shell
+dotnet run --project src/Examples/Akka.Hosting.Asp.LoggingDemo/Akka.Hosting.Asp.LoggingDemo.csproj
+```
+
+This will expose the output of both of these healthchecks as pretty-printed JSON at http://localhost:5000/healthz
+
+```json
+{
+  "status": "Healthy",
+  "totalDuration": "00:00:00.0002317",
+  "checks": [
+    {
+      "name": "ActorSystem Available",
+      "status": "Healthy",
+      "duration": "00:00:00.0000138",
+      "description": "ActorSystem is running.",
+      "tags": [
+        "akka"
+      ],
+      "data": {}
+    },
+    {
+      "name": "cluster.join",
+      "status": "Healthy",
+      "duration": "00:00:00.0000248",
+      "description": "Successfully joined Akka.NET cluster after [0:00:06.3427821].",
+      "tags": [
+        "ready",
+        "akka.cluster",
+        "akka"
+      ],
+      "data": {}
+    }
+  ]
+}
+```
+
+4. **Easy to customize** - we expose several types of helper methods, all called `WithHealthCheck`, that make it very easy to define a health check. For example:
+
+```csharp
+builder.WithHealthCheck("FooActor alive", async (system, registry, cancellationToken) =>
+        {
+            /*
+             * N.B. CancellationToken is set by the call to MSFT.EXT.DIAGNOSTICS.HEALTHCHECK,
+             * so that value could be "infinite" by default.
+             *
+             * Therefore, it might be a really, really good idea to guard this with a non-infinite
+             * timeout via a LinkedCancellationToken here.
+             */
+            try
+            {
+                var fooActor = await registry.GetAsync<FooActor>(cancellationToken);
+
+                try
+                {
+                    var r = await fooActor.Ask<ActorIdentity>(new Identify("foo"), cancellationToken: cancellationToken);
+                    if (r.Subject.IsNobody())
+                        return HealthCheckResult.Unhealthy("FooActor was alive but is now dead");
+                }
+                catch (Exception e)
+                {
+                    return HealthCheckResult.Degraded("FooActor found but non-responsive", e);
+                }
+            }
+            catch (Exception e2)
+            {
+                return HealthCheckResult.Unhealthy("FooActor not found in registry", e2);
+            }
+
+            return HealthCheckResult.Healthy("fooActor found and responsive");
+        });
+```
+
+A basic lambda function can handle it - the only reason this function is as complicated as this is because I wanted to include _different reasons for why it failed_ in the description. You can also implement your own `IAkkaHealthCheck` and pass it into a `WithHealthCheck` method that way too.

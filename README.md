@@ -10,7 +10,6 @@ See the ["Introduction to Akka.Hosting - HOCON-less, "Pit of Success" Akka.NET R
 - [Supported Packages](#supported-packages)
     * [Akka.NET Core Packages](#akkanet-core-packages)
     * [Akka Persistence Plugins](#akka-persistence-plugins)
-    * [Akka.HealthCheck](#akkahealthcheck)
     * [Akka.Management Plugins](#akkamanagement-plugins)
         + [Akka.Management Core Package](#akkamanagement-core-package)
         + [Akka.Discovery Plugins](#akkadiscovery-plugins)
@@ -27,7 +26,8 @@ See the ["Introduction to Akka.Hosting - HOCON-less, "Pit of Success" Akka.NET R
     * [Microsoft.Extensions.Logging.ILoggerFactory Logging Support](#microsoftextensionsloggingiloggerfactory-logging-support)
     * [Serilog Support](#serilog-support)
     * [Microsoft.Extensions.Logging Log Event Filtering](#microsoftextensionslogging-log-event-filtering)
-
+- [Microsoft.Extensions.Diagnostics.HealthChecks Integration](#healthchecks)
+    * [Built-in HealthChecks](#healthcheck-builtin)
 <a id="supported-packages"></a>
 # Supported Packages
 
@@ -47,13 +47,6 @@ See the ["Introduction to Akka.Hosting - HOCON-less, "Pit of Success" Akka.NET R
 * [`Akka.Persistence.SqlServer.Hosting`](https://github.com/akkadotnet/Akka.Persistence.SqlServer/tree/dev/src/Akka.Persistence.SqlServer.Hosting) - used for Akka.Persistence.SqlServer support. Documentation can be read [here](https://github.com/akkadotnet/Akka.Persistence.SqlServer/blob/dev/src/Akka.Persistence.SqlServer.Hosting/README.md)
 * [`Akka.Persistence.PostgreSql.Hosting`](https://github.com/akkadotnet/Akka.Persistence.PostgreSql/tree/dev/src/Akka.Persistence.PostgreSql.Hosting) - used for Akka.Persistence.PostgreSql support. Documentation can be read [here](https://github.com/akkadotnet/Akka.Persistence.PostgreSql/blob/dev/src/Akka.Persistence.PostgreSql.Hosting/README.md)
 * [`Akka.Persistence.Azure.Hosting`](https://github.com/petabridge/Akka.Persistence.Azure) - used for Akka.Persistence.Azure support. Documentation can be read [here](https://github.com/petabridge/Akka.Persistence.Azure/blob/master/README.md)
-
-[Back to top](#akkahosting)
-
-<a id="akkahealthcheck"></a>
-## [Akka.HealthCheck](https://github.com/petabridge/akkadotnet-healthcheck)
-
-Embed health check functionality for environments such as Kubernetes, ASP.NET, AWS, Azure, Pivotal Cloud Foundry, and more. Documentation can be read [here](https://github.com/petabridge/akkadotnet-healthcheck/blob/dev/README.md)
 
 [Back to top](#akkahosting)
 
@@ -671,5 +664,63 @@ In Akka.NET 1.5.21, we introduced [log filtering for log messages based on the L
            });
    });
    ```
+
+[Back to top](#akkahosting)
+
+<a id="healthchecks"></a>
+## Microsoft.Extensions.Diagnostics.HealthChecks Integration
+
+We've recently deprecated [Akka.HealthChecks](https://github.com/petabridge/akkadotnet-healthcheck) in favor of a simpler, more configurable solution that is built directly into Akka.Hosting: `IAkkaHealthCheck` and `WithAkkaHealthCheck`:
+
+```csharp
+ builder
+    .WithActorSystemLivenessCheck() // have to opt-in to the built-in health check
+    .WithHealthCheck("FooActor alive", async (system, registry, cancellationToken) =>
+{
+    /*
+     * N.B. CancellationToken is set by the call to MSFT.EXT.DIAGNOSTICS.HEALTHCHECK,
+     * so that value could be "infinite" by default.
+     *
+     * Therefore, it might be a really, really good idea to guard this with a non-infinite
+     * timeout via a LinkedCancellationToken here.
+     */
+    try
+    {
+        var fooActor = await registry.GetAsync<FooActor>(cancellationToken);
+
+        try
+        {
+            var r = await fooActor.Ask<ActorIdentity>(new Identify("foo"), cancellationToken: cancellationToken);
+            if (r.Subject.IsNobody())
+                return HealthCheckResult.Unhealthy("FooActor was alive but is now dead");
+        }
+        catch (Exception e)
+        {
+            return HealthCheckResult.Degraded("FooActor found but non-responsive", e);
+        }
+    }
+    catch (Exception e2)
+    {
+        return HealthCheckResult.Unhealthy("FooActor not found in registry", e2);
+    }
+
+    return HealthCheckResult.Healthy("fooActor found and responsive");
+});
+```
+
+These health checks and any other you register using one of the `WithHealthCheck` overloads on the `AkkaConfigurationBuilder` will automatically be registered with the [`Microsoft.Extensions.Diagnostics.HealthCheckService`](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) and will be called just like any other ASP.NET Core, Entity Framework, etc health check.
+
+[Back to top](#akkahosting)
+
+<a id="healthcheck-builtin"></a>
+### Built-in Health Checks
+
+> ![NOTE]
+> All Akka.NET health checks will be tagged with the `akka` tag, so they [can easily be filtered via the health check endpoints](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks?view=aspnetcore-9.0#filter-health-checks).
+
+Akka.Hosting and its other packages ship with some built-in health checks:
+
+* `WithActorSystemLivenessCheck()` - a liveness probe that will fail if the `ActorSystem` is terminated. Generally, Akka.Hosting will try to shut down your process anyway if the `ActorSystem` dies.
+* `WithAkkaClusterReadinessCheck` - if you are an Akka.Cluster user, this health check will return `HealthStatus.Unhealthy` until you successfully join a cluster - that way you can stop load-balancers and other devices from routing traffic to this node until it has access to the cluster. This readiness check is also tagged with the `ready` tag for filtering purposes.
 
 [Back to top](#akkahosting)
