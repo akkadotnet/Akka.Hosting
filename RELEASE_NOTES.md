@@ -1,4 +1,4 @@
-#### 1.5.47-beta1 July 24th 2025 ####
+#### 1.5.48.1 September 2nd 2025 ####
 
 Introduces new health check functionality and completey replaces [Akka.HealthChecks](https://github.com/petabridge/akkadotnet-healthcheck)
 

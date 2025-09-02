@@ -5,8 +5,6 @@ using Akka.Actor;
 using Akka.Cluster.Sharding;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -40,7 +38,7 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
             })
             .WithClustering(new ClusterOptions
             {
-                Roles = new[]{ Role }
+                Roles = [Role]
             })
             .WithShardedDaemonProcess<ShardedDaemonRouter>(
                 name: Name, 
@@ -68,7 +66,7 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
         // validate that we have a cluster
         await AwaitAssertAsync(() =>
         {
-            Cluster.Get(Sys).State.Members.Count(x => x.Status == MemberStatus.Up).Should().Be(1);
+            Assert.Equal(1, Cluster.Get(Sys).State.Members.Count(x => x.Status == MemberStatus.Up));
         });
         
         // <PushDaemon>
@@ -78,7 +76,7 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
         for(var i = 0; i < NumWorkers; i++)
         {
             var result = await host.Ask<int>(i);
-            result.Should().Be(i);
+            Assert.Equal(i, result);
         }
         // </PushDaemon>
         
@@ -93,8 +91,8 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
             // validate that we have a 2 node cluster with both members marked as up
             await AwaitAssertAsync(() =>
             {
-                Cluster.Get(Sys).State.Members.Count(x => x.Status == MemberStatus.Up).Should().Be(2);
-                Cluster.Get(proxySystem.Sys).State.Members.Count(x => x.Status == MemberStatus.Up).Should().Be(2);
+                Assert.Equal(2, Cluster.Get(Sys).State.Members.Count(x => x.Status == MemberStatus.Up));
+                Assert.Equal(2, Cluster.Get(proxySystem.Sys).State.Members.Count(x => x.Status == MemberStatus.Up));
             });
             
             var proxyRouter = await proxySystem.Host.Services
@@ -104,7 +102,7 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
             for(var i = 0; i < NumWorkers; i++)
             {
                 var result = await proxyRouter.Ask<int>(i);
-                result.Should().Be(i);
+                Assert.Equal(i, result);
             }
         }
         finally

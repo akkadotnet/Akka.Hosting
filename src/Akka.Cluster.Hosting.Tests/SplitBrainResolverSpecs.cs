@@ -14,7 +14,6 @@ using Akka.Cluster.Hosting.Tests.Lease;
 using Akka.Cluster.SBR;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -84,10 +83,11 @@ public class SplitBrainResolverSpecs
 
         var system = host.Services.GetRequiredService<ActorSystem>();
         
-        Cluster.Get(system).DowningProvider.Should().BeOfType<SplitBrainResolverProvider>();
+        Assert.IsType<SplitBrainResolverProvider>(Cluster.Get(system).DowningProvider);
+        
         var settings = new SplitBrainResolverSettings(system.Settings.Config);
-        settings.DowningStrategy.Should().Be(SplitBrainResolverSettings.KeepMajorityName);
-        settings.KeepMajorityRole.Should().BeNull();
+        Assert.Equal(SplitBrainResolverSettings.KeepMajorityName, settings.DowningStrategy);
+        Assert.Null(settings.KeepMajorityRole);
     }
     
     [Fact(DisplayName = "Static quorum SBR set from Akka.Hosting should load")]
@@ -106,12 +106,12 @@ public class SplitBrainResolverSpecs
         });
 
         var system = host.Services.GetRequiredService<ActorSystem>();
-        Cluster.Get(system).DowningProvider.Should().BeOfType<SplitBrainResolverProvider>();
+        Assert.IsType<SplitBrainResolverProvider>(Cluster.Get(system).DowningProvider);
         
         var settings = new SplitBrainResolverSettings(system.Settings.Config);
-        settings.DowningStrategy.Should().Be(SplitBrainResolverSettings.StaticQuorumName);
-        settings.StaticQuorumSettings.Size.Should().Be(1);
-        settings.StaticQuorumSettings.Role.Should().Be("myRole");
+        Assert.Equal(SplitBrainResolverSettings.StaticQuorumName, settings.DowningStrategy);
+        Assert.Equal(1, settings.StaticQuorumSettings.Size);
+        Assert.Equal("myRole", settings.StaticQuorumSettings.Role);
     }
     
     [Fact(DisplayName = "Keep majority SBR set from Akka.Hosting should load")]
@@ -129,11 +129,11 @@ public class SplitBrainResolverSpecs
         });
 
         var system = host.Services.GetRequiredService<ActorSystem>();
-        Cluster.Get(system).DowningProvider.Should().BeOfType<SplitBrainResolverProvider>();
+        Assert.IsType<SplitBrainResolverProvider>(Cluster.Get(system).DowningProvider);
         
         var settings = new SplitBrainResolverSettings(system.Settings.Config);
-        settings.DowningStrategy.Should().Be(SplitBrainResolverSettings.KeepMajorityName);
-        settings.KeepMajorityRole.Should().Be("myRole");
+        Assert.Equal(SplitBrainResolverSettings.KeepMajorityName, settings.DowningStrategy);
+        Assert.Equal("myRole", settings.KeepMajorityRole);
     }
     
     [Fact(DisplayName = "Keep oldest SBR set from Akka.Hosting should load")]
@@ -152,12 +152,12 @@ public class SplitBrainResolverSpecs
         });
 
         var system = host.Services.GetRequiredService<ActorSystem>();
-        Cluster.Get(system).DowningProvider.Should().BeOfType<SplitBrainResolverProvider>();
+        Assert.IsType<SplitBrainResolverProvider>(Cluster.Get(system).DowningProvider);
         
         var settings = new SplitBrainResolverSettings(system.Settings.Config);
-        settings.DowningStrategy.Should().Be(SplitBrainResolverSettings.KeepOldestName);
-        settings.KeepOldestSettings.DownIfAlone.Should().BeFalse();
-        settings.KeepOldestSettings.Role.Should().Be("myRole");
+        Assert.Equal(SplitBrainResolverSettings.KeepOldestName, settings.DowningStrategy);
+        Assert.False(settings.KeepOldestSettings.DownIfAlone);
+        Assert.Equal("myRole", settings.KeepOldestSettings.Role);
     }
     
     [Fact(DisplayName = "Lease Majority SBR set from Akka.Hosting should load")]
@@ -178,13 +178,13 @@ public class SplitBrainResolverSpecs
         });
 
         var system = host.Services.GetRequiredService<ActorSystem>();
-        Cluster.Get(system).DowningProvider.Should().BeOfType<SplitBrainResolverProvider>();
+        Assert.IsType<SplitBrainResolverProvider>(Cluster.Get(system).DowningProvider);
         
         var settings = new SplitBrainResolverSettings(system.Settings.Config);
-        settings.DowningStrategy.Should().Be(SplitBrainResolverSettings.LeaseMajorityName);
-        settings.LeaseMajoritySettings.LeaseImplementation.Should().Be("test-lease");
-        settings.LeaseMajoritySettings.LeaseName.Should().Be("myService-akka-sbr");
-        settings.LeaseMajoritySettings.Role.Should().Be("myRole");
+        Assert.Equal(SplitBrainResolverSettings.LeaseMajorityName, settings.DowningStrategy);
+        Assert.Equal("test-lease", settings.LeaseMajoritySettings.LeaseImplementation);
+        Assert.Equal("myService-akka-sbr", settings.LeaseMajoritySettings.LeaseName);
+        Assert.Equal("myRole", settings.LeaseMajoritySettings.Role);
     }
     
 }

@@ -10,11 +10,8 @@ using Akka.Cluster.Tools.Client;
 using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Hosting;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Cluster.Hosting.Tests;
 
@@ -36,16 +33,16 @@ public class ClusterClientDiscoverySpecs
         var config = ConfigurationFactory.ParseString(options.ToString())
             .WithFallback(systemConfig.GetConfig("akka.cluster.client"));
 
-        config.GetBoolean("use-initial-contacts-discovery").Should().BeTrue();
-        config.GetString("discovery.method").Should().Be(ConfigServiceDiscoveryOptions.DefaultPath);
-        config.GetString("discovery.service-name").Should().Be("whatever");
+        Assert.True(config.GetBoolean("use-initial-contacts-discovery"));
+        Assert.Equal(ConfigServiceDiscoveryOptions.DefaultPath, config.GetString("discovery.method"));
+        Assert.Equal("whatever", config.GetString("discovery.service-name"));
         
         defaultConfig.AssertSameString(config, "discovery.port-name");
         defaultConfig.AssertSameInt(config, "discovery.number-of-contacts");
         defaultConfig.AssertSameTimeSpan(config, "discovery.interval");
         defaultConfig.AssertSameTimeSpan(config, "discovery.resolve-timeout");
 
-        systemConfig.GetString("akka.discovery.method").Should().Be("config");
+        Assert.Equal("config", systemConfig.GetString("akka.discovery.method"));
     }
     
     [Fact(DisplayName = "ClusterClientDiscoverySettings should be set correctly")]
@@ -81,78 +78,72 @@ public class ClusterClientDiscoverySpecs
             .WithFallback(systemConfig.GetConfig("akka.cluster.client"));
         var settings = ClusterClientSettings.Create(config);
 
-        config.GetString("discovery.method").Should().Be("custom");
-        config.GetBoolean("use-initial-contacts-discovery").Should().BeTrue();
-        settings.InitialContacts.Should().BeEmpty();
-        settings.DiscoverySettings.ServiceName.Should().Be("testService");
-        settings.DiscoverySettings.PortName.Should().Be("testPort");
-        settings.DiscoverySettings.ResolveTimeout.Should().Be(1.Seconds());
-        settings.DiscoverySettings.Interval.Should().Be(2.Seconds());
-        settings.DiscoverySettings.NumberOfContacts.Should().Be(10);
+        Assert.Equal("custom", config.GetString("discovery.method"));
+        Assert.True(config.GetBoolean("use-initial-contacts-discovery"));
+        Assert.Empty(settings.InitialContacts);
+        Assert.Equal("testService", settings.DiscoverySettings.ServiceName);
+        Assert.Equal("testPort", settings.DiscoverySettings.PortName);
+        Assert.Equal(1.Seconds(), settings.DiscoverySettings.ResolveTimeout);
+        Assert.Equal(2.Seconds(), settings.DiscoverySettings.Interval);
+        Assert.Equal(10, settings.DiscoverySettings.NumberOfContacts);
 
-        systemConfig.GetString("akka.discovery.method").Should().Be("<method>");
+        Assert.Equal("<method>", systemConfig.GetString("akka.discovery.method"));
         
         var discoveryConfig = systemConfig.GetConfig("akka.discovery.custom");
-        discoveryConfig.Should().NotBeNull();
-        discoveryConfig.GetString("services-path").Should().Be("akka.discovery.custom.services");
-        discoveryConfig.GetConfig("services").Should().NotBeNull();
+        Assert.NotNull(discoveryConfig);
+        Assert.Equal("akka.discovery.custom.services", discoveryConfig.GetString("services-path"));
+        Assert.NotNull(discoveryConfig.GetConfig("services"));
     }
 
     [Fact(DisplayName = "ClusterClientDiscoverySettings with invalid values should throw")]
     public void ClusterClientDiscoveryInvalidSettingsSpec()
     {
-        Invoking(() => new ClusterClientDiscoveryOptions
-            {
-                DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
-                ServiceName = null!
-            }.ToString())
-            .Should().ThrowExactly<ArgumentException>()
-            .WithMessage("Service name must be provided*");
+        var ex = Assert.Throws<ArgumentException>(() => new ClusterClientDiscoveryOptions
+        {
+            DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
+            ServiceName = null!
+        }.ToString());
+        Assert.StartsWith("Service name must be provided", ex.Message);
+
+
+        ex = Assert.Throws<ArgumentException>(() => new ClusterClientDiscoveryOptions
+        {
+            DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
+            ServiceName = string.Empty
+        }.ToString());
+        Assert.StartsWith("Service name must be provided", ex.Message);
+
+        ex = Assert.Throws<ArgumentException>(() => new ClusterClientDiscoveryOptions
+        {
+            DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
+            ServiceName = "whatever",
+            Timeout = Timeout.InfiniteTimeSpan
+        }.ToString());
+        Assert.StartsWith("Timeout must be greater than zero", ex.Message);
+
+        ex = Assert.Throws<ArgumentException>(() => new ClusterClientDiscoveryOptions
+        {
+            DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
+            ServiceName = "whatever",
+            NumberOfContacts = 0
+        }.ToString());
+        Assert.StartsWith("Number of contacts must be greater than zero", ex.Message);
         
-        Invoking(() => new ClusterClientDiscoveryOptions
-            {
-                DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
-                ServiceName = string.Empty
-            }.ToString())
-            .Should().ThrowExactly<ArgumentException>()
-            .WithMessage("Service name must be provided*");
-        
-        Invoking(() => new ClusterClientDiscoveryOptions
-            {
-                DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
-                ServiceName = "whatever",
-                Timeout = Timeout.InfiniteTimeSpan
-            }.ToString())
-            .Should().ThrowExactly<ArgumentException>()
-            .WithMessage("Timeout must be greater than zero*");
-        
-        Invoking(() => new ClusterClientDiscoveryOptions
-            {
-                DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
-                ServiceName = "whatever",
-                NumberOfContacts = 0
-            }.ToString())
-            .Should().ThrowExactly<ArgumentException>()
-            .WithMessage("Number of contacts must be greater than zero*");
-        
-        Invoking(() => new ClusterClientDiscoveryOptions
-            {
-                DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
-                ServiceName = "whatever",
-                ClientActorName = string.Empty
-            }.ToString())
-            .Should().ThrowExactly<ArgumentException>()
-            .WithMessage("Cluster client actor name must not be empty or whitespace*");
-        
-        Invoking(() => new ClusterClientDiscoveryOptions
-            {
-                DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
-                ServiceName = "whatever",
-                ClientActorName = " "
-            }.ToString())
-            .Should().ThrowExactly<ArgumentException>()
-            .WithMessage("Cluster client actor name must not be empty or whitespace*");
-        
+        ex = Assert.Throws<ArgumentException>(() => new ClusterClientDiscoveryOptions
+        {
+            DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
+            ServiceName = "whatever",
+            ClientActorName = string.Empty
+        }.ToString());
+        Assert.StartsWith("Cluster client actor name must not be empty or whitespace", ex.Message);
+
+        ex = Assert.Throws<ArgumentException>(() => new ClusterClientDiscoveryOptions
+        {
+            DiscoveryOptions = new ConfigServiceDiscoveryOptions(),
+            ServiceName = "whatever",
+            ClientActorName = " "
+        }.ToString());
+        Assert.StartsWith("Cluster client actor name must not be empty or whitespace", ex.Message);
     }
     
     private class ConfigServiceDiscoveryOptions: IDiscoveryOptions

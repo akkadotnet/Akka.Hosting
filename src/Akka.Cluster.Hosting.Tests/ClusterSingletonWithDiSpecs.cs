@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
@@ -80,6 +79,6 @@ public class ClusterSingletonWithDiSpecs : Akka.Hosting.TestKit.TestKit
         var respond = await singletonProxy.Ask<string>("hit", TimeSpan.FromSeconds(3));
 
         // assert
-        respond.Should().Be(thing.ThingId);
+        Assert.Equal(thing.ThingId, respond);
     }
 }
