@@ -93,50 +93,16 @@ namespace Akka.Hosting
             // Get the DI resolver from the actor system
             var diResolver = DependencyResolver.For(context.ActorSystem);
             
-            // Try to resolve the actual health check from DI first
+            // Resolve the health check from DI - will throw if not registered
             var healthCheck = diResolver.Resolver.GetService<T>();
-            
-            // If not available in DI, create manually by resolving dependencies
             if (healthCheck == null)
             {
-                healthCheck = CreateHealthCheckInstance<T>(diResolver.Resolver);
+                throw new InvalidOperationException($"Health check type '{typeof(T).Name}' is not registered in the dependency injection container. " +
+                    $"Register the health check type using services.AddTransient<{typeof(T).Name}>() or similar in your DI configuration.");
             }
             
             // Delegate to the resolved health check
             return await healthCheck.CheckHealthAsync(context, cancellationToken);
-        }
-        
-        private static T CreateHealthCheckInstance<THealthCheck>(IDependencyResolver serviceProvider) where THealthCheck : class, IAkkaHealthCheck
-        {
-            var constructors = typeof(THealthCheck).GetConstructors()
-                .OrderByDescending(c => c.GetParameters().Length)
-                .ToArray();
-            
-            foreach (var constructor in constructors)
-            {
-                var parameters = constructor.GetParameters();
-                var args = new object[parameters.Length];
-                var canResolveAllParams = true;
-                
-                for (int i = 0; i < parameters.Length; i++)
-                {
-                    var param = parameters[i];
-                    var service = serviceProvider.GetService(param.ParameterType);
-                    if (service == null)
-                    {
-                        canResolveAllParams = false;
-                        break;
-                    }
-                    args[i] = service;
-                }
-                
-                if (canResolveAllParams)
-                {
-                    return (T)Activator.CreateInstance(typeof(THealthCheck), args)!;
-                }
-            }
-            
-            throw new InvalidOperationException($"Unable to create instance of {typeof(THealthCheck).Name}. Could not resolve all constructor dependencies from the service provider.");
         }
     }
 
@@ -409,7 +375,7 @@ namespace Akka.Hosting
         
         /// <summary>
         /// Registers a DI-resolved health check with the <see cref="AkkaConfigurationBuilder"/>.
-        /// The health check type will be registered as a transient service and resolved from the DI container.
+        /// The health check type must be registered in the DI container.
         /// </summary>
         /// <param name="name">The healthcheck name.</param>
         /// <param name="failureStatus">
@@ -433,7 +399,7 @@ namespace Akka.Hosting
         
         /// <summary>
         /// Registers a DI-resolved health check with the <see cref="AkkaConfigurationBuilder"/> using the specified registration template.
-        /// The health check type will be registered as a transient service and resolved from the DI container.
+        /// The health check type must be registered in the DI container.
         /// </summary>
         /// <param name="registrationTemplate">The health check registration template (name, failure status, tags, timeout).</param>
         /// <typeparam name="T">The type of the health check that implements <see cref="IAkkaHealthCheck"/>.</typeparam>

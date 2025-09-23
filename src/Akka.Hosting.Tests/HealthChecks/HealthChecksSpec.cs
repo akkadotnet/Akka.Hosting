@@ -6,6 +6,7 @@ using Akka.Actor;
 using Akka.Hosting.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -58,6 +59,14 @@ public class HealthChecksSpec : TestKit.TestKit
 
             return HealthCheckResult.Healthy("fooActor found and responsive");
         });
+    }
+
+    protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+    {
+        // Register the test health check for DI resolution
+        services.AddTransient<TestDiHealthCheck>();
+
+        base.ConfigureServices(context, services);
     }
 
     [Fact]
@@ -126,7 +135,7 @@ public class HealthChecksSpec : TestKit.TestKit
     }
     
     [Fact]
-    public async Task ShouldResolveDiHealthCheckWithoutRegistration()
+    public async Task ShouldResolveDiHealthCheckFromContainer()
     {
         // arrange
         var configurationBuilder = Host.Services.GetRequiredService<AkkaConfigurationBuilder>();
@@ -144,7 +153,7 @@ public class HealthChecksSpec : TestKit.TestKit
             Registration = diHealthCheckRegistration.ToHealthCheckRegistration()
         };
         
-        // invoke the DI-resolved health check - should work even though TestDiHealthCheck wasn't registered in DI
+        // invoke the DI-resolved health check - TestDiHealthCheck is registered in ConfigureServices
         var healthCheckResult = await diHealthCheckRegistration.HealthCheck.CheckHealthAsync(akkaHealthCheckContext, CancellationToken.None);
         
         // assert - health check should be healthy
