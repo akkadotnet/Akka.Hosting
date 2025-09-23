@@ -7,6 +7,7 @@ using Akka.Event;
 using Akka.Hosting.Asp.LoggingDemo;
 using Akka.Remote.Hosting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using LogLevel = Akka.Event.LogLevel;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,8 +35,9 @@ builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider
             Roles = ["myRole"], 
             SeedNodes = ["akka.tcp://MyActorSystem@localhost:8110"]
         })
-        .WithActorSystemLivenessCheck()
         .WithAkkaClusterReadinessCheck()
+        .WithActorSystemLivenessCheck()
+        .WithHealthCheck<TestHealth>("test", HealthStatus.Unhealthy, new[] { "test", "custom" })
         .WithActors((system, registry) =>
         {
             var echo = system.ActorOf(act =>

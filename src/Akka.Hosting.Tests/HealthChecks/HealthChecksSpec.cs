@@ -124,4 +124,94 @@ public class HealthChecksSpec : TestKit.TestKit
             Assert.Equal(expectedStatus, healthCheckResult.Status);
         }
     }
+    
+    [Fact]
+    public async Task ShouldResolveDiHealthCheckWithoutRegistration()
+    {
+        // arrange
+        var configurationBuilder = Host.Services.GetRequiredService<AkkaConfigurationBuilder>();
+        
+        // act - add a DI-resolved health check to the existing configuration
+        configurationBuilder.WithHealthCheck<TestDiHealthCheck>("test-di-health");
+        
+        // assert
+        Assert.Equal(3, configurationBuilder.HealthChecks.Count); // 2 from base configuration + 1 DI-resolved
+        
+        // find the DI-resolved health check
+        var diHealthCheckRegistration = configurationBuilder.HealthChecks.Values.Single(c => c.Name == "test-di-health");
+        var akkaHealthCheckContext = new AkkaHealthCheckContext(Sys)
+        {
+            Registration = diHealthCheckRegistration.ToHealthCheckRegistration()
+        };
+        
+        // invoke the DI-resolved health check - should work even though TestDiHealthCheck wasn't registered in DI
+        var healthCheckResult = await diHealthCheckRegistration.HealthCheck.CheckHealthAsync(akkaHealthCheckContext, CancellationToken.None);
+        
+        // assert - health check should be healthy
+        Assert.Equal(HealthStatus.Healthy, healthCheckResult.Status);
+        Assert.Equal("Test DI health check is working with DI", healthCheckResult.Description);
+    }
+    
+    [Fact]
+    public async Task ShouldResolveDiHealthCheckWithRegistrationTemplate()
+    {
+        // arrange
+        var configurationBuilder = Host.Services.GetRequiredService<AkkaConfigurationBuilder>();
+        
+        // act - add a DI-resolved health check using the registration template pattern
+        configurationBuilder.WithHealthCheck<TestDiHealthCheck>(new AkkaHealthCheckRegistration(
+            "template-test", 
+            HealthStatus.Degraded,
+            new[]
+            {
+                "custom", "test"
+            }));
+        
+        // assert
+        Assert.Equal(3, configurationBuilder.HealthChecks.Count); // 2 from base configuration + 1 DI-resolved
+        
+        // find the DI-resolved health check
+        var diHealthCheckRegistration = configurationBuilder.HealthChecks.Values.Single(c => c.Name == "template-test");
+        Assert.Equal(HealthStatus.Degraded, diHealthCheckRegistration.FailureStatus);
+        Assert.Contains("custom", diHealthCheckRegistration.Tags);
+        Assert.Contains("test", diHealthCheckRegistration.Tags);
+        
+        var akkaHealthCheckContext = new AkkaHealthCheckContext(Sys)
+            { Registration = diHealthCheckRegistration.ToHealthCheckRegistration() };
+        
+        // invoke the health check
+        var healthCheckResult = await diHealthCheckRegistration.HealthCheck.CheckHealthAsync(akkaHealthCheckContext, CancellationToken.None);
+        
+        // assert
+        Assert.Equal(HealthStatus.Healthy, healthCheckResult.Status);
+        Assert.Equal("Test DI health check is working with DI", healthCheckResult.Description);
+    }
+    
+    /// <summary>
+    /// Test health check class that requires DI (simulates ILogger dependency)
+    /// </summary>
+    private class TestDiHealthCheck : IAkkaHealthCheck
+    {
+        private readonly IServiceProvider? _serviceProvider;
+        
+        public TestDiHealthCheck()
+        {
+            // Parameterless constructor for manual creation
+        }
+        
+        public TestDiHealthCheck(IServiceProvider serviceProvider)
+        {
+            // Constructor with DI dependency
+            _serviceProvider = serviceProvider;
+        }
+        
+        public Task<HealthCheckResult> CheckHealthAsync(AkkaHealthCheckContext context, CancellationToken cancellationToken = default)
+        {
+            // Verify that dependencies can be resolved (simulates ILogger usage)
+            var hasServiceProvider = _serviceProvider != null;
+            
+            return Task.FromResult(HealthCheckResult.Healthy("Test DI health check is working" + 
+                (hasServiceProvider ? " with DI" : "")));
+        }
+    }
 }

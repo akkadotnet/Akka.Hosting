@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
@@ -79,6 +80,64 @@ namespace Akka.Hosting
         public Func<ExtendedActorSystem, Serializer> SerializerFactory { get; }
 
         public ImmutableHashSet<Type> TypeBindings { get; }
+    }
+
+    /// <summary>
+    /// A wrapper health check that resolves the actual health check from the DI container when needed.
+    /// </summary>
+    /// <typeparam name="T">The type of health check to resolve.</typeparam>
+    internal sealed class DiResolvedHealthCheck<T> : IAkkaHealthCheck where T : class, IAkkaHealthCheck
+    {
+        public async Task<HealthCheckResult> CheckHealthAsync(AkkaHealthCheckContext context, CancellationToken cancellationToken = default)
+        {
+            // Get the DI resolver from the actor system
+            var diResolver = DependencyResolver.For(context.ActorSystem);
+            
+            // Try to resolve the actual health check from DI first
+            var healthCheck = diResolver.Resolver.GetService<T>();
+            
+            // If not available in DI, create manually by resolving dependencies
+            if (healthCheck == null)
+            {
+                healthCheck = CreateHealthCheckInstance<T>(diResolver.Resolver);
+            }
+            
+            // Delegate to the resolved health check
+            return await healthCheck.CheckHealthAsync(context, cancellationToken);
+        }
+        
+        private static T CreateHealthCheckInstance<THealthCheck>(IDependencyResolver serviceProvider) where THealthCheck : class, IAkkaHealthCheck
+        {
+            var constructors = typeof(THealthCheck).GetConstructors()
+                .OrderByDescending(c => c.GetParameters().Length)
+                .ToArray();
+            
+            foreach (var constructor in constructors)
+            {
+                var parameters = constructor.GetParameters();
+                var args = new object[parameters.Length];
+                var canResolveAllParams = true;
+                
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    var param = parameters[i];
+                    var service = serviceProvider.GetService(param.ParameterType);
+                    if (service == null)
+                    {
+                        canResolveAllParams = false;
+                        break;
+                    }
+                    args[i] = service;
+                }
+                
+                if (canResolveAllParams)
+                {
+                    return (T)Activator.CreateInstance(typeof(THealthCheck), args)!;
+                }
+            }
+            
+            throw new InvalidOperationException($"Unable to create instance of {typeof(THealthCheck).Name}. Could not resolve all constructor dependencies from the service provider.");
+        }
     }
 
     public sealed class AkkaConfigurationBuilder
@@ -344,6 +403,50 @@ namespace Akka.Hosting
         /// <param name="registration">The health check registration.</param>
         public AkkaConfigurationBuilder WithHealthCheck(AkkaHealthCheckRegistration registration)
         {
+            HealthChecks[registration.Name] = registration;
+            return this;
+        }
+        
+        /// <summary>
+        /// Registers a DI-resolved health check with the <see cref="AkkaConfigurationBuilder"/>.
+        /// The health check type will be registered as a transient service and resolved from the DI container.
+        /// </summary>
+        /// <param name="name">The healthcheck name.</param>
+        /// <param name="failureStatus">
+        /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+        /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+        /// </param>
+        /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
+        /// <param name="timeout">An optional <see cref="TimeSpan"/> representing the timeout of the check.</param>
+        /// <typeparam name="T">The type of the health check that implements <see cref="IAkkaHealthCheck"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public AkkaConfigurationBuilder WithHealthCheck<T>(string name, HealthStatus? failureStatus = null, 
+            IEnumerable<string>? tags = null, TimeSpan? timeout = null) where T : class, IAkkaHealthCheck
+        {
+            // Create a health check instance that will be resolved from DI when needed
+            var healthCheckInstance = new DiResolvedHealthCheck<T>();
+            var registration = new AkkaHealthCheckRegistration(name, healthCheckInstance, failureStatus, tags, timeout);
+            
+            HealthChecks[registration.Name] = registration;
+            return this;
+        }
+        
+        /// <summary>
+        /// Registers a DI-resolved health check with the <see cref="AkkaConfigurationBuilder"/> using the specified registration template.
+        /// The health check type will be registered as a transient service and resolved from the DI container.
+        /// </summary>
+        /// <param name="registrationTemplate">The health check registration template (name, failure status, tags, timeout).</param>
+        /// <typeparam name="T">The type of the health check that implements <see cref="IAkkaHealthCheck"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public AkkaConfigurationBuilder WithHealthCheck<T>(AkkaHealthCheckRegistration registrationTemplate) where T : class, IAkkaHealthCheck
+        {
+            // Create a health check instance that will be resolved from DI when needed
+            var healthCheckInstance = new DiResolvedHealthCheck<T>();
+            
+            // Create the actual registration with the resolved health check
+            var registration = new AkkaHealthCheckRegistration(registrationTemplate.Name, healthCheckInstance,
+                registrationTemplate.FailureStatus, registrationTemplate.Tags, registrationTemplate.Timeout);
+            
             HealthChecks[registration.Name] = registration;
             return this;
         }

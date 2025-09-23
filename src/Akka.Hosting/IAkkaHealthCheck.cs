@@ -70,6 +70,55 @@ public sealed class AkkaHealthCheckRegistration
     }
     
     /// <summary>
+    /// Creates a new <see cref="AkkaHealthCheckRegistration"/> template for use with DI-resolved health checks.
+    /// This constructor is intended for use with generic health check registration methods.
+    /// </summary>
+    /// <param name="name">The healthcheck name.</param>
+    /// <param name="failureStatus">
+    /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+    /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+    /// </param>
+    /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
+    /// <param name="timeout">An optional <see cref="TimeSpan"/> representing the timeout of the check.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <see cref="name"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if a negative timeout other than <see cref="System.Threading.Timeout.InfiniteTimeSpan"/> is used.</exception>
+    internal AkkaHealthCheckRegistration(string name, HealthStatus? failureStatus,
+        IEnumerable<string>? tags, TimeSpan? timeout)
+    {
+        if (name == null)
+        {
+            throw new ArgumentNullException(nameof(name));
+        }
+
+        if (timeout <= TimeSpan.Zero && timeout != System.Threading.Timeout.InfiniteTimeSpan)
+        {
+            throw new ArgumentOutOfRangeException(nameof(timeout));
+        }
+
+        _name = name;
+        FailureStatus = failureStatus ?? HealthStatus.Unhealthy;
+        Tags = new HashSet<string>(tags ?? [], StringComparer.OrdinalIgnoreCase);
+        _healthCheck = null!; // Will be set by the generic method
+        Timeout = timeout ?? System.Threading.Timeout.InfiniteTimeSpan;
+    }
+    
+    /// <summary>
+    /// Creates a new <see cref="AkkaHealthCheckRegistration"/> for use with DI-resolved health checks.
+    /// This constructor is intended for use with the generic <c>WithHealthCheck&lt;T&gt;</c> method.
+    /// </summary>
+    /// <param name="name">The healthcheck name.</param>
+    /// <param name="failureStatus">
+    /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+    /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+    /// </param>
+    /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <see cref="name"/> is null.</exception>
+    public AkkaHealthCheckRegistration(string name, HealthStatus? failureStatus, IEnumerable<string>? tags) 
+        : this(name, failureStatus, tags, null)
+    {
+    }
+    
+    /// <summary>
     /// Gets or sets the healthcheck name.
     /// </summary>
     public string Name
