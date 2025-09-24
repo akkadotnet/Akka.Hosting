@@ -38,6 +38,7 @@ namespace Akka.Persistence.Hosting
         public bool IsDefaultPlugin { get; set; }
         public string PluginId { get; }
         public string? Serializer { get; set; }
+        public Akka.Actor.SupervisorStrategyConfigurator? SupervisorStrategy { get; set; }
         public abstract string Identifier { get; set; }
         protected virtual System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
         public Akka.Configuration.Config ToConfig() { }
@@ -58,6 +59,7 @@ namespace Akka.Persistence.Hosting
         public bool IsDefaultPlugin { get; set; }
         public string PluginId { get; }
         public string? Serializer { get; set; }
+        public Akka.Actor.SupervisorStrategyConfigurator? SupervisorStrategy { get; set; }
         public abstract string Identifier { get; set; }
         protected virtual System.Text.StringBuilder Build(System.Text.StringBuilder sb) { }
         public Akka.Configuration.Config ToConfig() { }
