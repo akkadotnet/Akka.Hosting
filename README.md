@@ -27,6 +27,7 @@ See the ["Introduction to Akka.Hosting - HOCON-less, "Pit of Success" Akka.NET R
     * [Serilog Support](#serilog-support)
     * [Microsoft.Extensions.Logging Log Event Filtering](#microsoftextensionslogging-log-event-filtering)
 - [Microsoft.Extensions.Diagnostics.HealthChecks Integration](#healthchecks)
+    * [Dependency Injected Health Checks](#healthcheck-di)
     * [Built-in HealthChecks](#healthcheck-builtin)
 <a id="supported-packages"></a>
 # Supported Packages
@@ -709,6 +710,61 @@ We've recently deprecated [Akka.HealthChecks](https://github.com/petabridge/akka
 ```
 
 These health checks and any other you register using one of the `WithHealthCheck` overloads on the `AkkaConfigurationBuilder` will automatically be registered with the [`Microsoft.Extensions.Diagnostics.HealthCheckService`](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) and will be called just like any other ASP.NET Core, Entity Framework, etc health check.
+
+[Back to top](#akkahosting)
+
+<a id="healthcheck-di"></a>
+### Dependency Injected Health Checks
+
+As of version 1.5.51, Akka.Hosting supports dependency injection for health checks. You can create custom health check classes that implement `IAkkaHealthCheck` and have dependencies injected from the DI container:
+
+```csharp
+// Define a custom health check with DI support
+public class MyHealthCheckWithDependencies : IAkkaHealthCheck
+{
+    private readonly ILogger<MyHealthCheckWithDependencies> _logger;
+    private readonly IMyService _myService;
+
+    public MyHealthCheckWithDependencies(
+        ILogger<MyHealthCheckWithDependencies> logger,
+        IMyService myService)
+    {
+        _logger = logger;
+        _myService = myService;
+    }
+
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        AkkaHealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Running health check with DI");
+            var isHealthy = await _myService.CheckServiceHealthAsync(cancellationToken);
+
+            return isHealthy
+                ? HealthCheckResult.Healthy("Service is healthy")
+                : HealthCheckResult.Unhealthy("Service is not healthy");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Health check failed");
+            return HealthCheckResult.Unhealthy($"Health check failed: {ex.Message}");
+        }
+    }
+}
+
+// Register the health check using the generic WithHealthCheck<T>() method
+builder
+    .WithActorSystemLivenessCheck()
+    .WithHealthCheck<MyHealthCheckWithDependencies>(
+        name: "MyServiceHealth",
+        failureStatus: HealthStatus.Degraded,
+        tags: new[] { "ready", "service" },
+        timeout: TimeSpan.FromSeconds(5));
+```
+
+The health check type will be resolved from the DI container when the health check is executed, allowing you to leverage constructor injection for any dependencies your health check needs. The health check instance itself doesn't need to be registered in DI - Akka.Hosting will automatically resolve it using `ActivatorUtilities.GetServiceOrCreateInstance<T>()`.
 
 [Back to top](#akkahosting)
 
