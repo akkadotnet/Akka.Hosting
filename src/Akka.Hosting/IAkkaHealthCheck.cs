@@ -16,7 +16,7 @@ namespace Akka.Hosting;
 /// </remarks>
 public sealed class AkkaHealthCheckRegistration
 {
-    private IAkkaHealthCheck _healthCheck;
+    private Func<IServiceProvider, IAkkaHealthCheck> _healthCheck;
     private string _name;
     private TimeSpan _timeout;
     
@@ -65,15 +65,16 @@ public sealed class AkkaHealthCheckRegistration
         _name = name;
         FailureStatus = failureStatus ?? HealthStatus.Unhealthy;
         Tags = new HashSet<string>(tags ?? [], StringComparer.OrdinalIgnoreCase);
-        _healthCheck  = instance;
+        _healthCheck  = _ => instance;
         Timeout = timeout ?? System.Threading.Timeout.InfiniteTimeSpan;
     }
-    
+
     /// <summary>
     /// Creates a new <see cref="AkkaHealthCheckRegistration"/> template for use with DI-resolved health checks.
     /// This constructor is intended for use with generic health check registration methods.
     /// </summary>
     /// <param name="name">The healthcheck name.</param>
+    /// <param name="factory">The DI-enabled factory.</param>
     /// <param name="failureStatus">
     /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
     /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
@@ -82,13 +83,14 @@ public sealed class AkkaHealthCheckRegistration
     /// <param name="timeout">An optional <see cref="TimeSpan"/> representing the timeout of the check.</param>
     /// <exception cref="ArgumentNullException">Thrown if <see cref="name"/> is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if a negative timeout other than <see cref="System.Threading.Timeout.InfiniteTimeSpan"/> is used.</exception>
-    internal AkkaHealthCheckRegistration(string name, HealthStatus? failureStatus,
+    internal AkkaHealthCheckRegistration(string name, Func<IServiceProvider, IAkkaHealthCheck> factory, HealthStatus? failureStatus,
         IEnumerable<string>? tags, TimeSpan? timeout)
     {
         if (name == null)
         {
             throw new ArgumentNullException(nameof(name));
         }
+        if(factory == null) throw new ArgumentNullException(nameof(factory));
 
         if (timeout <= TimeSpan.Zero && timeout != System.Threading.Timeout.InfiniteTimeSpan)
         {
@@ -98,24 +100,8 @@ public sealed class AkkaHealthCheckRegistration
         _name = name;
         FailureStatus = failureStatus ?? HealthStatus.Unhealthy;
         Tags = new HashSet<string>(tags ?? [], StringComparer.OrdinalIgnoreCase);
-        _healthCheck = null!; // Will be set by the generic method
+        _healthCheck = factory;
         Timeout = timeout ?? System.Threading.Timeout.InfiniteTimeSpan;
-    }
-    
-    /// <summary>
-    /// Creates a new <see cref="AkkaHealthCheckRegistration"/> for use with DI-resolved health checks.
-    /// This constructor is intended for use with the generic <c>WithHealthCheck&lt;T&gt;</c> method.
-    /// </summary>
-    /// <param name="name">The healthcheck name.</param>
-    /// <param name="failureStatus">
-    /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
-    /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
-    /// </param>
-    /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
-    /// <exception cref="ArgumentNullException">Thrown if <see cref="name"/> is null.</exception>
-    public AkkaHealthCheckRegistration(string name, HealthStatus? failureStatus, IEnumerable<string>? tags) 
-        : this(name, failureStatus, tags, null)
-    {
     }
     
     /// <summary>
@@ -131,7 +117,7 @@ public sealed class AkkaHealthCheckRegistration
     /// Gets or sets the <see cref="IAkkaHealthCheck"/>
     /// </summary>
     /// <exception cref="ArgumentNullException"></exception>
-    public IAkkaHealthCheck HealthCheck
+    public Func<IServiceProvider,IAkkaHealthCheck> Factory
     {
         get => _healthCheck;
         set => _healthCheck = value ?? throw new ArgumentNullException(nameof(value));
