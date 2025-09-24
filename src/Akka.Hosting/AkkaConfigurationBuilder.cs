@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
@@ -346,6 +347,31 @@ namespace Akka.Hosting
         {
             HealthChecks[registration.Name] = registration;
             return this;
+        }
+        
+        /// <summary>
+        /// Registers a DI-resolved health check with the <see cref="AkkaConfigurationBuilder"/>.
+        /// The health check type must be registered in the DI container.
+        /// </summary>
+        /// <param name="name">The healthcheck name.</param>
+        /// <param name="failureStatus">
+        /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+        /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+        /// </param>
+        /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
+        /// <param name="timeout">An optional <see cref="TimeSpan"/> representing the timeout of the check.</param>
+        /// <typeparam name="T">The type of the health check that implements <see cref="IAkkaHealthCheck"/>.</typeparam>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public AkkaConfigurationBuilder WithHealthCheck<T>(string name, HealthStatus? failureStatus = null, 
+            IEnumerable<string>? tags = null, TimeSpan? timeout = null) where T : class, IAkkaHealthCheck
+        {
+            // Create a health check instance that will be resolved from DI when needed
+            var registration = new AkkaHealthCheckRegistration(name, GetServiceOrCreateInstance, failureStatus, tags, timeout);
+            
+            HealthChecks[registration.Name] = registration;
+            return this;
+            
+            static T GetServiceOrCreateInstance(IServiceProvider sp) => ActivatorUtilities.GetServiceOrCreateInstance<T>(sp);
         }
         
         internal void Bind()

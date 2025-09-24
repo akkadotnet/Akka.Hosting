@@ -17,7 +17,7 @@ internal static class AkkaHealthCheckExtensions
     {
         // func for lazily instantiating the health check registration
         Func<IServiceProvider, IHealthCheck> adapter = provider =>
-            new HealthCheckAdapter(registration.HealthCheck, provider.GetRequiredService<ActorSystem>());
+            new HealthCheckAdapter(registration.Factory(provider), provider.GetRequiredService<ActorSystem>());
 
         var tags = registration.Tags;
         tags.Add(AkkaTag);
