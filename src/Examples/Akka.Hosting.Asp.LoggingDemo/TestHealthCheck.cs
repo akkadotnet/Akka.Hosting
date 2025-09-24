@@ -15,6 +15,7 @@ namespace Akka.Hosting.Asp.LoggingDemo
         {
             try
             {
+                _logger.LogInformation("DI healthcheck is running");
                 return Task.FromResult(HealthCheckResult.Healthy("Test is healthy"));
             }
             catch (Exception ex)

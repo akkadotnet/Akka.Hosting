@@ -13,9 +13,6 @@ using LogLevel = Akka.Event.LogLevel;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHealthChecks();
 
-// This is required for WithHealthCheck<T> call
-builder.Services.AddTransient<TestHealth>();
-
 builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider) =>
 {
     configurationBuilder
@@ -40,7 +37,7 @@ builder.Services.AddAkka("MyActorSystem", (configurationBuilder, serviceProvider
         })
         .WithAkkaClusterReadinessCheck()
         .WithActorSystemLivenessCheck()
-        .WithHealthCheck<TestHealth>("test", HealthStatus.Unhealthy, new[] { "test", "custom" })
+        .WithHealthCheck<TestHealth>("di-test", HealthStatus.Unhealthy, new[] { "test", "custom" })
         .WithActors((system, registry) =>
         {
             var echo = system.ActorOf(act =>
