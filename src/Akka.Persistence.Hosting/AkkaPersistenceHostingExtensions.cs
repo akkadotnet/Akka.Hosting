@@ -6,6 +6,7 @@ using Akka.Hosting;
 using Akka.Persistence.Journal;
 using Akka.Util;
 using Akka.Actor;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 #nullable enable
 namespace Akka.Persistence.Hosting
@@ -37,11 +38,27 @@ namespace Akka.Persistence.Hosting
         internal readonly AkkaConfigurationBuilder Builder;
         internal readonly Dictionary<Type, HashSet<string>> Bindings = new Dictionary<Type, HashSet<string>>();
         internal readonly Dictionary<string, Type> Adapters = new Dictionary<string, Type>();
+        internal AkkaHealthCheckRegistration? HealthCheckRegistration = null;
 
         public AkkaPersistenceJournalBuilder(string journalId, AkkaConfigurationBuilder builder)
         {
             JournalId = journalId;
             Builder = builder;
+        }
+
+        /// <summary>
+        /// Uses the built-in journal health check on the Akka.Persistence.Journal.
+        /// </summary>
+        /// <param name="unHealthyStatus">Default status to return when the plugin reports <see cref="PersistenceHealthStatus.Unhealthy"/>
+        /// or <see cref="PersistenceHealthStatus.Degraded"/>. Defaults to degraded.</param>
+        /// <param name="name">Optional name to add to the health check.</param>
+        /// <returns></returns>
+        public AkkaPersistenceJournalBuilder WithHealthCheck(HealthStatus unHealthyStatus = HealthStatus.Degraded,
+            string? name = null)
+        {
+            var registration = AddHealthCheck(name, unHealthyStatus);
+            HealthCheckRegistration = registration;
+            return this;
         }
 
         public AkkaPersistenceJournalBuilder AddEventAdapter<TAdapter>(string eventAdapterName,
@@ -79,6 +96,16 @@ namespace Akka.Persistence.Hosting
             }
         }
 
+        private AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus)
+        {
+            var registration = new AkkaHealthCheckRegistration(
+                name ?? $"Akka.Persistence.Journal.{JournalId}",
+                new JournalHealthCheck(JournalId),
+                unHealthyStatus,
+                ["akka", "persistence", "journal"]);
+            return registration;
+        }
+
         /// <summary>
         /// INTERNAL API - Builds the HOCON and then injects it.
         /// </summary>
@@ -98,6 +125,10 @@ namespace Akka.Persistence.Hosting
             var finalHocon = ConfigurationFactory.ParseString(adapters.ToString())
                 .WithFallback(Persistence.DefaultConfig()); // add the default config as a fallback
             Builder.AddHocon(finalHocon, HoconAddMode.Prepend);
+            
+            // add the health checks if specified
+            if(HealthCheckRegistration != null)
+                Builder.WithHealthCheck(HealthCheckRegistration);
         }
 
         internal void AppendAdapters(StringBuilder sb)
