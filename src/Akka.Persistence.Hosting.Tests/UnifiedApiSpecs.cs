@@ -229,7 +229,7 @@ public sealed class JournalAndSnapshotWithBuildersSpec : Akka.Hosting.TestKit.Te
             snapshotOptions,
             journal => journal
                 .AddWriteEventAdapter<UnifiedApiTestResources.TestWriteAdapter>("adapter",
-                    new[] { typeof(UnifiedApiTestResources.TestEvent) })
+                    [typeof(UnifiedApiTestResources.TestEvent)])
                 .WithHealthCheck(),
             snapshot => snapshot
                 .WithHealthCheck());

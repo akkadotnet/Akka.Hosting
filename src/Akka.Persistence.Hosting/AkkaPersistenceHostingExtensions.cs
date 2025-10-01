@@ -393,7 +393,7 @@ namespace Akka.Persistence.Hosting
         /// <remarks>
         /// This method can be called multiple times for different <see cref="IEventAdapter"/>s.
         /// </remarks>
-        [Obsolete("Use WithJournal(journalOptions, configureBuilder) instead to combine options configuration with event adapters and health checks. This method will be removed in v2.0.")]
+        [Obsolete("Use WithJournal(journalOptions, configureBuilder) instead to combine options configuration with event adapters and health checks. This method will be removed in v1.6.")]
         public static AkkaConfigurationBuilder WithJournal(
             this AkkaConfigurationBuilder builder,
             string journalId,
@@ -418,16 +418,21 @@ namespace Akka.Persistence.Hosting
             string journalId = "inmem",
             bool isDefaultPlugin = true)
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            builder.WithJournal(journalId, journalBuilder);
-#pragma warning restore CS0618 // Type or member is obsolete
+            
+            var jBuilder = new AkkaPersistenceJournalBuilder(journalId, builder);
+            journalBuilder(jBuilder);
+
+            // build and inject the HOCON
+            jBuilder.Build();
 
             var liveConfig =
-                @$"{(isDefaultPlugin ? $"akka.persistence.journal.plugin = akka.persistence.journal.{journalId}" : "")}
-akka.persistence.journal.{journalId} {{
-    class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
-    plugin-dispatcher = ""akka.actor.default-dispatcher""
-}}";
+                $$"""
+                  {{(isDefaultPlugin ? $"akka.persistence.journal.plugin = akka.persistence.journal.{journalId}" : "")}}
+                  akka.persistence.journal.{{journalId}} {
+                      class = "Akka.Persistence.Journal.MemoryJournal, Akka.Persistence"
+                      plugin-dispatcher = "akka.actor.default-dispatcher"
+                  }
+                  """;
 
             return builder.AddHocon(liveConfig, HoconAddMode.Prepend);
         }
@@ -438,11 +443,13 @@ akka.persistence.journal.{journalId} {{
             bool isDefaultPlugin = true)
         {
             var liveConfig =
-                $@"{(isDefaultPlugin ? $"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{snapshotStoreId}" : "")}
-akka.persistence.snapshot-store.{snapshotStoreId} {{
-    class = ""Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence""
-    plugin-dispatcher = ""akka.actor.default-dispatcher""
-}}";
+                $$"""
+                  {{(isDefaultPlugin ? $"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{snapshotStoreId}" : "")}}
+                  akka.persistence.snapshot-store.{{snapshotStoreId}} {
+                      class = "Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence"
+                      plugin-dispatcher = "akka.actor.default-dispatcher"
+                  }
+                  """;
 
             return builder.AddHocon(liveConfig, HoconAddMode.Prepend);
         }
@@ -468,15 +475,17 @@ akka.persistence.snapshot-store.{snapshotStoreId} {{
             this AkkaConfigurationBuilder builder,
             string journalId)
         {
-            var config = @$"{journalId} {{
-     event-adapters {{
-        coordinator-migration = ""Akka.Cluster.Sharding.OldCoordinatorStateMigrationEventAdapter, Akka.Cluster.Sharding""
-    }}
+            var config = $$"""
+                           {{journalId}} {
+                                event-adapters {
+                                   coordinator-migration = "Akka.Cluster.Sharding.OldCoordinatorStateMigrationEventAdapter, Akka.Cluster.Sharding"
+                               }
 
-    event-adapter-bindings {{
-        ""Akka.Cluster.Sharding.ShardCoordinator+IDomainEvent, Akka.Cluster.Sharding"" = coordinator-migration
-    }}
-}}";
+                               event-adapter-bindings {
+                                   "Akka.Cluster.Sharding.ShardCoordinator+IDomainEvent, Akka.Cluster.Sharding" = coordinator-migration
+                               }
+                           }
+                           """;
             return builder.AddHocon(config, HoconAddMode.Prepend);
         }
     }
