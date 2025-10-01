@@ -6,6 +6,7 @@ using Akka.Hosting;
 using Akka.Persistence.Journal;
 using Akka.Util;
 using Akka.Actor;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 #nullable enable
 namespace Akka.Persistence.Hosting
@@ -37,11 +38,27 @@ namespace Akka.Persistence.Hosting
         internal readonly AkkaConfigurationBuilder Builder;
         internal readonly Dictionary<Type, HashSet<string>> Bindings = new Dictionary<Type, HashSet<string>>();
         internal readonly Dictionary<string, Type> Adapters = new Dictionary<string, Type>();
+        internal AkkaHealthCheckRegistration? HealthCheckRegistration = null;
 
         public AkkaPersistenceJournalBuilder(string journalId, AkkaConfigurationBuilder builder)
         {
             JournalId = journalId;
             Builder = builder;
+        }
+
+        /// <summary>
+        /// Uses the built-in journal health check on the Akka.Persistence.Journal.
+        /// </summary>
+        /// <param name="unHealthyStatus">Default status to return when the plugin reports <see cref="PersistenceHealthStatus.Unhealthy"/>
+        /// or <see cref="PersistenceHealthStatus.Degraded"/>. Defaults to degraded.</param>
+        /// <param name="name">Optional name to add to the health check.</param>
+        /// <returns></returns>
+        public AkkaPersistenceJournalBuilder WithHealthCheck(HealthStatus unHealthyStatus = HealthStatus.Degraded,
+            string? name = null)
+        {
+            var registration = AddHealthCheck(name, unHealthyStatus);
+            HealthCheckRegistration = registration;
+            return this;
         }
 
         public AkkaPersistenceJournalBuilder AddEventAdapter<TAdapter>(string eventAdapterName,
@@ -79,6 +96,17 @@ namespace Akka.Persistence.Hosting
             }
         }
 
+        private AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus)
+        {
+            var pluginId = $"akka.persistence.journal.{JournalId}";
+            var registration = new AkkaHealthCheckRegistration(
+                name ?? $"Akka.Persistence.Journal.{JournalId}",
+                new JournalHealthCheck(pluginId),
+                unHealthyStatus,
+                ["akka", "persistence", "journal"]);
+            return registration;
+        }
+
         /// <summary>
         /// INTERNAL API - Builds the HOCON and then injects it.
         /// </summary>
@@ -98,6 +126,10 @@ namespace Akka.Persistence.Hosting
             var finalHocon = ConfigurationFactory.ParseString(adapters.ToString())
                 .WithFallback(Persistence.DefaultConfig()); // add the default config as a fallback
             Builder.AddHocon(finalHocon, HoconAddMode.Prepend);
+            
+            // add the health checks if specified
+            if(HealthCheckRegistration != null)
+                Builder.WithHealthCheck(HealthCheckRegistration);
         }
 
         internal void AppendAdapters(StringBuilder sb)
@@ -139,21 +171,50 @@ namespace Akka.Persistence.Hosting
             this AkkaConfigurationBuilder builder,
             JournalOptions journalOptions,
             SnapshotOptions snapshotOptions)
+            => WithJournalAndSnapshot(builder, journalOptions, snapshotOptions,
+                configureJournal: null, configureSnapshot: null);
+
+        /// <summary>
+        /// A generic way to add both journal and snapshot store configuration to the <see cref="ActorSystem"/> with support for event adapters and health checks.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalOptions">The specific journal options instance used to configure the journal. For example, an instance of <c>SqlServerJournalOptions</c></param>
+        /// <param name="snapshotOptions">The specific snapshot store options instance used to configure the snapshot store. For example, an instance of <c>SqlServerSnapshotOptions</c></param>
+        /// <param name="configureJournal">Optional action to configure event adapters and health checks for the journal.</param>
+        /// <param name="configureSnapshot">Optional action to configure health checks for the snapshot store.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <example>
+        /// <code>
+        /// builder.WithJournalAndSnapshot(
+        ///     new SqlServerJournalOptions
+        ///     {
+        ///         ConnectionString = "...",
+        ///         IsDefaultPlugin = true
+        ///     },
+        ///     new SqlServerSnapshotOptions
+        ///     {
+        ///         ConnectionString = "...",
+        ///         IsDefaultPlugin = true
+        ///     },
+        ///     journal => journal
+        ///         .AddWriteEventAdapter&lt;MyAdapter&gt;("adapter", new[] { typeof(MyEvent) })
+        ///         .WithHealthCheck(HealthStatus.Degraded),
+        ///     snapshot => snapshot
+        ///         .WithHealthCheck());
+        /// </code>
+        /// </example>
+        public static AkkaConfigurationBuilder WithJournalAndSnapshot(
+            this AkkaConfigurationBuilder builder,
+            JournalOptions journalOptions,
+            SnapshotOptions snapshotOptions,
+            Action<AkkaPersistenceJournalBuilder>? configureJournal,
+            Action<AkkaPersistenceSnapshotBuilder>? configureSnapshot)
         {
-            if (journalOptions is null)
-                throw new ArgumentNullException(nameof(journalOptions));
-            if (snapshotOptions is null)
-                throw new ArgumentNullException(nameof(snapshotOptions));
 
-            builder.AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend);
-            var defaultConfig = journalOptions.DefaultConfig;
 
-            builder.AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend);
-            defaultConfig = defaultConfig.Equals(snapshotOptions.DefaultConfig)
-                ? defaultConfig
-                : defaultConfig.WithFallback(snapshotOptions.DefaultConfig);
-
-            return builder.AddHocon(defaultConfig, HoconAddMode.Append);
+            return builder.WithJournal(journalOptions, configureJournal)
+                .WithSnapshot(snapshotOptions, configureSnapshot);
         }
 
         /// <summary>
@@ -166,12 +227,50 @@ namespace Akka.Persistence.Hosting
         public static AkkaConfigurationBuilder WithJournal(
             this AkkaConfigurationBuilder builder,
             JournalOptions journalOptions)
+            => WithJournal(builder, journalOptions, configureBuilder: null);
+
+        /// <summary>
+        /// A generic way to add journal configuration to the <see cref="ActorSystem"/> with support for event adapters and health checks.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="journalOptions">The specific journal options instance used to configure the journal. For example, an instance of <c>SqlServerJournalOptions</c></param>
+        /// <param name="configureBuilder">Optional action to configure event adapters and health checks for this journal.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <example>
+        /// <code>
+        /// builder.WithJournal(
+        ///     new SqlServerJournalOptions
+        ///     {
+        ///         ConnectionString = "...",
+        ///         IsDefaultPlugin = true
+        ///     },
+        ///     journal => journal
+        ///         .AddWriteEventAdapter&lt;MyAdapter&gt;("adapter", new[] { typeof(MyEvent) })
+        ///         .WithHealthCheck(HealthStatus.Degraded));
+        /// </code>
+        /// </example>
+        public static AkkaConfigurationBuilder WithJournal(
+            this AkkaConfigurationBuilder builder,
+            JournalOptions journalOptions,
+            Action<AkkaPersistenceJournalBuilder>? configureBuilder)
         {
             if (journalOptions is null)
                 throw new ArgumentNullException(nameof(journalOptions));
 
+            // Apply the options configuration
             builder.AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend);
-            return builder.AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append);
+            builder.AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append);
+
+            // Apply the builder configuration (adapters + health checks) if provided
+            if (configureBuilder != null)
+            {
+                var jBuilder = new AkkaPersistenceJournalBuilder(journalOptions.Identifier, builder);
+                configureBuilder(jBuilder);
+                jBuilder.Build();
+            }
+
+            return builder;
         }
 
         /// <summary>
@@ -184,12 +283,49 @@ namespace Akka.Persistence.Hosting
         public static AkkaConfigurationBuilder WithSnapshot(
             this AkkaConfigurationBuilder builder,
             SnapshotOptions snapshotOptions)
+            => WithSnapshot(builder, snapshotOptions, configureBuilder: null);
+
+        /// <summary>
+        /// A generic way to add snapshot store configuration to the <see cref="ActorSystem"/> with support for health checks.
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="snapshotOptions">The specific snapshot store options instance used to configure the snapshot store. For example, an instance of <c>SqlServerSnapshotOptions</c></param>
+        /// <param name="configureBuilder">Optional action to configure health checks for this snapshot store.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <example>
+        /// <code>
+        /// builder.WithSnapshot(
+        ///     new SqlServerSnapshotOptions
+        ///     {
+        ///         ConnectionString = "...",
+        ///         IsDefaultPlugin = true
+        ///     },
+        ///     snapshot => snapshot
+        ///         .WithHealthCheck(HealthStatus.Degraded));
+        /// </code>
+        /// </example>
+        public static AkkaConfigurationBuilder WithSnapshot(
+            this AkkaConfigurationBuilder builder,
+            SnapshotOptions snapshotOptions,
+            Action<AkkaPersistenceSnapshotBuilder>? configureBuilder)
         {
             if (snapshotOptions is null)
                 throw new ArgumentNullException(nameof(snapshotOptions));
 
+            // Apply the options configuration
             builder.AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend);
-            return builder.AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append);
+            builder.AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append);
+
+            // Apply the builder configuration (health checks) if provided
+            if (configureBuilder != null)
+            {
+                var sBuilder = new AkkaPersistenceSnapshotBuilder(snapshotOptions.Identifier, builder);
+                configureBuilder(sBuilder);
+                sBuilder.Build();
+            }
+
+            return builder;
         }
 
         /// <summary>
@@ -202,6 +338,7 @@ namespace Akka.Persistence.Hosting
         /// <remarks>
         /// This method can be called multiple times for different <see cref="IEventAdapter"/>s.
         /// </remarks>
+        [Obsolete("Use WithJournal(journalOptions, configureBuilder) instead to combine options configuration with event adapters and health checks. This method will be removed in v1.6.")]
         public static AkkaConfigurationBuilder WithJournal(
             this AkkaConfigurationBuilder builder,
             string journalId,
@@ -226,14 +363,21 @@ namespace Akka.Persistence.Hosting
             string journalId = "inmem",
             bool isDefaultPlugin = true)
         {
-            builder.WithJournal(journalId, journalBuilder);
+            
+            var jBuilder = new AkkaPersistenceJournalBuilder(journalId, builder);
+            journalBuilder(jBuilder);
+
+            // build and inject the HOCON
+            jBuilder.Build();
 
             var liveConfig =
-                @$"{(isDefaultPlugin ? $"akka.persistence.journal.plugin = akka.persistence.journal.{journalId}" : "")} 
-akka.persistence.journal.{journalId} {{
-    class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
-    plugin-dispatcher = ""akka.actor.default-dispatcher""
-}}";
+                $$"""
+                  {{(isDefaultPlugin ? $"akka.persistence.journal.plugin = akka.persistence.journal.{journalId}" : "")}}
+                  akka.persistence.journal.{{journalId}} {
+                      class = "Akka.Persistence.Journal.MemoryJournal, Akka.Persistence"
+                      plugin-dispatcher = "akka.actor.default-dispatcher"
+                  }
+                  """;
 
             return builder.AddHocon(liveConfig, HoconAddMode.Prepend);
         }
@@ -244,11 +388,13 @@ akka.persistence.journal.{journalId} {{
             bool isDefaultPlugin = true)
         {
             var liveConfig =
-                $@"{(isDefaultPlugin ? $"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{snapshotStoreId}" : "")}
-akka.persistence.snapshot-store.{snapshotStoreId} {{
-    class = ""Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence""
-    plugin-dispatcher = ""akka.actor.default-dispatcher""
-}}";
+                $$"""
+                  {{(isDefaultPlugin ? $"akka.persistence.snapshot-store.plugin = akka.persistence.snapshot-store.{snapshotStoreId}" : "")}}
+                  akka.persistence.snapshot-store.{{snapshotStoreId}} {
+                      class = "Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence"
+                      plugin-dispatcher = "akka.actor.default-dispatcher"
+                  }
+                  """;
 
             return builder.AddHocon(liveConfig, HoconAddMode.Prepend);
         }
@@ -274,15 +420,17 @@ akka.persistence.snapshot-store.{snapshotStoreId} {{
             this AkkaConfigurationBuilder builder,
             string journalId)
         {
-            var config = @$"{journalId} {{
-     event-adapters {{
-        coordinator-migration = ""Akka.Cluster.Sharding.OldCoordinatorStateMigrationEventAdapter, Akka.Cluster.Sharding""
-    }}
+            var config = $$"""
+                           {{journalId}} {
+                                event-adapters {
+                                   coordinator-migration = "Akka.Cluster.Sharding.OldCoordinatorStateMigrationEventAdapter, Akka.Cluster.Sharding"
+                               }
 
-    event-adapter-bindings {{
-        ""Akka.Cluster.Sharding.ShardCoordinator+IDomainEvent, Akka.Cluster.Sharding"" = coordinator-migration
-    }}
-}}";
+                               event-adapter-bindings {
+                                   "Akka.Cluster.Sharding.ShardCoordinator+IDomainEvent, Akka.Cluster.Sharding" = coordinator-migration
+                               }
+                           }
+                           """;
             return builder.AddHocon(config, HoconAddMode.Prepend);
         }
     }

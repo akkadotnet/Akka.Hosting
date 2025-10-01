@@ -9,9 +9,15 @@ namespace Akka.Persistence.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithInMemoryJournal(this Akka.Hosting.AkkaConfigurationBuilder builder, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder> journalBuilder, string journalId = "inmem", bool isDefaultPlugin = true) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithInMemorySnapshotStore(this Akka.Hosting.AkkaConfigurationBuilder builder, string snapshotStoreId = "inmem", bool isDefaultPlugin = true) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithJournal(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions journalOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithJournal(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions journalOptions, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder>? configureBuilder) { }
+        [System.Obsolete("Use WithJournal(journalOptions, configureBuilder) instead to combine options conf" +
+            "iguration with event adapters and health checks. This method will be removed in " +
+            "v1.6.")]
         public static Akka.Hosting.AkkaConfigurationBuilder WithJournal(this Akka.Hosting.AkkaConfigurationBuilder builder, string journalId, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder> journalBuilder) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithJournalAndSnapshot(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions journalOptions, Akka.Persistence.Hosting.SnapshotOptions snapshotOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithJournalAndSnapshot(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions journalOptions, Akka.Persistence.Hosting.SnapshotOptions snapshotOptions, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder>? configureJournal, System.Action<Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder>? configureSnapshot) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithSnapshot(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.SnapshotOptions snapshotOptions) { }
+        public static Akka.Hosting.AkkaConfigurationBuilder WithSnapshot(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.SnapshotOptions snapshotOptions, System.Action<Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder>? configureBuilder) { }
     }
     public sealed class AkkaPersistenceJournalBuilder
     {
@@ -22,6 +28,12 @@ namespace Akka.Persistence.Hosting
             where TAdapter : Akka.Persistence.Journal.IReadEventAdapter { }
         public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder AddWriteEventAdapter<TAdapter>(string eventAdapterName, System.Collections.Generic.IEnumerable<System.Type> boundTypes)
             where TAdapter : Akka.Persistence.Journal.IWriteEventAdapter { }
+        public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder WithHealthCheck(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus unHealthyStatus = 1, string? name = null) { }
+    }
+    public sealed class AkkaPersistenceSnapshotBuilder
+    {
+        public AkkaPersistenceSnapshotBuilder(string snapshotStoreId, Akka.Hosting.AkkaConfigurationBuilder builder) { }
+        public Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder WithHealthCheck(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus unHealthyStatus = 1, string? name = null) { }
     }
     public static class Extensions
     {

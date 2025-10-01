@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Journal;
 using Akka.Util;
@@ -17,11 +18,28 @@ public class EventAdapterSpecs: Akka.Hosting.TestKit.TestKit
     {
         var host = new HostBuilder()
             .ConfigureServices(testSetup).Build();
-        
+
         await host.StartAsync();
         return host;
     }
-    
+
+    // Mock SQL Server journal options for testing event adapters
+    private sealed class MockSqlServerJournalOptions : JournalOptions
+    {
+        public MockSqlServerJournalOptions() : base(isDefault: false)
+        {
+            Identifier = "sql-server";
+        }
+
+        public override string Identifier { get; set; }
+
+        protected override Config InternalDefaultConfig =>
+            ConfigurationFactory.ParseString(@"
+                class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
+                plugin-dispatcher = ""akka.actor.default-dispatcher""
+            ");
+    }
+
     public sealed class Event1{ }
     public sealed class Event2{ }
 
@@ -81,7 +99,9 @@ public class EventAdapterSpecs: Akka.Hosting.TestKit.TestKit
     
     protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
-        builder.WithJournal("sql-server", journalBuilder =>
+        // Using the new unified API: WithJournal(options, builder)
+        var journalOptions = new MockSqlServerJournalOptions();
+        builder.WithJournal(journalOptions, journalBuilder =>
         {
             journalBuilder.AddWriteEventAdapter<EventMapper1>("mapper1", new Type[] { typeof(Event1) });
             journalBuilder.AddReadEventAdapter<ReadAdapter>("reader1", new Type[] { typeof(Event1) });
