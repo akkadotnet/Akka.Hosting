@@ -44,9 +44,10 @@ namespace Akka.Persistence.Hosting
 
         private AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus)
         {
+            var pluginId = $"akka.persistence.snapshot-store.{SnapshotStoreId}";
             var registration = new AkkaHealthCheckRegistration(
                 name ?? $"Akka.Persistence.SnapshotStore.{SnapshotStoreId}",
-                new SnapshotStoreHealthCheck(SnapshotStoreId),
+                new SnapshotStoreHealthCheck(pluginId),
                 unHealthyStatus,
                 ["akka", "persistence", "snapshot-store"]);
             return registration;

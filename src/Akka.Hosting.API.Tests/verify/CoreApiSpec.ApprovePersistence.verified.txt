@@ -12,7 +12,7 @@ namespace Akka.Persistence.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithJournal(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions journalOptions, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder>? configureBuilder) { }
         [System.Obsolete("Use WithJournal(journalOptions, configureBuilder) instead to combine options conf" +
             "iguration with event adapters and health checks. This method will be removed in " +
-            "v2.0.")]
+            "v1.6.")]
         public static Akka.Hosting.AkkaConfigurationBuilder WithJournal(this Akka.Hosting.AkkaConfigurationBuilder builder, string journalId, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder> journalBuilder) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithJournalAndSnapshot(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions journalOptions, Akka.Persistence.Hosting.SnapshotOptions snapshotOptions) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithJournalAndSnapshot(this Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions journalOptions, Akka.Persistence.Hosting.SnapshotOptions snapshotOptions, System.Action<Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder>? configureJournal, System.Action<Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder>? configureSnapshot) { }

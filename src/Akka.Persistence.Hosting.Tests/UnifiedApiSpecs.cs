@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Persistence.Journal;
@@ -28,11 +30,12 @@ public static class UnifiedApiTestResources
         public override string Identifier { get; set; }
 
         protected override Config InternalDefaultConfig =>
-            ConfigurationFactory.ParseString(@"
-                akka.persistence.journal.test-journal {
-                    class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
-                    plugin-dispatcher = ""akka.actor.default-dispatcher""
-                }");
+            ConfigurationFactory.ParseString("""
+
+                                                             class = "Akka.Persistence.Journal.MemoryJournal, Akka.Persistence"
+                                                             plugin-dispatcher = "akka.actor.default-dispatcher"
+
+                                             """);
     }
 
     // Mock snapshot options for testing
@@ -47,14 +50,15 @@ public static class UnifiedApiTestResources
 
         protected override Config InternalDefaultConfig =>
             ConfigurationFactory.ParseString(@"
-                akka.persistence.snapshot-store.test-snapshot {
-                    class = ""Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence""
-                    plugin-dispatcher = ""akka.actor.default-dispatcher""
-                }");
+                class = ""Akka.Persistence.Snapshot.MemorySnapshotStore, Akka.Persistence""
+                plugin-dispatcher = ""akka.actor.default-dispatcher""
+            ");
     }
 
     // Test event adapters
-    public sealed class TestEvent { }
+    public sealed class TestEvent
+    {
+    }
 
     public sealed class TestWriteAdapter : IWriteEventAdapter
     {
@@ -74,7 +78,9 @@ public static class UnifiedApiTestResources
 /// </summary>
 public sealed class JournalOptionsOnlySpec : Akka.Hosting.TestKit.TestKit
 {
-    public JournalOptionsOnlySpec(ITestOutputHelper output) : base(output: output) { }
+    public JournalOptionsOnlySpec(ITestOutputHelper output) : base(output: output)
+    {
+    }
 
     protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
@@ -105,7 +111,9 @@ public sealed class JournalOptionsOnlySpec : Akka.Hosting.TestKit.TestKit
 /// </summary>
 public sealed class JournalWithAdaptersSpec : Akka.Hosting.TestKit.TestKit
 {
-    public JournalWithAdaptersSpec(ITestOutputHelper output) : base(output: output) { }
+    public JournalWithAdaptersSpec(ITestOutputHelper output) : base(output: output)
+    {
+    }
 
     protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
@@ -118,9 +126,9 @@ public sealed class JournalWithAdaptersSpec : Akka.Hosting.TestKit.TestKit
         var options = new UnifiedApiTestResources.TestJournalOptions { IsDefaultPlugin = true };
         builder.WithJournal(options, journal => journal
             .AddWriteEventAdapter<UnifiedApiTestResources.TestWriteAdapter>("test-adapter",
-                new[] { typeof(UnifiedApiTestResources.TestEvent) })
+                [typeof(UnifiedApiTestResources.TestEvent)])
             .AddReadEventAdapter<UnifiedApiTestResources.TestReadAdapter>("test-reader",
-                new[] { typeof(UnifiedApiTestResources.TestEvent) }));
+                [typeof(UnifiedApiTestResources.TestEvent)]));
     }
 
     [Fact]
@@ -150,7 +158,9 @@ public sealed class JournalWithAdaptersSpec : Akka.Hosting.TestKit.TestKit
 /// </summary>
 public sealed class SnapshotOptionsOnlySpec : Akka.Hosting.TestKit.TestKit
 {
-    public SnapshotOptionsOnlySpec(ITestOutputHelper output) : base(output: output) { }
+    public SnapshotOptionsOnlySpec(ITestOutputHelper output) : base(output: output)
+    {
+    }
 
     protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
@@ -180,7 +190,9 @@ public sealed class SnapshotOptionsOnlySpec : Akka.Hosting.TestKit.TestKit
 /// </summary>
 public sealed class JournalAndSnapshotWithoutBuildersSpec : Akka.Hosting.TestKit.TestKit
 {
-    public JournalAndSnapshotWithoutBuildersSpec(ITestOutputHelper output) : base(output: output) { }
+    public JournalAndSnapshotWithoutBuildersSpec(ITestOutputHelper output) : base(output: output)
+    {
+    }
 
     protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
@@ -211,7 +223,9 @@ public sealed class JournalAndSnapshotWithoutBuildersSpec : Akka.Hosting.TestKit
 /// </summary>
 public sealed class JournalAndSnapshotWithBuildersSpec : Akka.Hosting.TestKit.TestKit
 {
-    public JournalAndSnapshotWithBuildersSpec(ITestOutputHelper output) : base(output: output) { }
+    public JournalAndSnapshotWithBuildersSpec(ITestOutputHelper output) : base(output: output)
+    {
+    }
 
     protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
@@ -236,7 +250,7 @@ public sealed class JournalAndSnapshotWithBuildersSpec : Akka.Hosting.TestKit.Te
     }
 
     [Fact]
-    public void WithJournalAndSnapshot_with_builders_should_configure_everything()
+    public async Task WithJournalAndSnapshot_with_builders_should_configure_everything()
     {
         var config = Sys.Settings.Config;
 
@@ -250,6 +264,24 @@ public sealed class JournalAndSnapshotWithBuildersSpec : Akka.Hosting.TestKit.Te
         var journalConfig = config.GetConfig("akka.persistence.journal.test-journal");
         journalConfig.GetString("event-adapters.adapter")
             .Should().Be(typeof(UnifiedApiTestResources.TestWriteAdapter).TypeQualifiedName());
+
+        // assert - health checks are registered and return real results
+        var healthCheckService = Host.Services.GetRequiredService<HealthCheckService>();
+        var result = await healthCheckService.CheckHealthAsync();
+
+        result.Status.Should().Be(HealthStatus.Healthy,
+            "both journal and snapshot health checks should be healthy");
+
+        // Verify both health checks are present
+        var journalCheck = result.Entries.FirstOrDefault(e => e.Key.Contains("test-journal"));
+        journalCheck.Should().NotBeNull("journal health check should be registered");
+        journalCheck.Value.Status.Should().Be(HealthStatus.Healthy,
+            "journal health check should return healthy status");
+
+        var snapshotCheck = result.Entries.FirstOrDefault(e => e.Key.Contains("test-snapshot"));
+        snapshotCheck.Should().NotBeNull("snapshot health check should be registered");
+        snapshotCheck.Value.Status.Should().Be(HealthStatus.Healthy,
+            "snapshot health check should return healthy status");
     }
 }
 
@@ -258,7 +290,9 @@ public sealed class JournalAndSnapshotWithBuildersSpec : Akka.Hosting.TestKit.Te
 /// </summary>
 public sealed class NullBuilderActionsSpec : Akka.Hosting.TestKit.TestKit
 {
-    public NullBuilderActionsSpec(ITestOutputHelper output) : base(output: output) { }
+    public NullBuilderActionsSpec(ITestOutputHelper output) : base(output: output)
+    {
+    }
 
     protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {

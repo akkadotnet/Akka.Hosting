@@ -35,10 +35,9 @@ public class EventAdapterSpecs: Akka.Hosting.TestKit.TestKit
 
         protected override Config InternalDefaultConfig =>
             ConfigurationFactory.ParseString(@"
-                akka.persistence.journal.sql-server {
-                    class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
-                    plugin-dispatcher = ""akka.actor.default-dispatcher""
-                }");
+                class = ""Akka.Persistence.Journal.MemoryJournal, Akka.Persistence""
+                plugin-dispatcher = ""akka.actor.default-dispatcher""
+            ");
     }
 
     public sealed class Event1{ }

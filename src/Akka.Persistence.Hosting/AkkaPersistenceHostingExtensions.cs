@@ -98,9 +98,10 @@ namespace Akka.Persistence.Hosting
 
         private AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus)
         {
+            var pluginId = $"akka.persistence.journal.{JournalId}";
             var registration = new AkkaHealthCheckRegistration(
                 name ?? $"Akka.Persistence.Journal.{JournalId}",
-                new JournalHealthCheck(JournalId),
+                new JournalHealthCheck(pluginId),
                 unHealthyStatus,
                 ["akka", "persistence", "journal"]);
             return registration;
@@ -170,22 +171,8 @@ namespace Akka.Persistence.Hosting
             this AkkaConfigurationBuilder builder,
             JournalOptions journalOptions,
             SnapshotOptions snapshotOptions)
-        {
-            if (journalOptions is null)
-                throw new ArgumentNullException(nameof(journalOptions));
-            if (snapshotOptions is null)
-                throw new ArgumentNullException(nameof(snapshotOptions));
-
-            builder.AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend);
-            var defaultConfig = journalOptions.DefaultConfig;
-
-            builder.AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend);
-            defaultConfig = defaultConfig.Equals(snapshotOptions.DefaultConfig)
-                ? defaultConfig
-                : defaultConfig.WithFallback(snapshotOptions.DefaultConfig);
-
-            return builder.AddHocon(defaultConfig, HoconAddMode.Append);
-        }
+            => WithJournalAndSnapshot(builder, journalOptions, snapshotOptions,
+                configureJournal: null, configureSnapshot: null);
 
         /// <summary>
         /// A generic way to add both journal and snapshot store configuration to the <see cref="ActorSystem"/> with support for event adapters and health checks.
@@ -270,13 +257,7 @@ namespace Akka.Persistence.Hosting
         public static AkkaConfigurationBuilder WithJournal(
             this AkkaConfigurationBuilder builder,
             JournalOptions journalOptions)
-        {
-            if (journalOptions is null)
-                throw new ArgumentNullException(nameof(journalOptions));
-
-            builder.AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend);
-            return builder.AddHocon(journalOptions.DefaultConfig, HoconAddMode.Append);
-        }
+            => WithJournal(builder, journalOptions, configureBuilder: null);
 
         /// <summary>
         /// A generic way to add journal configuration to the <see cref="ActorSystem"/> with support for event adapters and health checks.
@@ -332,13 +313,7 @@ namespace Akka.Persistence.Hosting
         public static AkkaConfigurationBuilder WithSnapshot(
             this AkkaConfigurationBuilder builder,
             SnapshotOptions snapshotOptions)
-        {
-            if (snapshotOptions is null)
-                throw new ArgumentNullException(nameof(snapshotOptions));
-
-            builder.AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend);
-            return builder.AddHocon(snapshotOptions.DefaultConfig, HoconAddMode.Append);
-        }
+            => WithSnapshot(builder, snapshotOptions, configureBuilder: null);
 
         /// <summary>
         /// A generic way to add snapshot store configuration to the <see cref="ActorSystem"/> with support for health checks.
