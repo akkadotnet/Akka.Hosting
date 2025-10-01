@@ -778,5 +778,69 @@ Akka.Hosting and its other packages ship with some built-in health checks:
 
 * `WithActorSystemLivenessCheck()` - a liveness probe that will fail if the `ActorSystem` is terminated. Generally, Akka.Hosting will try to shut down your process anyway if the `ActorSystem` dies.
 * `WithAkkaClusterReadinessCheck` - if you are an Akka.Cluster user, this health check will return `HealthStatus.Unhealthy` until you successfully join a cluster - that way you can stop load-balancers and other devices from routing traffic to this node until it has access to the cluster. This readiness check is also tagged with the `ready` tag for filtering purposes.
+* **Akka.Persistence Health Checks** - verify that persistence plugins (journals and snapshot stores) are properly initialized and accessible. These health checks use the built-in Akka.Persistence health check APIs to validate plugin connectivity and functionality. Health checks are tagged with `akka`, `persistence`, and either `journal` or `snapshot-store` for filtering purposes.
+
+#### Configuring Persistence Health Checks
+
+You can add health checks for your persistence plugins using the `.WithHealthCheck()` method when configuring journals and snapshot stores:
+
+```csharp
+builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+{
+    configurationBuilder
+        // Journal with health check
+        .WithJournal(
+            new SqlServerJournalOptions
+            {
+                ConnectionString = "...",
+                IsDefaultPlugin = true
+            },
+            journal => journal
+                .AddWriteEventAdapter<MyAdapter>("adapter", new[] { typeof(MyEvent) })
+                .WithHealthCheck(
+                    unHealthyStatus: HealthStatus.Degraded,
+                    name: "sql-journal"))
+
+        // Snapshot store with health check
+        .WithSnapshot(
+            new SqlServerSnapshotOptions
+            {
+                ConnectionString = "...",
+                IsDefaultPlugin = true
+            },
+            snapshot => snapshot
+                .WithHealthCheck(
+                    unHealthyStatus: HealthStatus.Degraded,
+                    name: "sql-snapshot"));
+});
+```
+
+You can also configure both journal and snapshot health checks together:
+
+```csharp
+builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+{
+    configurationBuilder
+        .WithJournalAndSnapshot(
+            new SqlServerJournalOptions
+            {
+                ConnectionString = "...",
+                IsDefaultPlugin = true
+            },
+            new SqlServerSnapshotOptions
+            {
+                ConnectionString = "...",
+                IsDefaultPlugin = true
+            },
+            journal => journal.WithHealthCheck(),
+            snapshot => snapshot.WithHealthCheck());
+});
+```
+
+The health checks will automatically:
+- Verify the persistence plugin is configured correctly
+- Test connectivity to the underlying storage (database, cloud storage, etc.)
+- Report `Healthy` when the plugin is operational
+- Report `Degraded` or `Unhealthy` (configurable) when issues are detected
 
 [Back to top](#akkahosting)
