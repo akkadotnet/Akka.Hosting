@@ -211,40 +211,10 @@ namespace Akka.Persistence.Hosting
             Action<AkkaPersistenceJournalBuilder>? configureJournal,
             Action<AkkaPersistenceSnapshotBuilder>? configureSnapshot)
         {
-            if (journalOptions is null)
-                throw new ArgumentNullException(nameof(journalOptions));
-            if (snapshotOptions is null)
-                throw new ArgumentNullException(nameof(snapshotOptions));
 
-            // Apply journal options configuration
-            builder.AddHocon(journalOptions.ToConfig(), HoconAddMode.Prepend);
-            var defaultConfig = journalOptions.DefaultConfig;
 
-            // Apply snapshot options configuration
-            builder.AddHocon(snapshotOptions.ToConfig(), HoconAddMode.Prepend);
-            defaultConfig = defaultConfig.Equals(snapshotOptions.DefaultConfig)
-                ? defaultConfig
-                : defaultConfig.WithFallback(snapshotOptions.DefaultConfig);
-
-            builder.AddHocon(defaultConfig, HoconAddMode.Append);
-
-            // Apply journal builder configuration (adapters + health checks) if provided
-            if (configureJournal != null)
-            {
-                var jBuilder = new AkkaPersistenceJournalBuilder(journalOptions.Identifier, builder);
-                configureJournal(jBuilder);
-                jBuilder.Build();
-            }
-
-            // Apply snapshot builder configuration (health checks) if provided
-            if (configureSnapshot != null)
-            {
-                var sBuilder = new AkkaPersistenceSnapshotBuilder(snapshotOptions.Identifier, builder);
-                configureSnapshot(sBuilder);
-                sBuilder.Build();
-            }
-
-            return builder;
+            return builder.WithJournal(journalOptions, configureJournal)
+                .WithSnapshot(snapshotOptions, configureSnapshot);
         }
 
         /// <summary>
