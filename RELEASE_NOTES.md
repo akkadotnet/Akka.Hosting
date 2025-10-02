@@ -1,3 +1,8 @@
+#### 1.5.51.1 October 2nd 2025 ####
+
+**Bug Fixes**
+* [Fix journal health check registration without event adapters](https://github.com/akkadotnet/Akka.Hosting/pull/667) - resolved [issue #666](https://github.com/akkadotnet/Akka.Hosting/issues/666) where journal health checks were not being registered when using `.WithHealthCheck()` without adding event adapters
+
 #### 1.5.51 October 1st 2025 ####
 
 **New Features**
