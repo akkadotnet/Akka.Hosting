@@ -112,6 +112,10 @@ namespace Akka.Persistence.Hosting
         /// </summary>
         internal void Build()
         {
+            // add the health checks if specified - do this FIRST before any early returns
+            if(HealthCheckRegistration != null)
+                Builder.WithHealthCheck(HealthCheckRegistration);
+
             // useless configuration - don't bother.
             if (Adapters.Count == 0 || Bindings.Count == 0)
                 return;
@@ -126,10 +130,6 @@ namespace Akka.Persistence.Hosting
             var finalHocon = ConfigurationFactory.ParseString(adapters.ToString())
                 .WithFallback(Persistence.DefaultConfig()); // add the default config as a fallback
             Builder.AddHocon(finalHocon, HoconAddMode.Prepend);
-            
-            // add the health checks if specified
-            if(HealthCheckRegistration != null)
-                Builder.WithHealthCheck(HealthCheckRegistration);
         }
 
         internal void AppendAdapters(StringBuilder sb)

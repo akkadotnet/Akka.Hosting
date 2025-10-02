@@ -286,6 +286,56 @@ public sealed class JournalAndSnapshotWithBuildersSpec : Akka.Hosting.TestKit.Te
 }
 
 /// <summary>
+/// Regression test for https://github.com/akkadotnet/Akka.Hosting/issues/666
+/// Ensures journal health checks are registered even without event adapters
+/// </summary>
+public sealed class JournalHealthCheckWithoutAdaptersSpec : Akka.Hosting.TestKit.TestKit
+{
+    public JournalHealthCheckWithoutAdaptersSpec(ITestOutputHelper output) : base(output: output)
+    {
+    }
+
+    protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+    {
+        base.ConfigureServices(context, services);
+        services.AddHealthChecks();
+    }
+
+    protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+    {
+        var journalOptions = new UnifiedApiTestResources.TestJournalOptions { IsDefaultPlugin = true };
+
+        // Configure journal with health check but WITHOUT any event adapters
+        // This is the regression case from issue #666
+        builder.WithJournal(
+            journalOptions,
+            journal => journal.WithHealthCheck());
+    }
+
+    [Fact]
+    public async Task Journal_health_check_should_be_registered_without_event_adapters()
+    {
+        // assert - journal plugin configured
+        var config = Sys.Settings.Config;
+        config.HasPath("akka.persistence.journal.test-journal")
+            .Should().BeTrue();
+
+        // assert - health check is registered even without event adapters
+        var healthCheckService = Host.Services.GetRequiredService<HealthCheckService>();
+        var result = await healthCheckService.CheckHealthAsync();
+
+        result.Status.Should().Be(HealthStatus.Healthy,
+            "journal health check should be healthy");
+
+        // Verify journal health check is present
+        var journalCheck = result.Entries.FirstOrDefault(e => e.Key.Contains("test-journal"));
+        journalCheck.Should().NotBeNull("journal health check should be registered even without event adapters");
+        journalCheck.Value.Status.Should().Be(HealthStatus.Healthy,
+            "journal health check should return healthy status");
+    }
+}
+
+/// <summary>
 /// Test null builder actions work correctly
 /// </summary>
 public sealed class NullBuilderActionsSpec : Akka.Hosting.TestKit.TestKit
