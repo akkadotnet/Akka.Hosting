@@ -2,13 +2,9 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-2025 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.5.51</VersionPrefix>
-    <PackageReleaseNotes>**New Features**
-* [Added Akka.Persistence health checks](https://github.com/akkadotnet/Akka.Hosting/pull/662) - health check support for Akka.Persistence journal and snapshot stores with unified configuration API
-* [Added dependency-injected health checks](https://github.com/akkadotnet/Akka.Hosting/pull/659) - `WithHealthCheck&lt;T&gt;()` generic methods for DI-resolved health checks
-
-**Updates**
-* [Bump Akka version from 1.5.50 to 1.5.51](https://github.com/akkadotnet/akka.net/releases/tag/1.5.51)</PackageReleaseNotes>
+    <VersionPrefix>1.5.51.1</VersionPrefix>
+    <PackageReleaseNotes>**Bug Fixes**
+* [Fix journal health check registration without event adapters](https://github.com/akkadotnet/Akka.Hosting/pull/667) - resolved [issue #666](https://github.com/akkadotnet/Akka.Hosting/issues/666) where journal health checks were not being registered when using `.WithHealthCheck()` without adding event adapters</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
