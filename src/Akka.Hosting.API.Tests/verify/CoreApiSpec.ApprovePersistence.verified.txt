@@ -43,6 +43,9 @@ namespace Akka.Persistence.Hosting
     public abstract class JournalOptions
     {
         protected JournalOptions(bool isDefault) { }
+        [System.Obsolete("Use the configureBuilder callback parameter in WithJournal() instead. This proper" +
+            "ty will be removed in v1.6.0. See https://github.com/akkadotnet/Akka.Hosting/iss" +
+            "ues/665")]
         public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder Adapters { get; set; }
         public bool AutoInitialize { get; set; }
         public Akka.Configuration.Config DefaultConfig { get; }

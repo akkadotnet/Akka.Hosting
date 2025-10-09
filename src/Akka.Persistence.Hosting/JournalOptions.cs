@@ -75,6 +75,7 @@ namespace Akka.Persistence.Hosting
         /// The journal adapter builder, use this builder to add custom journal
         /// <see cref="IEventAdapter"/>, <see cref="IWriteEventAdapter"/>, or <see cref="IReadEventAdapter"/>
         /// </summary>
+        [Obsolete("Use the configureBuilder callback parameter in WithJournal() instead. This property will be removed in v1.6.0. See https://github.com/akkadotnet/Akka.Hosting/issues/665")]
         public AkkaPersistenceJournalBuilder Adapters { get; set; } = new ("", null!);
 
         public string PluginId => $"akka.persistence.journal.{Identifier}";
@@ -102,7 +103,8 @@ namespace Akka.Persistence.Hosting
             sb.Insert(0, $"{PluginId} {{{Environment.NewLine}");
             sb.AppendLine($"auto-initialize = {AutoInitialize.ToHocon()}");
             sb.AppendLine($"serializer = {Serializer.ToHocon()}");
-            Adapters.AppendAdapters(sb);
+            // Adapters property is deprecated - use the callback pattern in WithJournal() instead
+            // See https://github.com/akkadotnet/Akka.Hosting/issues/665
             sb.AppendLine("}");
             
             if (IsDefaultPlugin)
