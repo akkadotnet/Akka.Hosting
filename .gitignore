@@ -309,3 +309,6 @@ __pycache__/
 *.odx.cs
 *.xsd.cs
 /.vscode
+
+# Claude worktree management
+.claude-wt/worktrees
