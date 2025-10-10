@@ -49,7 +49,7 @@ namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
             SendRawLogEventMessage(initLoggerMessage);
             try
             {
-                ExpectMsg("OK");
+                await ExpectMsgAsync("OK", TimeSpan.FromSeconds(10));
             }
             catch (Exception e)
             {
