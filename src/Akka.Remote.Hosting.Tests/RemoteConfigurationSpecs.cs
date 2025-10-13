@@ -433,16 +433,122 @@ public class RemoteConfigurationSpecs
             EnableSsl = false,
             Ssl = new SslOptions
             {
-                SuppressValidation = true, 
+                SuppressValidation = true,
                 X509Certificate = certificate
             }
         });
-        
+
         // act
         var setup = builder.Setups.FirstOrDefault(s => s is DotNettySslSetup);
 
         // assert
         setup.Should().BeNull();
+    }
+
+    [Fact(DisplayName = "RemoteOptions with new SSL/TLS settings should generate correct HOCON configuration")]
+    public void WithRemotingNewSslSettingsHoconTest()
+    {
+        // arrange
+        var certificate = new X509Certificate2("./Resources/akka-validcert.pfx", "password");
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(new RemoteOptions
+        {
+            EnableSsl = true,
+            Ssl = new SslOptions
+            {
+                SuppressValidation = false,
+                RequireMutualAuthentication = false, // Explicitly set to false for testing
+                ValidateCertificateHostname = true,  // Explicitly set to true for testing
+                X509Certificate = certificate
+            }
+        });
+
+        // act
+        var config = builder.Configuration.Value;
+        var sslConfig = config.GetConfig("akka.remote.dot-netty.tcp.ssl");
+
+        // assert
+        sslConfig.GetBoolean("suppress-validation").Should().BeFalse();
+        sslConfig.GetBoolean("require-mutual-authentication").Should().BeFalse();
+        sslConfig.GetBoolean("validate-certificate-hostname").Should().BeTrue();
+    }
+
+    [Fact(DisplayName = "RemoteOptions with new SSL/TLS settings should properly configure DotNettySslSetup")]
+    public void WithRemotingNewSslSettingsDotNettySslSetupTest()
+    {
+        // arrange
+        var certificate = new X509Certificate2("./Resources/akka-validcert.pfx", "password");
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(new RemoteOptions
+        {
+            EnableSsl = true,
+            Ssl = new SslOptions
+            {
+                SuppressValidation = false,
+                RequireMutualAuthentication = false,
+                ValidateCertificateHostname = true,
+                X509Certificate = certificate
+            }
+        });
+
+        // act
+        var setup = (DotNettySslSetup)builder.Setups.First(s => s is DotNettySslSetup);
+
+        // assert
+        setup.SuppressValidation.Should().BeFalse();
+        setup.Certificate.Should().Be(certificate);
+        // Note: The RequireMutualAuthentication and ValidateCertificateHostname properties
+        // will be passed to DotNettySslSetup when Akka.NET is upgraded to v1.5.53+
+        // For now, these settings are only configured via HOCON
+    }
+
+    [Fact(DisplayName = "RemoteOptions without new SSL/TLS settings should use default values")]
+    public void WithRemotingDefaultSslSettingsTest()
+    {
+        // arrange
+        var certificate = new X509Certificate2("./Resources/akka-validcert.pfx", "password");
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(new RemoteOptions
+        {
+            EnableSsl = true,
+            Ssl = new SslOptions
+            {
+                X509Certificate = certificate
+                // RequireMutualAuthentication and ValidateCertificateHostname not specified
+            }
+        });
+
+        // act
+        var setup = (DotNettySslSetup)builder.Setups.First(s => s is DotNettySslSetup);
+
+        // assert
+        setup.Should().NotBeNull();
+        // When not specified, we use the legacy constructor for backward compatibility
+    }
+
+    [Fact(DisplayName = "RemoteOptions using configurator should set new SSL/TLS properties correctly")]
+    public void WithRemotingConfiguratorNewSslSettingsTest()
+    {
+        // arrange
+        var certificate = new X509Certificate2("./Resources/akka-validcert.pfx", "password");
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+        builder.WithRemoting(opt =>
+        {
+            opt.EnableSsl = true;
+            opt.Ssl.RequireMutualAuthentication = true;
+            opt.Ssl.ValidateCertificateHostname = false;
+            opt.Ssl.X509Certificate = certificate;
+        });
+
+        // act
+        var config = builder.Configuration.Value;
+        var tcpConfig = config.GetConfig("akka.remote.dot-netty.tcp");
+        var sslConfig = tcpConfig.GetConfig("ssl");
+
+        // assert
+        tcpConfig.GetBoolean("enable-ssl").Should().BeTrue();
+        sslConfig.GetBoolean("require-mutual-authentication").Should().BeTrue();
+        sslConfig.GetBoolean("validate-certificate-hostname").Should().BeFalse();
     }
     
     [Fact]

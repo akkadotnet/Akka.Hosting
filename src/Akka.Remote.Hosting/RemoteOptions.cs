@@ -104,12 +104,33 @@ namespace Akka.Remote.Hosting
 
             if (sb.Length > 0)
                 builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-            
-            if (EnableSsl is false || Ssl.X509Certificate == null) 
+
+            if (EnableSsl is false || Ssl.X509Certificate == null)
                 return;
-        
+
             var suppressValidation = Ssl.SuppressValidation ?? false;
+
+            // Note: The new SSL/TLS settings (RequireMutualAuthentication and ValidateCertificateHostname)
+            // are configured via HOCON above. The DotNettySslSetup constructor with these parameters
+            // is available in Akka.NET v1.5.53+. When this library updates to v1.5.53 or later,
+            // uncomment the code below to pass these settings directly to DotNettySslSetup.
+
             builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation));
+
+            /* Future implementation for Akka.NET v1.5.53+:
+            var requireMutualAuth = Ssl.RequireMutualAuthentication ?? true; // Default to true as per v1.5.52
+            var validateHostname = Ssl.ValidateCertificateHostname ?? false; // Default to false as per v1.5.53
+
+            if (Ssl.RequireMutualAuthentication.HasValue || Ssl.ValidateCertificateHostname.HasValue)
+            {
+                builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation, requireMutualAuth, validateHostname));
+            }
+            else
+            {
+                // Use legacy constructor for backward compatibility when new settings are not specified
+                builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation));
+            }
+            */
         }
     
         private void Build(StringBuilder builder)
@@ -197,18 +218,55 @@ namespace Akka.Remote.Hosting
         public X509Certificate2? X509Certificate { get; set; }
         public SslCertificateOptions CertificateOptions { get; set; } = new ();
 
+        /// <summary>
+        /// <para>
+        /// When set to true, enables mutual TLS (mTLS) authentication where both client and server
+        /// must present valid certificates with accessible private keys during the TLS handshake.
+        /// </para>
+        /// <para>
+        /// This provides defense-in-depth security by ensuring bidirectional authentication and
+        /// preventing asymmetric connectivity issues in peer-to-peer Akka.Remote connections.
+        /// </para>
+        /// <b>Default:</b> true (as of Akka.NET v1.5.52)
+        /// </summary>
+        public bool? RequireMutualAuthentication { get; set; }
+
+        /// <summary>
+        /// <para>
+        /// Controls whether certificate hostname validation is performed during TLS handshake.
+        /// </para>
+        /// <para>
+        /// When enabled (true): Traditional TLS hostname validation is performed - certificate CN/SAN must match the target hostname.
+        /// When disabled (false): Only validates certificate chain against CA, ignores hostname mismatches.
+        /// </para>
+        /// <para>
+        /// Disabling hostname validation may be necessary for:
+        /// - Mutual TLS with per-node certificates in P2P clusters
+        /// - IP-based connections where certificates use DNS names
+        /// - Service discovery with dynamic addresses
+        /// </para>
+        /// <b>Default:</b> false (as of Akka.NET v1.5.53)
+        /// </summary>
+        public bool? ValidateCertificateHostname { get; set; }
+
         internal void Build(StringBuilder builder)
         {
             var sb = new StringBuilder();
-            
+
             if (SuppressValidation is not null)
                 sb.AppendLine($"suppress-validation = {SuppressValidation.ToHocon()}");
-            
+
+            if (RequireMutualAuthentication is not null)
+                sb.AppendLine($"require-mutual-authentication = {RequireMutualAuthentication.ToHocon()}");
+
+            if (ValidateCertificateHostname is not null)
+                sb.AppendLine($"validate-certificate-hostname = {ValidateCertificateHostname.ToHocon()}");
+
             CertificateOptions.Build(sb);
-            
+
             if(sb.Length == 0)
                 return;
-            
+
             sb.Insert(0, "ssl {");
             sb.AppendLine("}");
             builder.Append(sb);
