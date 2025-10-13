@@ -498,8 +498,7 @@ public class RemoteConfigurationSpecs
         setup.SuppressValidation.Should().BeFalse();
         setup.Certificate.Should().Be(certificate);
         // Note: The RequireMutualAuthentication and ValidateCertificateHostname properties
-        // will be passed to DotNettySslSetup when Akka.NET is upgraded to v1.5.53+
-        // For now, these settings are only configured via HOCON
+        // are now passed to DotNettySslSetup via the 4-parameter constructor in Akka.NET v1.5.53
     }
 
     [Fact(DisplayName = "RemoteOptions without new SSL/TLS settings should use default values")]

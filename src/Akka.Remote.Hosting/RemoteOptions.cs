@@ -109,18 +109,10 @@ namespace Akka.Remote.Hosting
                 return;
 
             var suppressValidation = Ssl.SuppressValidation ?? false;
-
-            // Note: The new SSL/TLS settings (RequireMutualAuthentication and ValidateCertificateHostname)
-            // are configured via HOCON above. The DotNettySslSetup constructor with these parameters
-            // is available in Akka.NET v1.5.53+. When this library updates to v1.5.53 or later,
-            // uncomment the code below to pass these settings directly to DotNettySslSetup.
-
-            builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation));
-
-            /* Future implementation for Akka.NET v1.5.53+:
             var requireMutualAuth = Ssl.RequireMutualAuthentication ?? true; // Default to true as per v1.5.52
             var validateHostname = Ssl.ValidateCertificateHostname ?? false; // Default to false as per v1.5.53
 
+            // Use the 4-parameter constructor if any of the new settings are provided, otherwise use the legacy constructor for backward compatibility
             if (Ssl.RequireMutualAuthentication.HasValue || Ssl.ValidateCertificateHostname.HasValue)
             {
                 builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation, requireMutualAuth, validateHostname));
@@ -130,7 +122,6 @@ namespace Akka.Remote.Hosting
                 // Use legacy constructor for backward compatibility when new settings are not specified
                 builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation));
             }
-            */
         }
     
         private void Build(StringBuilder builder)
