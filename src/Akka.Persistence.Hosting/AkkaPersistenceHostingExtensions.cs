@@ -127,8 +127,7 @@ namespace Akka.Persistence.Hosting
 
             adapters.AppendLine("}");
 
-            var finalHocon = ConfigurationFactory.ParseString(adapters.ToString())
-                .WithFallback(Persistence.DefaultConfig()); // add the default config as a fallback
+            var finalHocon = ConfigurationFactory.ParseString(adapters.ToString());
             Builder.AddHocon(finalHocon, HoconAddMode.Prepend);
         }
 
