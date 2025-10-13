@@ -38,23 +38,13 @@ public class EventAdapterRuntimeInvocationSpecs : Akka.Hosting.TestKit.TestKit
     {
         public static int CallCount = 0;
 
-        public InvocationCountingAdapter()
-        {
-            // Parameterless constructor for Akka.NET instantiation
-        }
-
-        public InvocationCountingAdapter(ExtendedActorSystem system)
-        {
-            // Constructor with ActorSystem parameter (also supported)
-        }
+        public InvocationCountingAdapter(ExtendedActorSystem system) { }
 
         public string Manifest(object evt) => string.Empty;
 
         public object ToJournal(object evt)
         {
             Interlocked.Increment(ref CallCount);
-
-            // Tag the event so we can verify it worked
             return evt switch
             {
                 TestEvent => new Tagged(evt, new[] { "test-tag" }),
@@ -124,7 +114,7 @@ public class EventAdapterRuntimeInvocationSpecs : Akka.Hosting.TestKit.TestKit
     [Fact]
     public async Task EventAdapter_Should_Be_Invoked_At_Runtime_With_New_Callback_API()
     {
-        // Reset the counter
+        // Reset the counter for test isolation
         InvocationCountingAdapter.CallCount = 0;
 
         // Verify adapter is in HOCON configuration
@@ -150,7 +140,7 @@ public class EventAdapterRuntimeInvocationSpecs : Akka.Hosting.TestKit.TestKit
         {
             _output.WriteLine($"Adapter was called {InvocationCountingAdapter.CallCount} times");
             InvocationCountingAdapter.CallCount.Should().Be(3,
-                "event adapter should be invoked once for each persisted event");
+                "event adapter should have been invoked 3 times if it was properly configured at runtime");
         });
 
         // Verify events were persisted correctly
@@ -185,7 +175,6 @@ public class EventAdapterWithMultipleJournalConfigsSpecs : Akka.Hosting.TestKit.
     {
         public static int CallCount = 0;
 
-        public InvocationCountingAdapter() { }
         public InvocationCountingAdapter(ExtendedActorSystem system) { }
 
         public string Manifest(object evt) => string.Empty;
@@ -274,7 +263,7 @@ public class EventAdapterWithMultipleJournalConfigsSpecs : Akka.Hosting.TestKit.
     [Fact]
     public async Task EventAdapter_Should_Still_Work_After_Second_Journal_Config()
     {
-        // Reset the counter
+        // Reset the counter for test isolation
         InvocationCountingAdapter.CallCount = 0;
 
         // Verify both journals exist in config
@@ -318,7 +307,7 @@ public class EventAdapterWithMultipleJournalConfigsSpecs : Akka.Hosting.TestKit.
     [Fact]
     public async Task Sharding_Journal_Should_Not_Have_Adapters()
     {
-        // Reset the counter
+        // Reset the counter for test isolation
         InvocationCountingAdapter.CallCount = 0;
 
         // Verify sharding journal does NOT have adapters (we only configured them on default)
@@ -411,7 +400,6 @@ public class EventAdapterWithExplicitJournalOptionsSpecs : Akka.Hosting.TestKit.
     {
         public static int CallCount = 0;
 
-        public InvocationCountingAdapter() { }
         public InvocationCountingAdapter(ExtendedActorSystem system) { }
 
         public string Manifest(object evt) => string.Empty;
@@ -504,7 +492,7 @@ public class EventAdapterWithExplicitJournalOptionsSpecs : Akka.Hosting.TestKit.
     [Fact]
     public async Task EventAdapter_Should_Work_With_Explicit_JournalOptions_Pattern()
     {
-        // Reset the counter
+        // Reset the counter for test isolation
         InvocationCountingAdapter.CallCount = 0;
 
         // Verify adapter is in HOCON for default journal
