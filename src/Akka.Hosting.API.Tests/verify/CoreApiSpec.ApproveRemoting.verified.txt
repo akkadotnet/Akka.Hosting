@@ -54,7 +54,9 @@
     {
         public SslOptions() { }
         public Akka.Remote.Hosting.SslCertificateOptions CertificateOptions { get; set; }
+        public bool? RequireMutualAuthentication { get; set; }
         public bool? SuppressValidation { get; set; }
+        public bool? ValidateCertificateHostname { get; set; }
         public System.Security.Cryptography.X509Certificates.X509Certificate2? X509Certificate { get; set; }
     }
 }
