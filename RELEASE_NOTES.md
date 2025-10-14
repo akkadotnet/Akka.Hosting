@@ -1,3 +1,12 @@
+#### 1.5.53 October 14th 2025 ####
+
+**Bug Fixes**
+* [Fix event adapter callback API not invoking adapters at runtime](https://github.com/akkadotnet/Akka.Hosting/pull/674) - resolved critical bug where event adapters configured via the callback API were not being invoked at runtime. This fix is especially important for users who have migrated to the callback pattern following the deprecation of `JournalOptions.Adapters` property. The issue was caused by unnecessary fallback configuration that interfered with adapter registration during HOCON merging.
+
+**Updates**
+* [Add SSL/TLS configuration settings from Akka.NET 1.5.52 and 1.5.53](https://github.com/akkadotnet/Akka.Hosting/pull/675) - updated SSL/TLS configuration options to support new features and settings introduced in Akka.NET versions 1.5.52 and 1.5.53
+* [Bump Akka version from 1.5.52 to 1.5.53](https://github.com/akkadotnet/akka.net/releases/tag/1.5.53)
+
 #### 1.5.52 October 9th 2025 ####
 
 **API Changes**
