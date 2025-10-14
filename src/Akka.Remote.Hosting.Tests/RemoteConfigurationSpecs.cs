@@ -499,6 +499,8 @@ public class RemoteConfigurationSpecs
         setup.Certificate.Should().Be(certificate);
         // Note: The RequireMutualAuthentication and ValidateCertificateHostname properties
         // are now passed to DotNettySslSetup via the 4-parameter constructor in Akka.NET v1.5.53
+        setup.RequireMutualAuthentication.Should().BeFalse();
+        setup.ValidateCertificateHostname.Should().BeTrue();
     }
 
     [Fact(DisplayName = "RemoteOptions without new SSL/TLS settings should use default values")]
@@ -522,7 +524,9 @@ public class RemoteConfigurationSpecs
 
         // assert
         setup.Should().NotBeNull();
-        // When not specified, we use the legacy constructor for backward compatibility
+        setup.Certificate.Should().Be(certificate);
+        setup.RequireMutualAuthentication.Should().BeTrue();
+        setup.ValidateCertificateHostname.Should().BeFalse();
     }
 
     [Fact(DisplayName = "RemoteOptions using configurator should set new SSL/TLS properties correctly")]
