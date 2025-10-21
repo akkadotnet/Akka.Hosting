@@ -29,11 +29,13 @@ namespace Akka.Persistence.Hosting
         public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder AddWriteEventAdapter<TAdapter>(string eventAdapterName, System.Collections.Generic.IEnumerable<System.Type> boundTypes)
             where TAdapter : Akka.Persistence.Journal.IWriteEventAdapter { }
         public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder WithHealthCheck(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus unHealthyStatus = 1, string? name = null) { }
+        public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder WithHealthCheck(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus unHealthyStatus, string? name, System.Collections.Generic.IEnumerable<string>? tags) { }
     }
     public sealed class AkkaPersistenceSnapshotBuilder
     {
         public AkkaPersistenceSnapshotBuilder(string snapshotStoreId, Akka.Hosting.AkkaConfigurationBuilder builder) { }
         public Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder WithHealthCheck(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus unHealthyStatus = 1, string? name = null) { }
+        public Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder WithHealthCheck(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus unHealthyStatus, string? name, System.Collections.Generic.IEnumerable<string>? tags) { }
     }
     public static class Extensions
     {
