@@ -29,7 +29,7 @@ public class HealthChecksSpec : TestKit.TestKit
     protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
     {
         builder
-            .WithActorSystemLivenessCheck() // have to opt-in to the built-in health check
+            .WithActorSystemLivenessCheck(failureStatus: HealthStatus.Degraded, tags: ["custom", "liveness"]) // test custom parameters
             .WithHealthCheck("FooActor alive", async (system, registry, cancellationToken) =>
             {
                 /*
@@ -61,7 +61,7 @@ public class HealthChecksSpec : TestKit.TestKit
                 }
 
                 return HealthCheckResult.Healthy("fooActor found and responsive");
-            });
+            }, failureStatus: HealthStatus.Degraded, tags: ["foo", "actor"], timeout: TimeSpan.FromSeconds(30));
     }
 
     [Fact]
@@ -78,6 +78,12 @@ public class HealthChecksSpec : TestKit.TestKit
         // find the built-in implementation
         var actorSystemHealthCheckRegistration =
             configurationBuilder.HealthChecks.Values.Single(c => c.Factory(Host.Services) is ActorSystemLivenessCheck);
+
+        // Verify the custom parameters we set in ConfigureAkka were applied
+        Assert.Equal(HealthStatus.Degraded, actorSystemHealthCheckRegistration.FailureStatus);
+        Assert.Contains("custom", actorSystemHealthCheckRegistration.Tags);
+        Assert.Contains("liveness", actorSystemHealthCheckRegistration.Tags);
+
         var akkaHealthCheckContext = new AkkaHealthCheckContext(Sys)
             { Registration = actorSystemHealthCheckRegistration.ToHealthCheckRegistration() };
 
@@ -98,6 +104,12 @@ public class HealthChecksSpec : TestKit.TestKit
         // act
         var customActorHealthCheck =
             configurationBuilder.HealthChecks.Values.Single(c => c.Factory(Host.Services) is DelegateHealthCheck);
+
+        // Verify custom parameters for the delegate health check
+        Assert.Equal(HealthStatus.Degraded, customActorHealthCheck.FailureStatus);
+        Assert.Contains("foo", customActorHealthCheck.Tags);
+        Assert.Contains("actor", customActorHealthCheck.Tags);
+        Assert.Equal(TimeSpan.FromSeconds(30), customActorHealthCheck.Timeout);
 
         var akkaHealthCheckContext = new AkkaHealthCheckContext(Sys)
             { Registration = customActorHealthCheck.ToHealthCheckRegistration() };
