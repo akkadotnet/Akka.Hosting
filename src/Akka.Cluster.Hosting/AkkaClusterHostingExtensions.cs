@@ -696,16 +696,26 @@ namespace Akka.Cluster.Hosting
         /// which will return `Unhealthy` until we have successfully joined a cluster. Used to prevent nodes
         /// from accepting load-balancer traffic until we have access to the cluster.
         /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="failureStatus">
+        /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+        /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+        /// </param>
+        /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
         /// <remarks>
         /// If you need to customize the readiness check, you can use <see cref="AkkaConfigurationBuilder.WithHealthCheck(AkkaHealthCheckRegistration)"/> to
         /// register your own <see cref="AkkaHealthCheckRegistration"/> with the <see cref="AkkaClusterReadinessCheck"/>.
         /// </remarks>
         public static AkkaConfigurationBuilder WithAkkaClusterReadinessCheck(
-            this AkkaConfigurationBuilder builder)
+            this AkkaConfigurationBuilder builder,
+            HealthStatus? failureStatus = null, 
+            IEnumerable<string>? tags = null)
         {
+            string[] defaultTags = ["akka", "ready", "akka.cluster"];
+            
             // add the default cluster readiness check
             return builder.WithHealthCheck(new AkkaHealthCheckRegistration("akka.cluster.join", new AkkaClusterReadinessCheck(),
-                HealthStatus.Unhealthy, ["ready", "akka.cluster"]));
+                failureStatus ?? HealthStatus.Unhealthy, tags ?? defaultTags));
         }
 
         public static AkkaConfigurationBuilder WithDistributedData(

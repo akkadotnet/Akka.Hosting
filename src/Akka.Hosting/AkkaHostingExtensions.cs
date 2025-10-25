@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -267,13 +268,21 @@ namespace Akka.Hosting
         /// <param name="builder">The builder instance being configured.</param>
         /// <param name="name">The unique name for this health check.</param>
         /// <param name="healthCheck">The health check implementation.</param>
+        /// <param name="failureStatus">
+        /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+        /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+        /// </param>
+        /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
+        /// <param name="timeout">An optional <see cref="TimeSpan"/> representing the per-invocation timeout of the check.</param>
         /// <remarks>
         /// If you need more detailed configuration for a health check, such as tags or default failure status,
         /// please use the <see cref="AkkaConfigurationBuilder.WithHealthCheck(AkkaHealthCheckRegistration)"/> method.
         /// </remarks>
-        public static AkkaConfigurationBuilder WithHealthCheck(this AkkaConfigurationBuilder builder, string name, IAkkaHealthCheck healthCheck)
+        public static AkkaConfigurationBuilder WithHealthCheck(this AkkaConfigurationBuilder builder, string name, IAkkaHealthCheck healthCheck,
+            HealthStatus? failureStatus = null,
+            IEnumerable<string>? tags = null, TimeSpan? timeout = null)
         {
-            var registration = new AkkaHealthCheckRegistration(name, healthCheck, null, null);
+            var registration = new AkkaHealthCheckRegistration(name, healthCheck, failureStatus, tags, timeout);
             return  builder.WithHealthCheck(registration);
         }
 
@@ -283,29 +292,47 @@ namespace Akka.Hosting
         /// <param name="builder">The builder instance being configured.</param>
         /// <param name="name">The unique name for this health check.</param>
         /// <param name="healthCheck">A health checking function.</param>
+        /// <param name="failureStatus">
+        /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+        /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+        /// </param>
+        /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
+        /// <param name="timeout">An optional <see cref="TimeSpan"/> representing the per-invocation timeout of the check.</param>
         /// <remarks>
         /// If you need more detailed configuration for a health check, such as tags or default failure status,
         /// please use the <see cref="AkkaConfigurationBuilder.WithHealthCheck(AkkaHealthCheckRegistration)"/> method.
         /// </remarks>
         public static AkkaConfigurationBuilder WithHealthCheck(this AkkaConfigurationBuilder builder, string name,
-            Func<ActorSystem, ActorRegistry, CancellationToken, Task<HealthCheckResult>> healthCheck)
+            Func<ActorSystem, ActorRegistry, CancellationToken, Task<HealthCheckResult>> healthCheck,
+            HealthStatus? failureStatus = null,
+            IEnumerable<string>? tags = null, TimeSpan? timeout = null)
         {
             var healthCheckImpl = new DelegateHealthCheck(healthCheck);
-            return builder.WithHealthCheck(name, healthCheckImpl);
+            return builder.WithHealthCheck(name, healthCheckImpl, failureStatus, tags, timeout);
         }
 
         /// <summary>
         /// Default health check for the <see cref="ActorSystem"/> liveness - if the <see cref="ActorSystem"/> is
         /// terminated, this check will return an unhealthy status.
         /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="failureStatus">
+        /// The <see cref="HealthStatus"/> that should be reported upon failure of the health check. If the provided value
+        /// is <c>null</c>, then <see cref="HealthStatus.Unhealthy"/> will be reported.
+        /// </param>
+        /// <param name="tags">A list of tags that can be used for filtering health checks.</param>
         /// <remarks>
         /// See <see cref="ActorSystemLivenessCheck"/> for more details on how this check works. You can create a custom
         /// <see cref="AkkaHealthCheckRegistration"/> if you want to customize this.
         /// </remarks>
-        public static AkkaConfigurationBuilder WithActorSystemLivenessCheck(this AkkaConfigurationBuilder builder)
+        public static AkkaConfigurationBuilder WithActorSystemLivenessCheck(this AkkaConfigurationBuilder builder, 
+            HealthStatus? failureStatus = null, 
+            IEnumerable<string>? tags = null)
         {
+            string[] defaultTags = ["akka", "liveness"];
+            
             var actorSystemHealthCheck = new AkkaHealthCheckRegistration("akka.actorsystem",
-                new ActorSystemLivenessCheck(), HealthStatus.Unhealthy, null);
+                new ActorSystemLivenessCheck(), failureStatus ?? HealthStatus.Unhealthy, tags ?? defaultTags);
             return builder.WithHealthCheck(actorSystemHealthCheck);
         }
     }
