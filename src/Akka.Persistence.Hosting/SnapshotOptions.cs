@@ -5,6 +5,8 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Akka.Configuration;
 using Akka.Hosting;
@@ -33,23 +35,26 @@ namespace Akka.Persistence.Hosting
         /// <param name="unHealthyStatus">Default status to return when the plugin reports <see cref="PersistenceHealthStatus.Unhealthy"/>
         /// or <see cref="PersistenceHealthStatus.Degraded"/>. Defaults to degraded.</param>
         /// <param name="name">Optional name to add to the health check.</param>
+        /// <param name="tags">Custom tags for the health check. If null, defaults to ["akka", "persistence", "snapshot-store"].</param>
         /// <returns>The current builder instance for method chaining.</returns>
         public AkkaPersistenceSnapshotBuilder WithHealthCheck(HealthStatus unHealthyStatus = HealthStatus.Degraded,
-            string? name = null)
+            string? name = null,
+            IEnumerable<string>? tags = null)
         {
-            var registration = AddHealthCheck(name, unHealthyStatus);
+            var registration = AddHealthCheck(name, unHealthyStatus, tags);
             HealthCheckRegistration = registration;
             return this;
         }
 
-        private AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus)
+        private AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus, IEnumerable<string>? tags = null)
         {
             var pluginId = $"akka.persistence.snapshot-store.{SnapshotStoreId}";
+            var healthCheckTags = tags?.ToList() ?? new List<string> { "akka", "persistence", "snapshot-store" };
             var registration = new AkkaHealthCheckRegistration(
                 name ?? $"Akka.Persistence.SnapshotStore.{SnapshotStoreId}",
                 new SnapshotStoreHealthCheck(pluginId),
                 unHealthyStatus,
-                ["akka", "persistence", "snapshot-store"]);
+                healthCheckTags);
             return registration;
         }
 
