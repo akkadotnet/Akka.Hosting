@@ -53,26 +53,11 @@ namespace Akka.Persistence.Hosting
         /// <param name="unHealthyStatus">Default status to return when the plugin reports <see cref="PersistenceHealthStatus.Unhealthy"/>
         /// or <see cref="PersistenceHealthStatus.Degraded"/>. Defaults to degraded.</param>
         /// <param name="name">Optional name to add to the health check.</param>
-        /// <returns>The current builder instance for method chaining.</returns>
-        public AkkaPersistenceJournalBuilder WithHealthCheck(HealthStatus unHealthyStatus = HealthStatus.Degraded,
-            string? name = null)
-        {
-            var registration = AddHealthCheck(name, unHealthyStatus, tags: null);
-            HealthCheckRegistration = registration;
-            return this;
-        }
-
-        /// <summary>
-        /// Uses the built-in journal health check on the Akka.Persistence.Journal with custom tags.
-        /// </summary>
-        /// <param name="unHealthyStatus">Default status to return when the plugin reports <see cref="PersistenceHealthStatus.Unhealthy"/>
-        /// or <see cref="PersistenceHealthStatus.Degraded"/>. Defaults to degraded.</param>
-        /// <param name="name">Optional name to add to the health check.</param>
         /// <param name="tags">Custom tags for the health check. If null, defaults to ["akka", "persistence", "journal"].</param>
         /// <returns>The current builder instance for method chaining.</returns>
-        public AkkaPersistenceJournalBuilder WithHealthCheck(HealthStatus unHealthyStatus,
-            string? name,
-            IEnumerable<string>? tags)
+        public AkkaPersistenceJournalBuilder WithHealthCheck(HealthStatus unHealthyStatus = HealthStatus.Degraded,
+            string? name = null,
+            IEnumerable<string>? tags = null)
         {
             var registration = AddHealthCheck(name, unHealthyStatus, tags);
             HealthCheckRegistration = registration;
