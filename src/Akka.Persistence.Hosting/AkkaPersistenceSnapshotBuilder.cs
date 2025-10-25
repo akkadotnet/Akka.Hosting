@@ -12,7 +12,7 @@ public sealed class AkkaPersistenceSnapshotBuilder
 {
     internal readonly string SnapshotStoreId;
     internal readonly AkkaConfigurationBuilder Builder;
-    internal AkkaHealthCheckRegistration? HealthCheckRegistration = null;
+    internal readonly HashSet<AkkaHealthCheckRegistration> HealthCheckRegistrations = [];
 
     public AkkaPersistenceSnapshotBuilder(string snapshotStoreId, AkkaConfigurationBuilder builder)
     {
@@ -32,8 +32,19 @@ public sealed class AkkaPersistenceSnapshotBuilder
         string? name = null,
         IEnumerable<string>? tags = null)
     {
-        var registration = AddHealthCheck(name, unHealthyStatus, tags);
-        HealthCheckRegistration = registration;
+        var registration = AddDefaultHealthCheck(name, unHealthyStatus, tags);
+        HealthCheckRegistrations.Add(registration);
+        return this;
+    }
+
+    /// <summary>
+    /// For Akka.Persistence plugins that have custom health checks (see https://github.com/akkadotnet/Akka.Hosting/issues/678)
+    /// </summary>
+    /// <param name="registration">The custom health check registration.</param>
+    /// <returns>The current builder instance for method chaining.</returns>
+    public AkkaPersistenceSnapshotBuilder WithCustomHealthCheck(AkkaHealthCheckRegistration registration)
+    {
+        HealthCheckRegistrations.Add(registration);
         return this;
     }
 
@@ -42,15 +53,15 @@ public sealed class AkkaPersistenceSnapshotBuilder
     /// </summary>
     internal AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus)
     {
-        return AddHealthCheck(name, unHealthyStatus, tags: null);
+        return AddDefaultHealthCheck(name, unHealthyStatus, tags: null);
     }
 
-    internal AkkaHealthCheckRegistration AddHealthCheck(string? name, HealthStatus unHealthyStatus, IEnumerable<string>? tags)
+    internal AkkaHealthCheckRegistration AddDefaultHealthCheck(string? name, HealthStatus unHealthyStatus, IEnumerable<string>? tags)
     {
         var pluginId = $"akka.persistence.snapshot-store.{SnapshotStoreId}";
-        var healthCheckTags = tags?.ToList() ?? new List<string> { "akka", "persistence", "snapshot-store" };
+        var healthCheckTags = tags?.ToList() ?? ["akka", "persistence", "snapshot-store"];
         var registration = new AkkaHealthCheckRegistration(
-            name ?? $"Akka.Persistence.SnapshotStore.{SnapshotStoreId}",
+            name ?? pluginId,
             new SnapshotStoreHealthCheck(pluginId),
             unHealthyStatus,
             healthCheckTags);
@@ -63,7 +74,7 @@ public sealed class AkkaPersistenceSnapshotBuilder
     internal void Build()
     {
         // add the health checks if specified
-        if(HealthCheckRegistration != null)
-            Builder.WithHealthCheck(HealthCheckRegistration);
+        foreach(var hc in HealthCheckRegistrations)
+            Builder.WithHealthCheck(hc);
     }
 }

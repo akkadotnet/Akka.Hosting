@@ -45,7 +45,7 @@ public sealed class AkkaPersistenceJournalBuilder
     }
 
     /// <summary>
-    /// Akka.Persistence plugins that have custom health checks (see https://github.com/akkadotnet/Akka.Hosting/issues/678)
+    /// For Akka.Persistence plugins that have custom health checks (see https://github.com/akkadotnet/Akka.Hosting/issues/678)
     /// </summary>
     /// <param name="registration">The custom health check registration.</param>
     /// <returns>The current builder instance for method chaining.</returns>
@@ -90,7 +90,7 @@ public sealed class AkkaPersistenceJournalBuilder
         }
     }
 
-    internal AkkaHealthCheckRegistration AddDefaultHealthCheck(string? name, HealthStatus unHealthyStatus, IEnumerable<string>? tags)
+    private AkkaHealthCheckRegistration AddDefaultHealthCheck(string? name, HealthStatus unHealthyStatus, IEnumerable<string>? tags)
     {
         var pluginId = $"akka.persistence.journal.{JournalId}";
         var healthCheckTags = tags?.ToList() ?? ["akka", "persistence", "journal"];
