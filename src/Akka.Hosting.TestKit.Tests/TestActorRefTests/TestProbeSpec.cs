@@ -84,7 +84,7 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
         }
 
         [Fact]
-        public void TestProbe_restart_a_failing_child_if_the_given_supervisor_says_so()
+        public async Task TestProbe_restart_a_failing_child_if_the_given_supervisor_says_so()
         {
             var probe = CreateTestProbe();
             var restartWatcher = CreateTestProbe();
@@ -95,8 +95,8 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
             child.Tell("hello");
 
             // Wait for exactly 2 restart notifications
-            restartWatcher.ExpectMsg("restarted");
-            restartWatcher.ExpectMsg("restarted");
+            await restartWatcher.ExpectMsgAsync("restarted");
+            await restartWatcher.ExpectMsgAsync("restarted");
         }
 
         class FailingActor : ActorBase
