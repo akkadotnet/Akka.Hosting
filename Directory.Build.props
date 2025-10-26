@@ -2,13 +2,16 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.5.55</VersionPrefix>
-    <PackageReleaseNotes>**Bug Fixes**
-* [Fix event adapter callback API not invoking adapters at runtime](https://github.com/akkadotnet/Akka.Hosting/pull/674) - resolved critical bug where event adapters configured via the callback API were not being invoked at runtime. This fix is especially important for users who have migrated to the callback pattern following the deprecation of `JournalOptions.Adapters` property. The issue was caused by unnecessary fallback configuration that interfered with adapter registration during HOCON merging.
+    <VersionPrefix>1.5.55-beta1</VersionPrefix>
+    <PackageReleaseNotes>**New Features**
+* [Support custom health check registrations on Journal and Snapshot Builders](https://github.com/akkadotnet/Akka.Hosting/pull/683) - added API to support custom health check registrations for Akka.Persistence plugins, related to [issue #678](https://github.com/akkadotnet/Akka.Hosting/issues/678)
+
+**Enhancements**
+* [Add customizable tags parameter to health check methods](https://github.com/akkadotnet/Akka.Hosting/pull/681) - resolved [issue #679](https://github.com/akkadotnet/Akka.Hosting/issues/679) by adding new overload allowing custom tags for health checks while maintaining backward compatibility
+* [Made it easier to customize failureState and tags for all health checks](https://github.com/akkadotnet/Akka.Hosting/pull/682) - simplified health check configuration API for all health checks
 
 **Updates**
-* [Add SSL/TLS configuration settings from Akka.NET 1.5.52 and 1.5.53](https://github.com/akkadotnet/Akka.Hosting/pull/675) - updated SSL/TLS configuration options to support new features and settings introduced in Akka.NET versions 1.5.52 and 1.5.53
-* [Bump Akka version from 1.5.52 to 1.5.53](https://github.com/akkadotnet/akka.net/releases/tag/1.5.53)</PackageReleaseNotes>
+* [Bump Akka version from 1.5.53 to 1.5.55](https://github.com/akkadotnet/akka.net/releases/tag/1.5.55)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
