@@ -89,9 +89,15 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
             var restarts = new AtomicCounter(0);
             var probe = CreateTestProbe();
             var child = probe.ChildActorOf(Props.Create(() => new FailingActor(restarts)), SupervisorStrategy.DefaultStrategy);
+
+            // Send messages BEFORE AwaitAssert to avoid restart storm
+            // Each message will trigger one restart
+            child.Tell("hello");
+            child.Tell("hello");
+
+            // Only check the counter, don't send more messages
             AwaitAssert(() =>
             {
-                child.Tell("hello");
                 restarts.Current.Should().BeGreaterThan(1);
             });
         }
@@ -113,6 +119,7 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
             protected override void PostRestart(Exception reason)
             {
                 Restarts.IncrementAndGet();
+                base.PostRestart(reason);
             }
         }
     }
