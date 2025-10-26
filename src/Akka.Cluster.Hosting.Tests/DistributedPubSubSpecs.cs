@@ -109,7 +109,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
         
         // Join cluster
         var myAddress = _cluster!.SelfAddress;
-        await _cluster.JoinAsync(myAddress, cancellationTokenSource.Token); // force system to wait until we're up
+        await _cluster.JoinAsync(myAddress); // force system to wait until we're up
 
         // Prepare test
         var registry = _host.Services.GetRequiredService<ActorRegistry>();
