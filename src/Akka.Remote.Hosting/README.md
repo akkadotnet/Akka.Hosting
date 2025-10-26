@@ -52,3 +52,39 @@ using var host = new HostBuilder()
 
 await host.RunAsync();
 ```
+
+## SSL/TLS Configuration
+
+Akka.Remote supports SSL/TLS encryption for secure communication between actor systems. Starting with Akka.NET v1.5.55, you can provide custom certificate validation callbacks using the `CertificateValidation` helper class.
+
+```csharp
+using System.Security.Cryptography.X509Certificates;
+using Akka.Remote.Transport.DotNetty;
+
+var certificate = new X509Certificate2("/path/to/certificate.pfx", "certificate-password");
+
+using var host = new HostBuilder()
+    .ConfigureServices((context, services) =>
+    {
+        services.AddAkka("secureSystem", (builder, provider) =>
+        {
+            builder.WithRemoting(options =>
+            {
+                options.HostName = "127.0.0.1";
+                options.Port = 4053;
+                options.EnableSsl = true;
+                options.Ssl.X509Certificate = certificate;
+
+                // Use built-in validators for common scenarios
+                options.Ssl.CustomValidator = CertificateValidation.Combine(
+                    CertificateValidation.ValidateChain(),
+                    CertificateValidation.ValidateSubject("CN=*.mycompany.com")
+                );
+            });
+        });
+    }).Build();
+
+await host.RunAsync();
+```
+
+Available `CertificateValidation` methods: `ValidateChain()`, `ValidateHostname()`, `PinnedCertificate()`, `ValidateSubject()`, `ValidateIssuer()`, and `Combine()`.
