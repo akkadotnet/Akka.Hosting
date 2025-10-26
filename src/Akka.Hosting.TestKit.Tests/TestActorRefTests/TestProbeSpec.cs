@@ -84,27 +84,30 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
         }
 
         [Fact]
-        public void TestProbe_restart_a_failing_child_if_the_given_supervisor_says_so()
+        public async Task TestProbe_restart_a_failing_child_if_the_given_supervisor_says_so()
         {
-            var restarts = new AtomicCounter(0);
             var probe = CreateTestProbe();
-            var child = probe.ChildActorOf(Props.Create(() => new FailingActor(restarts)), SupervisorStrategy.DefaultStrategy);
-            AwaitAssert(() =>
-            {
-                child.Tell("hello");
-                restarts.Current.Should().BeGreaterThan(1);
-            });
+            var restartWatcher = CreateTestProbe();
+            var child = probe.ChildActorOf(Props.Create(() => new FailingActor(restartWatcher)), SupervisorStrategy.DefaultStrategy);
+
+            // Send two messages that will cause failures and restarts
+            child.Tell("hello");
+            child.Tell("hello");
+
+            // Wait for exactly 2 restart notifications
+            await restartWatcher.ExpectMsgAsync("restarted");
+            await restartWatcher.ExpectMsgAsync("restarted");
         }
-        
+
         class FailingActor : ActorBase
         {
-            private AtomicCounter Restarts { get; }
-            
-            public FailingActor(AtomicCounter restarts)
+            private readonly IActorRef _restartWatcher;
+
+            public FailingActor(IActorRef restartWatcher)
             {
-                Restarts = restarts;
+                _restartWatcher = restartWatcher;
             }
-            
+
             protected override bool Receive(object message)
             {
                 throw new Exception("Simulated failure");
@@ -112,7 +115,8 @@ namespace Akka.Hosting.TestKit.Tests.TestActorRefTests
 
             protected override void PostRestart(Exception reason)
             {
-                Restarts.IncrementAndGet();
+                _restartWatcher.Tell("restarted");
+                base.PostRestart(reason);
             }
         }
     }
