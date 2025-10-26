@@ -7,9 +7,11 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Akka.Configuration;
+using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Transport.DotNetty;
 
@@ -112,14 +114,20 @@ namespace Akka.Remote.Hosting
             var requireMutualAuth = Ssl.RequireMutualAuthentication ?? true; // Default to true as per v1.5.52
             var validateHostname = Ssl.ValidateCertificateHostname ?? false; // Default to false as per v1.5.53
 
-            // Use the 4-parameter constructor if any of the new settings are provided, otherwise use the legacy constructor for backward compatibility
-            if (Ssl.RequireMutualAuthentication.HasValue || Ssl.ValidateCertificateHostname.HasValue)
+            // Choose the appropriate constructor based on which settings are provided
+            if (Ssl.CustomValidator != null)
             {
+                // Use the 5-parameter constructor with custom validator (v1.5.55+)
+                builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation, requireMutualAuth, validateHostname, Ssl.CustomValidator));
+            }
+            else if (Ssl.RequireMutualAuthentication.HasValue || Ssl.ValidateCertificateHostname.HasValue)
+            {
+                // Use the 4-parameter constructor (v1.5.52/v1.5.53+)
                 builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation, requireMutualAuth, validateHostname));
             }
             else
             {
-                // Use legacy constructor for backward compatibility when new settings are not specified
+                // Use legacy 2-parameter constructor for backward compatibility when new settings are not specified
                 builder.AddSetup(new DotNettySslSetup(Ssl.X509Certificate, suppressValidation));
             }
         }
@@ -239,6 +247,30 @@ namespace Akka.Remote.Hosting
         /// <b>Default:</b> false (as of Akka.NET v1.5.53)
         /// </summary>
         public bool? ValidateCertificateHostname { get; set; }
+
+        /// <summary>
+        /// <para>
+        /// Custom certificate validation callback for advanced validation scenarios.
+        /// When provided, this callback takes precedence over config-based validation.
+        /// </para>
+        /// <para>
+        /// Use this to implement custom validation logic such as certificate pinning,
+        /// subject/issuer matching, or other business-specific validation rules.
+        /// </para>
+        /// <para>
+        /// The callback parameters are:
+        /// - X509Certificate2?: The peer certificate to validate
+        /// - X509Chain?: The X509 chain for validation
+        /// - string: The remote peer identifier
+        /// - SslPolicyErrors: SSL policy errors from standard validation
+        /// - ILoggingAdapter: Logger for diagnostics
+        /// </para>
+        /// <para>
+        /// Returns true to accept the certificate, false to reject it.
+        /// </para>
+        /// <b>Available since:</b> Akka.NET v1.5.55
+        /// </summary>
+        public Transport.DotNetty.CertificateValidationCallback? CustomValidator { get; set; }
 
         internal void Build(StringBuilder builder)
         {

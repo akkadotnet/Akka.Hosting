@@ -54,6 +54,7 @@
     {
         public SslOptions() { }
         public Akka.Remote.Hosting.SslCertificateOptions CertificateOptions { get; set; }
+        public Akka.Remote.Transport.DotNetty.CertificateValidationCallback? CustomValidator { get; set; }
         public bool? RequireMutualAuthentication { get; set; }
         public bool? SuppressValidation { get; set; }
         public bool? ValidateCertificateHostname { get; set; }

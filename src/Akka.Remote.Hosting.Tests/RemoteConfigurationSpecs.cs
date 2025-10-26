@@ -503,6 +503,45 @@ public class RemoteConfigurationSpecs
         setup.ValidateCertificateHostname.Should().BeTrue();
     }
 
+    [Fact(DisplayName = "RemoteOptions with CustomValidator should properly configure DotNettySslSetup with custom validation")]
+    public void WithRemotingCustomValidatorDotNettySslSetupTest()
+    {
+        // arrange
+        var certificate = new X509Certificate2("./Resources/akka-validcert.pfx", "password");
+        var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
+
+        // Create a simple custom validator for testing
+        Transport.DotNetty.CertificateValidationCallback customValidator = (cert, chain, peer, errors, log) =>
+        {
+            // This is just a test validator - in real usage, this would contain actual validation logic
+            return cert != null && cert.Thumbprint == certificate.Thumbprint;
+        };
+
+        builder.WithRemoting(new RemoteOptions
+        {
+            EnableSsl = true,
+            Ssl = new SslOptions
+            {
+                SuppressValidation = false,
+                RequireMutualAuthentication = true,
+                ValidateCertificateHostname = false,
+                X509Certificate = certificate,
+                CustomValidator = customValidator
+            }
+        });
+
+        // act
+        var setup = (DotNettySslSetup)builder.Setups.First(s => s is DotNettySslSetup);
+
+        // assert
+        setup.Certificate.Should().Be(certificate);
+        setup.SuppressValidation.Should().BeFalse();
+        setup.RequireMutualAuthentication.Should().BeTrue();
+        setup.ValidateCertificateHostname.Should().BeFalse();
+        setup.CustomValidator.Should().NotBeNull();
+        setup.CustomValidator.Should().BeSameAs(customValidator);
+    }
+
     [Fact(DisplayName = "RemoteOptions without new SSL/TLS settings should use default values")]
     public void WithRemotingDefaultSslSettingsTest()
     {
