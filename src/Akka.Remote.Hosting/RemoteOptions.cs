@@ -107,6 +107,14 @@ namespace Akka.Remote.Hosting
             if (sb.Length > 0)
                 builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
 
+            // SSL configuration strategy:
+            // 1. If X509Certificate object is provided -> Use DotNettySslSetup (takes precedence over HOCON)
+            // 2. If X509Certificate is null but SSL settings configured -> Use HOCON configuration only
+            //
+            // Important: DotNettySslSetup ALWAYS takes precedence when present, causing HOCON SSL settings
+            // to be completely ignored. We must not emit both to avoid confusion.
+            // See: https://github.com/akkadotnet/akka.net/blob/dev/src/core/Akka.Remote/Transport/DotNetty/DotNettyTransportSettings.cs#L163-L164
+
             if (EnableSsl is false || Ssl.X509Certificate == null)
                 return;
 
@@ -188,8 +196,15 @@ namespace Akka.Remote.Hosting
                 {
                     if(Ssl is null)
                         throw new ConfigurationException("Ssl property need to be populated when EnableSsl is set to true.");
-                
-                    Ssl.Build(tcpSb);
+
+                    // Only emit HOCON SSL configuration if we're NOT going to create a DotNettySslSetup
+                    // When DotNettySslSetup is present, it takes precedence and HOCON SSL settings are ignored
+                    // See: https://github.com/akkadotnet/akka.net/issues/7914 and the warning at
+                    // https://github.com/akkadotnet/akka.net/blob/dev/src/core/Akka.Remote/Transport/DotNetty/DotNettyTransportSettings.cs#L163-L164
+                    if (Ssl.X509Certificate == null)
+                    {
+                        Ssl.Build(tcpSb);
+                    }
                 }
             }
 
