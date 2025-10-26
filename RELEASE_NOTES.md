@@ -1,3 +1,16 @@
+#### 1.5.55 October 26th 2025 ####
+
+**New Features**
+* [Support custom health check registrations on Journal and Snapshot Builders](https://github.com/akkadotnet/Akka.Hosting/pull/683) - added API to support custom health check registrations for Akka.Persistence plugins, related to [issue #678](https://github.com/akkadotnet/Akka.Hosting/issues/678)
+* [Add support for custom certificate validation callbacks](https://github.com/akkadotnet/Akka.Hosting/pull/686) - integrated the new `CertificateValidationCallback` feature from Akka.NET v1.5.55, allowing users to provide custom certificate validation logic for SSL/TLS connections. Enables advanced scenarios including certificate pinning, subject/issuer matching, custom business validation rules, and advanced mTLS scenarios
+
+**Enhancements**
+* [Add customizable tags parameter to health check methods](https://github.com/akkadotnet/Akka.Hosting/pull/681) - resolved [issue #679](https://github.com/akkadotnet/Akka.Hosting/issues/679) by adding new overload allowing custom tags for health checks while maintaining backward compatibility
+* [Made it easier to customize failureState and tags for all health checks](https://github.com/akkadotnet/Akka.Hosting/pull/682) - simplified health check configuration API for all health checks
+
+**Updates**
+* [Bump Akka version from 1.5.53 to 1.5.55](https://github.com/akkadotnet/akka.net/releases/tag/1.5.55)
+
 #### 1.5.55-beta1 October 26th 2025 ####
 
 **New Features**
