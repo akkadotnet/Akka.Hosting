@@ -135,7 +135,7 @@ namespace Akka.Persistence.Hosting
             // Apply the builder configuration (adapters + health checks) if provided
             if (configureBuilder != null)
             {
-                var jBuilder = new AkkaPersistenceJournalBuilder(journalOptions.Identifier, builder);
+                var jBuilder = new AkkaPersistenceJournalBuilder(journalOptions.Identifier, builder, journalOptions);
                 configureBuilder(jBuilder);
                 jBuilder.Build();
             }
@@ -190,7 +190,7 @@ namespace Akka.Persistence.Hosting
             // Apply the builder configuration (health checks) if provided
             if (configureBuilder != null)
             {
-                var sBuilder = new AkkaPersistenceSnapshotBuilder(snapshotOptions.Identifier, builder);
+                var sBuilder = new AkkaPersistenceSnapshotBuilder(snapshotOptions.Identifier, builder, snapshotOptions);
                 configureBuilder(sBuilder);
                 sBuilder.Build();
             }

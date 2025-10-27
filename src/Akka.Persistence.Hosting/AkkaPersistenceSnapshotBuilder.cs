@@ -14,10 +14,31 @@ public sealed class AkkaPersistenceSnapshotBuilder
     internal readonly AkkaConfigurationBuilder Builder;
     internal readonly HashSet<AkkaHealthCheckRegistration> HealthCheckRegistrations = [];
 
+    /// <summary>
+    /// The <see cref="SnapshotOptions"/> instance used to configure this snapshot store.
+    /// This property allows extension methods to access snapshot store configuration details
+    /// (such as connection strings) without requiring them as explicit parameters.
+    /// </summary>
+    public SnapshotOptions? Options { get; }
+
     public AkkaPersistenceSnapshotBuilder(string snapshotStoreId, AkkaConfigurationBuilder builder)
     {
         SnapshotStoreId = snapshotStoreId;
         Builder = builder;
+        Options = null;
+    }
+
+    /// <summary>
+    /// Constructor that accepts snapshot options for improved extension method ergonomics.
+    /// </summary>
+    /// <param name="snapshotStoreId">The snapshot store identifier</param>
+    /// <param name="builder">The Akka configuration builder</param>
+    /// <param name="options">The snapshot options instance</param>
+    public AkkaPersistenceSnapshotBuilder(string snapshotStoreId, AkkaConfigurationBuilder builder, SnapshotOptions options)
+    {
+        SnapshotStoreId = snapshotStoreId;
+        Builder = builder;
+        Options = options;
     }
 
     /// <summary>
