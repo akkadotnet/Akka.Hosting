@@ -1,3 +1,8 @@
+#### 1.5.55.1 October 27th 2025 ####
+
+**Enhancements**
+* [Expose options in journal and snapshot builders](https://github.com/akkadotnet/Akka.Hosting/pull/691) - resolved [issue #690](https://github.com/akkadotnet/Akka.Hosting/issues/690) by adding `Options` property to `AkkaPersistenceJournalBuilder` and `AkkaPersistenceSnapshotBuilder`. Extension methods can now access configuration details without requiring options as explicit parameters, eliminating redundant option passing for connectivity health checks and other plugin-specific features
+
 #### 1.5.55 October 26th 2025 ####
 
 **New Features**
