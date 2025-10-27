@@ -22,6 +22,8 @@ namespace Akka.Persistence.Hosting
     public sealed class AkkaPersistenceJournalBuilder
     {
         public AkkaPersistenceJournalBuilder(string journalId, Akka.Hosting.AkkaConfigurationBuilder builder) { }
+        public AkkaPersistenceJournalBuilder(string journalId, Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.JournalOptions options) { }
+        public Akka.Persistence.Hosting.JournalOptions? Options { get; }
         public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder AddEventAdapter<TAdapter>(string eventAdapterName, System.Collections.Generic.IEnumerable<System.Type> boundTypes)
             where TAdapter : Akka.Persistence.Journal.IEventAdapter { }
         public Akka.Persistence.Hosting.AkkaPersistenceJournalBuilder AddReadEventAdapter<TAdapter>(string eventAdapterName, System.Collections.Generic.IEnumerable<System.Type> boundTypes)
@@ -34,6 +36,8 @@ namespace Akka.Persistence.Hosting
     public sealed class AkkaPersistenceSnapshotBuilder
     {
         public AkkaPersistenceSnapshotBuilder(string snapshotStoreId, Akka.Hosting.AkkaConfigurationBuilder builder) { }
+        public AkkaPersistenceSnapshotBuilder(string snapshotStoreId, Akka.Hosting.AkkaConfigurationBuilder builder, Akka.Persistence.Hosting.SnapshotOptions options) { }
+        public Akka.Persistence.Hosting.SnapshotOptions? Options { get; }
         public Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder WithCustomHealthCheck(Akka.Hosting.AkkaHealthCheckRegistration registration) { }
         public Akka.Persistence.Hosting.AkkaPersistenceSnapshotBuilder WithHealthCheck(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus unHealthyStatus = 1, string? name = null, System.Collections.Generic.IEnumerable<string>? tags = null) { }
     }

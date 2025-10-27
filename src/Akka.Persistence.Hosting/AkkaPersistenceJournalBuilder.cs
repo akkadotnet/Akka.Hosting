@@ -21,10 +21,31 @@ public sealed class AkkaPersistenceJournalBuilder
     internal readonly Dictionary<string, Type> Adapters = new Dictionary<string, Type>();
     internal readonly HashSet<AkkaHealthCheckRegistration> HealthCheckRegistrations = [];
 
+    /// <summary>
+    /// The <see cref="JournalOptions"/> instance used to configure this journal.
+    /// This property allows extension methods to access journal configuration details
+    /// (such as connection strings) without requiring them as explicit parameters.
+    /// </summary>
+    public JournalOptions? Options { get; }
+
     public AkkaPersistenceJournalBuilder(string journalId, AkkaConfigurationBuilder builder)
     {
         JournalId = journalId;
         Builder = builder;
+        Options = null;
+    }
+
+    /// <summary>
+    /// Constructor that accepts journal options for improved extension method ergonomics.
+    /// </summary>
+    /// <param name="journalId">The journal identifier</param>
+    /// <param name="builder">The Akka configuration builder</param>
+    /// <param name="options">The journal options instance</param>
+    public AkkaPersistenceJournalBuilder(string journalId, AkkaConfigurationBuilder builder, JournalOptions options)
+    {
+        JournalId = journalId;
+        Builder = builder;
+        Options = options;
     }
 
     /// <summary>
