@@ -60,15 +60,16 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         var reply = await _testActor.Ask<string>("User {UserId} with email {Email} logged in|12345|user@example.com");
         reply.Should().Be("OK");
 
-        await Task.Delay(500); // Give logger time to process
+        await AwaitAssertAsync(() =>
+        {
+            _logger.LogEntries.Should().NotBeEmpty();
+            var entry = _logger.LogEntries.First(e => e.Message.Contains("User") && e.Message.Contains("logged in"));
 
-        _logger.LogEntries.Should().NotBeEmpty();
-        var entry = _logger.LogEntries.First(e => e.Message.Contains("User") && e.Message.Contains("logged in"));
-
-        entry.State.Should().ContainKey("UserId");
-        entry.State.Should().ContainKey("Email");
-        entry.State["UserId"].Should().Be(12345);
-        entry.State["Email"].Should().Be("user@example.com");
+            entry.State.Should().ContainKey("UserId");
+            entry.State.Should().ContainKey("Email");
+            entry.State["UserId"].Should().Be(12345);
+            entry.State["Email"].Should().Be("user@example.com");
+        });
     }
 
     [Fact(DisplayName = "Should extract positional template properties and add to MEL state dictionary")]
@@ -80,15 +81,16 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         var reply = await _testActor.Ask<string>("User {0} logged in from {1}|Bob|192.168.1.1");
         reply.Should().Be("OK");
 
-        await Task.Delay(500);
+        await AwaitAssertAsync(() =>
+        {
+            _logger.LogEntries.Should().NotBeEmpty();
+            var entry = _logger.LogEntries.First(e => e.Message.Contains("User") && e.Message.Contains("logged in from"));
 
-        _logger.LogEntries.Should().NotBeEmpty();
-        var entry = _logger.LogEntries.First(e => e.Message.Contains("User") && e.Message.Contains("logged in from"));
-
-        entry.State.Should().ContainKey("0");
-        entry.State.Should().ContainKey("1");
-        entry.State["0"].Should().Be("Bob");
-        entry.State["1"].Should().Be("192.168.1.1");
+            entry.State.Should().ContainKey("0");
+            entry.State.Should().ContainKey("1");
+            entry.State["0"].Should().Be("Bob");
+            entry.State["1"].Should().Be("192.168.1.1");
+        });
     }
 
     [Fact(DisplayName = "Should handle multiple named properties in template")]
@@ -100,19 +102,20 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         var reply = await _testActor.Ask<string>("Order {OrderId} for customer {CustomerId}: {Amount} {Currency}|ORD-001|CUST-456|99.99|USD");
         reply.Should().Be("OK");
 
-        await Task.Delay(500);
+        await AwaitAssertAsync(() =>
+        {
+            _logger.LogEntries.Should().NotBeEmpty();
+            var entry = _logger.LogEntries.First(e => e.Message.Contains("Order") && e.Message.Contains("customer"));
 
-        _logger.LogEntries.Should().NotBeEmpty();
-        var entry = _logger.LogEntries.First(e => e.Message.Contains("Order") && e.Message.Contains("customer"));
-
-        entry.State.Should().ContainKey("OrderId");
-        entry.State.Should().ContainKey("CustomerId");
-        entry.State.Should().ContainKey("Amount");
-        entry.State.Should().ContainKey("Currency");
-        entry.State["OrderId"].Should().Be("ORD-001");
-        entry.State["CustomerId"].Should().Be("CUST-456");
-        entry.State["Amount"].Should().Be(99.99);
-        entry.State["Currency"].Should().Be("USD");
+            entry.State.Should().ContainKey("OrderId");
+            entry.State.Should().ContainKey("CustomerId");
+            entry.State.Should().ContainKey("Amount");
+            entry.State.Should().ContainKey("Currency");
+            entry.State["OrderId"].Should().Be("ORD-001");
+            entry.State["CustomerId"].Should().Be("CUST-456");
+            entry.State["Amount"].Should().Be(99.99);
+            entry.State["Currency"].Should().Be("USD");
+        });
     }
 
     [Fact(DisplayName = "Should preserve Akka metadata properties alongside semantic logging properties")]
@@ -124,20 +127,21 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         var reply = await _testActor.Ask<string>("User {UserId} action|999");
         reply.Should().Be("OK");
 
-        await Task.Delay(500);
+        await AwaitAssertAsync(() =>
+        {
+            _logger.LogEntries.Should().NotBeEmpty();
+            var entry = _logger.LogEntries.First(e => e.Message.Contains("User") && e.Message.Contains("action"));
 
-        _logger.LogEntries.Should().NotBeEmpty();
-        var entry = _logger.LogEntries.First(e => e.Message.Contains("User") && e.Message.Contains("action"));
+            // Semantic property
+            entry.State.Should().ContainKey("UserId");
+            entry.State["UserId"].Should().Be(999);
 
-        // Semantic property
-        entry.State.Should().ContainKey("UserId");
-        entry.State["UserId"].Should().Be(999);
-
-        // Akka metadata properties
-        entry.State.Should().ContainKey("ActorPath");
-        entry.State.Should().ContainKey("LogSource");
-        entry.State.Should().ContainKey("Thread");
-        entry.State.Should().ContainKey("Timestamp");
+            // Akka metadata properties
+            entry.State.Should().ContainKey("ActorPath");
+            entry.State.Should().ContainKey("LogSource");
+            entry.State.Should().ContainKey("Thread");
+            entry.State.Should().ContainKey("Timestamp");
+        });
     }
 
     [Fact(DisplayName = "Should include {OriginalFormat} key per MEL convention")]
@@ -149,18 +153,19 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         var reply = await _testActor.Ask<string>("Processing item {ItemId}|42");
         reply.Should().Be("OK");
 
-        await Task.Delay(500);
+        await AwaitAssertAsync(() =>
+        {
+            _logger.LogEntries.Should().NotBeEmpty();
+            var entry = _logger.LogEntries.First(e => e.Message.Contains("Processing item"));
 
-        _logger.LogEntries.Should().NotBeEmpty();
-        var entry = _logger.LogEntries.First(e => e.Message.Contains("Processing item"));
+            // MEL convention key
+            entry.State.Should().ContainKey("{OriginalFormat}");
+            entry.State["{OriginalFormat}"].Should().Be("Processing item {ItemId}");
 
-        // MEL convention key
-        entry.State.Should().ContainKey("{OriginalFormat}");
-        entry.State["{OriginalFormat}"].Should().Be("Processing item {ItemId}");
-
-        // Semantic property
-        entry.State.Should().ContainKey("ItemId");
-        entry.State["ItemId"].Should().Be(42);
+            // Semantic property
+            entry.State.Should().ContainKey("ItemId");
+            entry.State["ItemId"].Should().Be(42);
+        });
     }
 
     [Fact(DisplayName = "Should handle format specifiers in named templates")]
@@ -173,17 +178,18 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         var reply = await _testActor.Ask<string>("Total amount: {Amount:N2}|1234.5678");
         reply.Should().Be("OK");
 
-        await Task.Delay(500);
+        await AwaitAssertAsync(() =>
+        {
+            _logger.LogEntries.Should().NotBeEmpty();
+            var entry = _logger.LogEntries.First(e => e.Message.Contains("Total amount"));
 
-        _logger.LogEntries.Should().NotBeEmpty();
-        var entry = _logger.LogEntries.First(e => e.Message.Contains("Total amount"));
+            // Property name is "Amount" (format specifier removed by Akka's parser)
+            entry.State.Should().ContainKey("Amount");
+            entry.State["Amount"].Should().Be(1234.5678);
 
-        // Property name is "Amount" (format specifier removed by Akka's parser)
-        entry.State.Should().ContainKey("Amount");
-        entry.State["Amount"].Should().Be(1234.5678);
-
-        // Original format includes the specifier
-        entry.State["{OriginalFormat}"].Should().Be("Total amount: {Amount:N2}");
+            // Original format includes the specifier
+            entry.State["{OriginalFormat}"].Should().Be("Total amount: {Amount:N2}");
+        });
     }
 
     [Fact(DisplayName = "Should handle empty/no properties gracefully")]
@@ -195,19 +201,20 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         var reply = await _testActor.Ask<string>("No template properties here|");
         reply.Should().Be("OK");
 
-        await Task.Delay(500);
+        await AwaitAssertAsync(() =>
+        {
+            _logger.LogEntries.Should().NotBeEmpty();
+            var entry = _logger.LogEntries.First(e => e.Message.Contains("No template properties here"));
 
-        _logger.LogEntries.Should().NotBeEmpty();
-        var entry = _logger.LogEntries.First(e => e.Message.Contains("No template properties here"));
+            // Should still have Akka metadata properties
+            entry.State.Should().ContainKey("ActorPath");
+            entry.State.Should().ContainKey("LogSource");
+            entry.State.Should().ContainKey("Thread");
+            entry.State.Should().ContainKey("Timestamp");
 
-        // Should still have Akka metadata properties
-        entry.State.Should().ContainKey("ActorPath");
-        entry.State.Should().ContainKey("LogSource");
-        entry.State.Should().ContainKey("Thread");
-        entry.State.Should().ContainKey("Timestamp");
-
-        // Should have {OriginalFormat}
-        entry.State.Should().ContainKey("{OriginalFormat}");
+            // Should have {OriginalFormat}
+            entry.State.Should().ContainKey("{OriginalFormat}");
+        });
     }
 
     private async Task WaitUntilSilent(TimeSpan timeout)
@@ -231,6 +238,40 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         {
             cts.Dispose();
         }
+    }
+
+    private async Task AwaitAssertAsync(Action assertion, TimeSpan? timeout = null, TimeSpan? interval = null)
+    {
+        var maxWait = timeout ?? TimeSpan.FromSeconds(3);
+        var checkInterval = interval ?? TimeSpan.FromMilliseconds(100);
+        var cts = new CancellationTokenSource(maxWait);
+
+        Exception? lastException = null;
+        while (!cts.Token.IsCancellationRequested)
+        {
+            try
+            {
+                assertion();
+                return; // Assertion passed
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                try
+                {
+                    await Task.Delay(checkInterval, cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
+        // If we get here, we timed out - throw the last exception
+        throw new TimeoutException(
+            $"Assertion did not pass within {maxWait.TotalSeconds}s",
+            lastException);
     }
 
     private static async Task<IHost> SetupHost(SemanticTestLogger logger)
