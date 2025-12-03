@@ -1,6 +1,10 @@
-#### 1.5.57-Beta1 December 3rd 2025 ####
+#### 1.5.57-beta2 December 3rd 2025 ####
 
-**Force beta suffix for CI/CD**
+**New Features**
+* [Add semantic logging support for Akka.NET 1.5.56+](https://github.com/akkadotnet/Akka.Hosting/pull/693) - enables Microsoft.Extensions.Logging to receive properly structured state dictionaries instead of pre-formatted strings. When using Akka.NET 1.5.56+, log messages now include structured properties from the semantic logging API along with Akka metadata (ActorPath, Timestamp, Thread, LogSource). Fully backwards compatible with older Akka.NET versions.
+
+**Updates**
+* [Bump Akka version from 1.5.55 to 1.5.57-beta2](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57-beta2)
 
 #### 1.5.55.1 October 27th 2025 ####
 
