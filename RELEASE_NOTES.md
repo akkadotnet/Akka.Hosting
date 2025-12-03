@@ -1,3 +1,7 @@
+#### 1.5.57-Beta1 December 3rd 2025 ####
+
+**Force beta suffix for CI/CD**
+
 #### 1.5.55.1 October 27th 2025 ####
 
 **Enhancements**
