@@ -65,7 +65,7 @@ namespace Akka.Hosting.Logging
             var logLevel = GetLogLevel(log.LogLevel());
 
             // Use semantic logging to extract structured properties
-            if (log.TryGetProperties(out var properties))
+            if (log.TryGetProperties(out var properties) && properties is not null)
             {
                 // Create state dictionary with structured properties from the log message
                 var state = new Dictionary<string, object>(properties.Count + 4);
