@@ -138,9 +138,12 @@ public class LoggerConfigBuilderSpecs
         
         cfg = new DeadLetterOptions
         {
-            ShouldLog = TriStateValue.Some
+            LogCount = 10
         }.ToString();
         cfg.GetInt("akka.log-dead-letters").Should().Be(10);
+
+        cfg = new DeadLetterOptions().ToString();
+        cfg.IsEmpty.Should().BeTrue();
     }
 
     [Fact(DisplayName = "WithLogFilter should populate the LogFilterBuilder property")]
