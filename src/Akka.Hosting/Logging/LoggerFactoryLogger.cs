@@ -91,7 +91,7 @@ namespace Akka.Hosting.Logging
             // Use LogMessage.ToString() which applies the correct formatter (SemanticLogMessageFormatter)
             // instead of string.Format() which only works with positional {0} placeholders
             _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                (s, ex) => log.Message is LogMessage logMsg ? logMsg.ToString() ?? string.Empty : log.Message?.ToString() ?? string.Empty);
+                (s, ex) => log.Message?.ToString() ?? string.Empty);
         }
 
         private static LogLevel GetLogLevel(Event.LogLevel level)
