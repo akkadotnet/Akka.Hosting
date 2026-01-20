@@ -90,8 +90,20 @@ namespace Akka.Hosting.Logging
             // Log with structured state
             // Use LogMessage.ToString() which applies the correct formatter (SemanticLogMessageFormatter)
             // instead of string.Format() which only works with positional {0} placeholders
-            _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                (s, ex) => log.Message?.ToString() ?? string.Empty);
+            _akkaLogger.Log(logLevel, new EventId(), state, log.Cause, (s, ex) =>
+            {
+                try
+                {
+                    return log.ToString();
+                }
+                catch
+                {
+                    if(log.Message is LogMessage msg)
+                        return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Template: [{msg.Format}], args: [{string.Join(",", msg.Unformatted())}]";
+                    
+                    return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Message: [{log.Message}]";
+                }
+            });
         }
 
         private static LogLevel GetLogLevel(Event.LogLevel level)
