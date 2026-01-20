@@ -52,6 +52,24 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
         });
     }
 
+    private void AssertMetadata(BugReproLogEntry entry, string? format = null)
+    {
+        entry.State.Should().ContainKey("ActorPath");
+        entry.State.Should().ContainKey("Timestamp");
+        entry.State.Should().ContainKey("Thread");
+        entry.State.Should().ContainKey("LogSource");
+        entry.State.Should().ContainKey("{OriginalFormat}");
+        
+        entry.State["ActorPath"].Should().BeOfType<string>();
+        entry.State["Timestamp"].Should().BeOfType<DateTime>();
+        entry.State["Thread"].Should().BeOfType<int>();
+        entry.State["LogSource"].Should().BeOfType<string>();
+        entry.State["{OriginalFormat}"].Should().BeOfType<string>();
+
+        if (format is not null)
+            entry.State["{OriginalFormat}"].Should().Be(format);
+    }
+    
     /// <summary>
     /// BUG REPRO: Named template placeholders should have values substituted in the formatted message.
     /// This test demonstrates the bug where {UserId} is NOT replaced with the actual value.
@@ -75,6 +93,11 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
             "the formatted message should contain the substituted value, not the raw template placeholder");
         entry.Message.Should().NotContain("{UserId}",
             "the formatted message should NOT contain the raw template placeholder");
+        
+        entry.State.Should().ContainKey("UserId");
+        entry.State["UserId"].Should().Be(12345);
+        
+        AssertMetadata(entry, "User {UserId} logged in");
     }
 
     /// <summary>
@@ -99,6 +122,11 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
             "positional placeholders should be substituted correctly");
         entry.Message.Should().NotContain("{0}",
             "positional placeholders should be replaced");
+        
+        entry.State.Should().ContainKey("0");
+        entry.State["0"].Should().Be(12345);
+        
+        AssertMetadata(entry, "User {0} logged in");
     }
 
     /// <summary>
@@ -127,6 +155,13 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
             "should NOT contain raw {Event} placeholder");
         entry.Message.Should().NotContain("{ActorId}",
             "should NOT contain raw {ActorId} placeholder");
+        
+        entry.State.Should().ContainKey("Event");
+        entry.State.Should().ContainKey("ActorId");
+        entry.State["Event"].Should().Be("UserLoggedIn");
+        entry.State["ActorId"].Should().Be("actor-123");
+        
+        AssertMetadata(entry, "Published callback event: {Event} | ActorId: {ActorId}");
     }
 
     /// <summary>
@@ -156,15 +191,13 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
         entry.State["UserId"].Should().Be(12345);
         entry.State["Email"].Should().Be("user@example.com");
 
-        // WORKS: Original format is preserved
-        entry.State.Should().ContainKey("{OriginalFormat}");
-        entry.State["{OriginalFormat}"].Should().Be("User {UserId} with email {Email} logged in");
-
         // BUG: Message should have substituted values, but it doesn't
         entry.Message.Should().Contain("12345",
             "the formatted message should contain the substituted UserId value");
         entry.Message.Should().Contain("user@example.com",
             "the formatted message should contain the substituted Email value");
+        
+        AssertMetadata(entry, "User {UserId} with email {Email} logged in");
     }
 
     /// <summary>
@@ -187,6 +220,13 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
         // Both should be substituted
         entry.Message.Should().Contain("12345", "UserId should be substituted");
         entry.Message.Should().Contain("Login", "action should be substituted");
+        
+        entry.State.Should().ContainKey("UserId");
+        entry.State.Should().ContainKey("0");
+        entry.State["UserId"].Should().Be(12345);
+        entry.State["0"].Should().Be("Login");
+        
+        AssertMetadata(entry, "User {UserId} action {0}");
     }
 }
 
