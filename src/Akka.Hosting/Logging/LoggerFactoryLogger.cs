@@ -64,53 +64,48 @@ namespace Akka.Hosting.Logging
         {
             var logLevel = GetLogLevel(log.LogLevel());
 
+            // Create state dictionary with structured properties from the log message
+            var state = new Dictionary<string, object>();
+
             // Use semantic logging to extract structured properties
             if (log.TryGetProperties(out var properties) && properties is not null)
             {
-                // Create state dictionary with structured properties from the log message
-                var state = new Dictionary<string, object>(properties.Count + 4);
-
                 // Add structured properties from the message template
                 foreach (var prop in properties)
                 {
                     state[prop.Key] = prop.Value;
                 }
-
-                // Add Akka metadata properties
-                state["ActorPath"] = path.ToString();
-                state["Timestamp"] = log.Timestamp;
-                state["Thread"] = log.Thread.ManagedThreadId;
-                state["LogSource"] = log.LogSource;
-
-                // Add {OriginalFormat} key per MEL convention for structured logging
-                // This allows MEL sinks to recognize and preserve the message template
-                state["{OriginalFormat}"] = log.GetTemplate();
-
-                // Log with structured state
-                _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                    (s, ex) => FormatMessage(log.GetTemplate(), log.GetParameters().ToArray()));
             }
-            else
+            
+            // Add Akka metadata properties
+            state["ActorPath"] = path.ToString();
+            state["Timestamp"] = log.Timestamp;
+            state["Thread"] = log.Thread.ManagedThreadId;
+            state["LogSource"] = log.LogSource;
+
+            // Add {OriginalFormat} key per MEL convention for structured logging
+            // This allows MEL sinks to recognize and preserve the message template
+            state["{OriginalFormat}"] = log.GetTemplate();
+
+            // Log with structured state
+            // Use LogMessage.ToString() which applies the correct formatter (SemanticLogMessageFormatter)
+            // instead of string.Format() which only works with positional {0} placeholders
+            _akkaLogger.Log(logLevel, new EventId(), state, log.Cause, (s, ex) =>
             {
-                // Fallback for non-structured messages (plain strings)
-                _akkaLogger.Log<LogEvent>(logLevel, new EventId(), log, log.Cause,
-                    (@event, exception) => @event.ToString());
-            }
+                try
+                {
+                    return log.ToString();
+                }
+                catch
+                {
+                    if(log.Message is LogMessage msg)
+                        return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Template: [{msg.Format}], args: [{string.Join(",", msg.Unformatted())}]";
+                    
+                    return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Message: [{log.Message}]";
+                }
+            });
         }
 
-        private static string FormatMessage(string template, object[] args)
-        {
-            try
-            {
-                return args.Length == 0 ? template : string.Format(template, args);
-            }
-            catch
-            {
-                // If formatting fails, return the template as-is
-                return template;
-            }
-        }
-        
         private static LogLevel GetLogLevel(Event.LogLevel level)
         {
             return level switch
