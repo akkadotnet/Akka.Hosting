@@ -87,8 +87,10 @@ namespace Akka.Hosting.Logging
                 state["{OriginalFormat}"] = log.GetTemplate();
 
                 // Log with structured state
+                // Use LogMessage.ToString() which applies the correct formatter (SemanticLogMessageFormatter)
+                // instead of string.Format() which only works with positional {0} placeholders
                 _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                    (s, ex) => FormatMessage(log.GetTemplate(), log.GetParameters().ToArray()));
+                    (s, ex) => log.Message is LogMessage logMsg ? logMsg.ToString() ?? string.Empty : log.Message?.ToString() ?? string.Empty);
             }
             else
             {
@@ -98,19 +100,6 @@ namespace Akka.Hosting.Logging
             }
         }
 
-        private static string FormatMessage(string template, object[] args)
-        {
-            try
-            {
-                return args.Length == 0 ? template : string.Format(template, args);
-            }
-            catch
-            {
-                // If formatting fails, return the template as-is
-                return template;
-            }
-        }
-        
         private static LogLevel GetLogLevel(Event.LogLevel level)
         {
             return level switch

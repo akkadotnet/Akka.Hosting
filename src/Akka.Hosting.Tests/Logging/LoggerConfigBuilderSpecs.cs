@@ -6,10 +6,13 @@
 
 using System;
 using System.Linq;
+using System.Threading.Tasks;
+using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 using LogLevel = Akka.Event.LogLevel;
 
@@ -18,23 +21,55 @@ namespace Akka.Hosting.Tests.Logging;
 public class LoggerConfigBuilderSpecs
 {
     [Fact(DisplayName = "LoggerConfigBuilder should contain proper default configuration")]
-    public void LoggerSetupDefaultValues()
+    public async Task LoggerSetupDefaultValues()
     {
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test")
             .ConfigureLoggers(_ => { });
 
-        builder.Configuration.HasValue.Should().BeTrue();
-        var config = builder.Configuration.Value;
-        config.GetString("akka.loglevel").Should().Be("Info");
-        config.GetString("akka.log-config-on-start").Should().Be("false");
-        var loggers = config.GetStringList("akka.loggers");
-        loggers.Count.Should().Be(1);
-        loggers[0].Should().Contain("Akka.Event.DefaultLogger");
+        builder.Configuration.HasValue.Should().BeFalse();
 
-        config.GetConfig("akka.actor.debug").Should().BeNull();
-        config.GetString("akka.log-dead-letters").Should().BeNull();
-        config.GetString("akka.log-dead-letters-during-shutdown").Should().BeNull();
-        config.GetString("akka.log-dead-letters-suspend-duration").Should().BeNull();
+        var host = Host.CreateDefaultBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddAkka(nameof(LoggerConfigBuilderSpecs), b =>
+                {
+                    b.ConfigureLoggers(_ => { });
+                });
+            })
+            .Build();
+
+        await host.StartAsync();
+
+        try
+        {
+            var config = host.Services.GetRequiredService<ActorSystem>().Settings.Config;
+            config.GetString("akka.loglevel").Should().Be("INFO");
+            config.GetBoolean("akka.log-config-on-start").Should().BeFalse();
+            var loggers = config.GetStringList("akka.loggers");
+            loggers.Count.Should().Be(1);
+            loggers[0].Should().Contain("Akka.Event.DefaultLogger");
+            config.GetString("akka.logger-formatter").Should().Contain("SemanticLogMessageFormatter");
+
+            var debug = config.GetConfig("akka.actor.debug");
+            debug.Should().NotBeNull();
+            debug.GetBoolean("receive").Should().BeFalse();
+            debug.GetBoolean("autoreceive").Should().BeFalse();
+            debug.GetBoolean("lifecycle").Should().BeFalse();
+            debug.GetBoolean("fsm").Should().BeFalse();
+            debug.GetBoolean("event-stream").Should().BeFalse();
+            debug.GetBoolean("unhandled").Should().BeFalse();
+            debug.GetBoolean("router-misconfiguration").Should().BeFalse();
+            debug.GetBoolean("log-timers").Should().BeFalse();
+            
+            config.GetInt("akka.log-dead-letters").Should().Be(10);
+            config.GetBoolean("akka.log-dead-letters-during-shutdown").Should().BeFalse();
+            config.GetTimeSpan("akka.log-dead-letters-suspend-duration").Should().Be(TimeSpan.FromMinutes(5));
+        }
+        finally
+        {
+            await host.StopAsync();
+            host.Dispose();
+        }
     }
     
     [Fact(DisplayName = "LoggerConfigBuilder should override config values")]
@@ -67,7 +102,7 @@ public class LoggerConfigBuilderSpecs
         builder.Configuration.HasValue.Should().BeTrue();
         var config = builder.Configuration.Value;
         config.GetString("akka.loglevel").Should().Be("Warning");
-        config.GetString("akka.log-config-on-start").Should().Be("true");
+        config.GetBoolean("akka.log-config-on-start").Should().BeTrue();
         var loggers = config.GetStringList("akka.loggers");
         loggers.Count.Should().Be(0);
         
