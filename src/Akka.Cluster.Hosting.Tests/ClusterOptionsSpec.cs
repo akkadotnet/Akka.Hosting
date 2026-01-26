@@ -144,7 +144,7 @@ public class ClusterOptionsSpec
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
         var jsonConfig = new ConfigurationBuilder().AddJsonStream(stream).Build();
         
-        var clusterOptions = jsonConfig.GetSection("Akka:ClusterOptions").Get<ClusterOptions>();
+        var clusterOptions = jsonConfig.GetSection("Akka:ClusterOptions").Get<ClusterOptions>()!;
         clusterOptions.SplitBrainResolver = jsonConfig.GetSection("Akka:KeepMajorityOption").Get<KeepMajorityOption>();
         
         var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "")

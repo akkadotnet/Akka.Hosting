@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
@@ -64,38 +65,76 @@ namespace Akka.Hosting.Logging
         {
             var logLevel = GetLogLevel(log.LogLevel());
 
+            // Try to get ActivityContext for OpenTelemetry trace correlation
+            // This captures trace context that was active when the log was created,
+            // solving the problem that Activity.Current doesn't flow across mailbox boundaries
+            var activityContext = TryGetActivityContext(log);
+
             // Use semantic logging to extract structured properties
             if (log.TryGetProperties(out var properties) && properties is not null)
             {
-                // Create state dictionary with structured properties from the log message
-                var state = new Dictionary<string, object>(properties.Count + 4);
+                var formattedMessage = FormatMessage(log.GetTemplate(), log.GetParameters().ToArray());
 
-                // Add structured properties from the message template
-                foreach (var prop in properties)
-                {
-                    state[prop.Key] = prop.Value;
-                }
+                // Use AkkaLogState to include trace context with structured properties
+                var state = new AkkaLogState(
+                    activityContext,
+                    properties,
+                    path.ToString(),
+                    log.Timestamp,
+                    log.Thread.ManagedThreadId,
+                    log.LogSource,
+                    log.GetTemplate(),
+                    formattedMessage);
 
-                // Add Akka metadata properties
-                state["ActorPath"] = path.ToString();
-                state["Timestamp"] = log.Timestamp;
-                state["Thread"] = log.Thread.ManagedThreadId;
-                state["LogSource"] = log.LogSource;
-
-                // Add {OriginalFormat} key per MEL convention for structured logging
-                // This allows MEL sinks to recognize and preserve the message template
-                state["{OriginalFormat}"] = log.GetTemplate();
-
-                // Log with structured state
+                // Log with structured state including trace context
                 _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                    (s, ex) => FormatMessage(log.GetTemplate(), log.GetParameters().ToArray()));
+                    (s, ex) => s.ToString());
             }
             else
             {
                 // Fallback for non-structured messages (plain strings)
-                _akkaLogger.Log<LogEvent>(logLevel, new EventId(), log, log.Cause,
-                    (@event, exception) => @event.ToString());
+                // Still include trace context if available
+                if (activityContext.TraceId != default)
+                {
+                    var state = new AkkaLogState(activityContext, log.ToString());
+                    _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
+                        (s, ex) => s.ToString());
+                }
+                else
+                {
+                    _akkaLogger.Log<LogEvent>(logLevel, new EventId(), log, log.Cause,
+                        (@event, exception) => @event.ToString());
+                }
             }
+        }
+
+        /// <summary>
+        /// Attempts to extract the ActivityContext from a LogEvent.
+        /// Uses reflection to maintain compatibility with older Akka.NET versions
+        /// that don't have the ActivityContext property.
+        /// </summary>
+        private static ActivityContext TryGetActivityContext(LogEvent log)
+        {
+            // Try to get ActivityContext via the property added in Akka.NET 1.5.59
+            // Use reflection for backwards compatibility with older versions
+            try
+            {
+                var activityContextProperty = log.GetType().GetProperty("ActivityContext");
+                if (activityContextProperty != null)
+                {
+                    var value = activityContextProperty.GetValue(log);
+                    if (value is ActivityContext context)
+                    {
+                        return context;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore reflection errors - just return default
+            }
+
+            return default;
         }
 
         private static string FormatMessage(string template, object[] args)

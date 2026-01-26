@@ -651,7 +651,7 @@ public class RemoteConfigurationSpecs
         // arrange
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
         var jsonConfig = new ConfigurationBuilder().AddJsonStream(stream).Build();
-        var remoteOptions = jsonConfig.GetSection("Akka:RemoteOptions").Get<RemoteOptions>();
+        var remoteOptions = jsonConfig.GetSection("Akka:RemoteOptions").Get<RemoteOptions>()!;
 
         using var host = new HostBuilder().ConfigureServices(services =>
         {

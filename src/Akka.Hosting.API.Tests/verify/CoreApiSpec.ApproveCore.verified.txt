@@ -99,6 +99,10 @@ namespace Akka.Hosting
         public static Akka.Hosting.AkkaConfigurationBuilder WithHealthCheck(this Akka.Hosting.AkkaConfigurationBuilder builder, string name, Akka.Hosting.IAkkaHealthCheck healthCheck, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus = default, System.Collections.Generic.IEnumerable<string>? tags = null, System.TimeSpan? timeout = default) { }
         public static Akka.Hosting.AkkaConfigurationBuilder WithHealthCheck(this Akka.Hosting.AkkaConfigurationBuilder builder, string name, System.Func<Akka.Actor.ActorSystem, Akka.Hosting.ActorRegistry, System.Threading.CancellationToken, System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>> healthCheck, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus = default, System.Collections.Generic.IEnumerable<string>? tags = null, System.TimeSpan? timeout = default) { }
     }
+    public static class AkkaOpenTelemetryExtensions
+    {
+        public static OpenTelemetry.Logs.OpenTelemetryLoggerOptions AddAkkaTraceCorrelation(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions options) { }
+    }
     public class DeadLetterOptions
     {
         public DeadLetterOptions() { }
@@ -251,6 +255,21 @@ namespace Akka.Hosting.HealthChecks
 }
 namespace Akka.Hosting.Logging
 {
+    public readonly struct AkkaLogState : System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object?>>, System.Collections.IEnumerable
+    {
+        public const string SpanIdKey = "Akka.SpanId";
+        public const string TraceFlagsKey = "Akka.TraceFlags";
+        public const string TraceIdKey = "Akka.TraceId";
+        public AkkaLogState(System.Diagnostics.ActivityContext activityContext, string formattedMessage) { }
+        public AkkaLogState(System.Diagnostics.ActivityContext activityContext, System.Collections.Generic.IReadOnlyDictionary<string, object> semanticProperties, string actorPath, System.DateTimeOffset timestamp, int threadId, string logSource, string template, string formattedMessage) { }
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object?>> GetEnumerator() { }
+        public override string ToString() { }
+    }
+    public sealed class AkkaTraceContextProcessor : OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord>
+    {
+        public AkkaTraceContextProcessor() { }
+        public override void OnEnd(OpenTelemetry.Logs.LogRecord data) { }
+    }
     public class LoggerFactoryLogger : Akka.Actor.ActorBase, Akka.Dispatch.IRequiresMessageQueue<Akka.Event.ILoggerMessageQueueSemantics>
     {
         protected readonly Akka.Event.ILoggingAdapter InternalLogger;

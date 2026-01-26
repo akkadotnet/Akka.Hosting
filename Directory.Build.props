@@ -2,11 +2,12 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.5.57</VersionPrefix>
+    <VersionPrefix>1.5.59</VersionPrefix>
     <PackageReleaseNotes>**New Features**
-* [Add semantic logging support for Akka.NET 1.5.56+](https://github.com/akkadotnet/Akka.Hosting/pull/693) - enables Microsoft.Extensions.Logging to receive properly structured state dictionaries instead of pre-formatted strings. When using Akka.NET 1.5.56+, log messages now include structured properties from the semantic logging API along with Akka metadata (ActorPath, Timestamp, Thread, LogSource). Fully backwards compatible with older Akka.NET versions.
+* [Add OpenTelemetry trace correlation support for LoggerFactoryLogger](https://github.com/akkadotnet/Akka.Hosting/issues/700) - enables proper trace correlation for logs emitted from actor code. Solves the problem that Activity.Current doesn't flow across actor mailbox boundaries. When using Akka.NET 1.5.59+, LogEvent.ActivityContext captures trace context at log creation time and flows it through to OpenTelemetry LogRecords via the new AkkaTraceContextProcessor.
 **Updates**
-* [Bump Akka version from 1.5.55 to 1.5.57](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57)</PackageReleaseNotes>
+* [Bump Akka version from 1.5.57 to 1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)
+* Added OpenTelemetry dependency (1.9.0+) for trace correlation support</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
@@ -28,9 +29,9 @@
     <TestSdkVersion>17.11.1</TestSdkVersion>
     <CoverletVersion>6.0.3</CoverletVersion>
     <XunitRunneVisualstudio>3.1.5</XunitRunneVisualstudio>
-    <AkkaVersion>1.5.57</AkkaVersion>
-    <MicrosoftExtensionsVersion>[6.0.0,)</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>[6.0.10,)</SystemTextJsonVersion>
+    <AkkaVersion>1.5.59</AkkaVersion>
+    <MicrosoftExtensionsVersion>[8.0.0,)</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>[8.0.5,)</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
