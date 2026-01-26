@@ -102,7 +102,7 @@ namespace Akka.Hosting
     public class DeadLetterOptions
     {
         public DeadLetterOptions() { }
-        public int LogCount { get; set; }
+        public int? LogCount { get; set; }
         public bool? LogDuringShutdown { get; set; }
         public System.TimeSpan? LogSuspendDuration { get; set; }
         public Akka.Hosting.TriStateValue ShouldLog { get; set; }
@@ -182,9 +182,9 @@ namespace Akka.Hosting
     {
         public Akka.Hosting.DeadLetterOptions? DeadLetterOptions { get; set; }
         public Akka.Hosting.DebugOptions? DebugOptions { get; set; }
-        public bool LogConfigOnStart { get; set; }
+        public bool? LogConfigOnStart { get; set; }
         public Akka.Event.LogFilterBuilder? LogFilterBuilder { get; set; }
-        public Akka.Event.LogLevel LogLevel { get; set; }
+        public Akka.Event.LogLevel? LogLevel { get; set; }
         [System.Obsolete("Use the WithDefaultLogMessageFormatter<T> method instead")]
         public System.Type LogMessageFormatter { get; set; }
         public Akka.Hosting.LoggerConfigBuilder AddLogger<T>()

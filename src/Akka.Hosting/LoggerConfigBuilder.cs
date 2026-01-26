@@ -16,8 +16,8 @@ namespace Akka.Hosting
 {
     public sealed class LoggerConfigBuilder
     {
-        private readonly List<Type> _loggers = new() { typeof(DefaultLogger) };
-        private Type _logMessageFormatter = typeof(DefaultLogMessageFormatter);
+        private readonly List<Type> _loggers = [];
+        private Type? _logMessageFormatter;
         internal AkkaConfigurationBuilder Builder { get; }
 
         internal LoggerConfigBuilder(AkkaConfigurationBuilder builder)
@@ -31,7 +31,7 @@ namespace Akka.Hosting
         /// </para>
         /// Defaults to <c>LogLevel.InfoLevel</c>
         /// </summary>
-        public LogLevel LogLevel { get; set; } = LogLevel.InfoLevel;
+        public LogLevel? LogLevel { get; set; }
         
         /// <summary>
         /// <para>
@@ -40,7 +40,7 @@ namespace Akka.Hosting
         /// </para>
         /// Defaults to false.
         /// </summary>
-        public bool LogConfigOnStart { get; set; } = false;
+        public bool? LogConfigOnStart { get; set; }
 
         public DeadLetterOptions? DeadLetterOptions { get; set; }
 
@@ -51,13 +51,13 @@ namespace Akka.Hosting
         [Obsolete("Use the WithDefaultLogMessageFormatter<T> method instead")]
         public Type LogMessageFormatter
         {
-            get => _logMessageFormatter;
+            get => _logMessageFormatter ?? typeof(SemanticLogMessageFormatter);
             set
             {
                 if (!typeof(ILogMessageFormatter).IsAssignableFrom(value))
                     throw new ConfigurationException($"{nameof(LogMessageFormatter)} must implement {nameof(ILogMessageFormatter)}");
 
-                var ctor = value.GetConstructor(new Type[]{});
+                var ctor = value.GetConstructor([]);
                 if (ctor is null)
                     throw new ConfigurationException($"{nameof(LogMessageFormatter)} Type must have an empty constructor");
                         
@@ -116,38 +116,49 @@ namespace Akka.Hosting
             _loggers.Add(logger);
         }
         
-        private Config ToConfig()
+        private Config? ToConfig()
         {
-            var sb = new StringBuilder()
-                .Append("akka.loglevel=").AppendLine(ParseLogLevel(LogLevel))
-                .Append("akka.loggers=[").Append(string.Join(",", _loggers.Select(t => $"\"{t.AssemblyQualifiedName}\""))).AppendLine("]")
-                .Append("akka.log-config-on-start=").AppendLine(LogConfigOnStart ? "true" : "false")
-                .Append("akka.logger-formatter=").AppendLine(_logMessageFormatter.AssemblyQualifiedName.ToHocon());
+            var sb = new StringBuilder();
+            
+            if(LogLevel is not null)
+                sb .Append("akka.loglevel=").AppendLine(ParseLogLevel(LogLevel).ToHocon());
+            
+            if(_loggers.Count > 0)
+                sb.Append("akka.loggers=[").Append(string.Join(",", _loggers.Select(t => $"\"{t.AssemblyQualifiedName}\""))).AppendLine("]");
+            
+            if(LogConfigOnStart is not null)
+                sb.Append("akka.log-config-on-start=").AppendLine(LogConfigOnStart.Value.ToHocon());
+            
+            if(_logMessageFormatter is not null)
+                sb.Append("akka.logger-formatter=").AppendLine(_logMessageFormatter.AssemblyQualifiedName.ToHocon());
                 
-            if (DebugOptions is { })
+            if (DebugOptions is not null)
                 sb.AppendLine(DebugOptions.ToString());
-            if (DeadLetterOptions is { })
+            
+            if (DeadLetterOptions is not null)
                 sb.AppendLine(DeadLetterOptions.ToString());
             
-            return ConfigurationFactory.ParseString(sb.ToString());
+            return sb.Length > 0 ? ConfigurationFactory.ParseString(sb.ToString()) : null;
         }
 
         internal AkkaConfigurationBuilder Build(AkkaConfigurationBuilder builder)
         {
-            builder.AddHoconConfiguration(ToConfig(), HoconAddMode.Prepend);
+            var config = ToConfig();
+            if(config is not null)
+                builder.AddHoconConfiguration(config, HoconAddMode.Prepend);
             if (LogFilterBuilder is not null)
                 builder.AddSetup(LogFilterBuilder.Build());
             
             return builder;
         }
 
-        private static string ParseLogLevel(LogLevel logLevel)
+        private static string ParseLogLevel(LogLevel? logLevel)
             => logLevel switch
             {
-                LogLevel.DebugLevel => "Debug",
-                LogLevel.InfoLevel => "Info",
-                LogLevel.WarningLevel => "Warning",
-                LogLevel.ErrorLevel => "Error",
+                Akka.Event.LogLevel.DebugLevel => "Debug",
+                Akka.Event.LogLevel.InfoLevel => "Info",
+                Akka.Event.LogLevel.WarningLevel => "Warning",
+                Akka.Event.LogLevel.ErrorLevel => "Error",
                 _ => throw new ConfigurationException($"Unknown {nameof(LogLevel)} enum value: {logLevel}")
             };
     }
