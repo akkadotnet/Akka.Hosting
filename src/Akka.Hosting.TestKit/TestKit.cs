@@ -77,7 +77,7 @@ namespace Akka.Hosting.TestKit
             ActorSystemName = actorSystemName ?? "test";
             Output = output;
             LogLevel = logLevel;
-            StartupTimeout = startupTimeout ?? TimeSpan.FromSeconds(10);
+            StartupTimeout = startupTimeout ?? TimeSpan.FromSeconds(30);
         }
         
         protected virtual void ConfigureHostConfiguration(IConfigurationBuilder builder)
@@ -181,19 +181,23 @@ namespace Akka.Hosting.TestKit
 
             _host = hostBuilder.Build();
 
-            var cts = new CancellationTokenSource(StartupTimeout);
-            cts.Token.Register(() =>
-                throw new TimeoutException($"Host failed to start within {StartupTimeout.Seconds} seconds"));
+            using var cts = new CancellationTokenSource(StartupTimeout);
             try
             {
                 await _host.StartAsync(cts.Token);
             }
-            finally
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
             {
-                cts.Dispose();
+                throw new TimeoutException($"Host failed to start within {StartupTimeout.TotalSeconds} seconds");
             }
 
-            await _initialized.Task;
+            // Wait for Akka initialization with timeout
+            var initializedTask = _initialized.Task;
+            var timeoutTask = Task.Delay(StartupTimeout, CancellationToken.None);
+            if (await Task.WhenAny(initializedTask, timeoutTask) == timeoutTask)
+            {
+                throw new TimeoutException($"Akka.NET failed to initialize within {StartupTimeout.TotalSeconds} seconds");
+            }
             
             // TestActor initialization and registration now happens in AddStartup
             // before user actors are created, preventing race conditions
