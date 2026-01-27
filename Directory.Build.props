@@ -2,11 +2,13 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.5.57</VersionPrefix>
-    <PackageReleaseNotes>**New Features**
-* [Add semantic logging support for Akka.NET 1.5.56+](https://github.com/akkadotnet/Akka.Hosting/pull/693) - enables Microsoft.Extensions.Logging to receive properly structured state dictionaries instead of pre-formatted strings. When using Akka.NET 1.5.56+, log messages now include structured properties from the semantic logging API along with Akka metadata (ActorPath, Timestamp, Thread, LogSource). Fully backwards compatible with older Akka.NET versions.
+    <VersionPrefix>1.5.59</VersionPrefix>
+    <PackageReleaseNotes>**Bug Fixes**
+* [Fix semantic logging not capturing named placeholders as structured properties](https://github.com/akkadotnet/Akka.Hosting/pull/702) - resolved [issue #701](https://github.com/akkadotnet/Akka.Hosting/issues/701) where named placeholders like `{Event}` in log messages were not captured as searchable structured properties. Made all `LoggerConfigBuilder` properties optional and refactored message formatting code.
+* [Fix TestKit startup timeout race condition](https://github.com/akkadotnet/Akka.Hosting/pull/705) - resolved race condition in `TestKit.InitializeAsync()` where `CancellationTokenSource.Register()` threw exceptions on the timer thread, causing unhandled exceptions that crashed the test host process. Also increased default startup timeout from 10s to 30s for CI environments.
+
 **Updates**
-* [Bump Akka version from 1.5.55 to 1.5.57](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57)</PackageReleaseNotes>
+* [Bump Akka version from 1.5.58 to 1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
