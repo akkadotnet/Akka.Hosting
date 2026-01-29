@@ -245,7 +245,7 @@ public class AkkaTraceContextProcessorSpecs
             activityContext,
             new Dictionary<string, object> { { "Key", "Value" } },
             "akka://test/user/actor",
-            DateTimeOffset.UtcNow,
+            DateTime.UtcNow,
             1,
             "TestSource",
             "Template with {Key}",

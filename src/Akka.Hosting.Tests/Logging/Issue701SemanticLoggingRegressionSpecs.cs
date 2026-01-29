@@ -61,7 +61,7 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
         entry.State.Should().ContainKey("{OriginalFormat}");
         
         entry.State["ActorPath"].Should().BeOfType<string>();
-        entry.State["Timestamp"].Should().BeOfType<DateTimeOffset>();
+        entry.State["Timestamp"].Should().BeOfType<DateTime>();
         entry.State["Thread"].Should().BeOfType<int>();
         entry.State["LogSource"].Should().BeOfType<string>();
         entry.State["{OriginalFormat}"].Should().BeOfType<string>();

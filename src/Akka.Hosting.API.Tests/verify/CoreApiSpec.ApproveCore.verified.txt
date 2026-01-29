@@ -261,7 +261,7 @@ namespace Akka.Hosting.Logging
         public const string TraceFlagsKey = "Akka.TraceFlags";
         public const string TraceIdKey = "Akka.TraceId";
         public AkkaLogState(System.Diagnostics.ActivityContext activityContext, string formattedMessage) { }
-        public AkkaLogState(System.Diagnostics.ActivityContext activityContext, System.Collections.Generic.IReadOnlyDictionary<string, object> semanticProperties, string actorPath, System.DateTimeOffset timestamp, int threadId, string logSource, string template, string formattedMessage) { }
+        public AkkaLogState(System.Diagnostics.ActivityContext activityContext, System.Collections.Generic.IReadOnlyDictionary<string, object> semanticProperties, string actorPath, System.DateTime timestamp, int threadId, string logSource, string template, string formattedMessage) { }
         public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object?>> GetEnumerator() { }
         public override string ToString() { }
     }
