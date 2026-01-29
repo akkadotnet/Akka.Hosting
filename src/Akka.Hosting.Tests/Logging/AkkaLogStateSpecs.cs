@@ -31,7 +31,7 @@ public class AkkaLogStateSpecs
         };
 
         var actorPath = "akka://test/user/myactor";
-        var timestamp = DateTime.UtcNow;
+        var timestamp = DateTimeOffset.UtcNow;
         var threadId = 42;
         var logSource = "MyActor";
         var template = "User {UserId} performed {Action}";
@@ -65,7 +65,7 @@ public class AkkaLogStateSpecs
 
         // Verify Akka metadata
         items.Should().Contain(kvp => kvp.Key == "ActorPath" && (string)kvp.Value! == actorPath);
-        items.Should().Contain(kvp => kvp.Key == "Timestamp" && (DateTime)kvp.Value! == timestamp);
+        items.Should().Contain(kvp => kvp.Key == "Timestamp" && (DateTimeOffset)kvp.Value! == timestamp);
         items.Should().Contain(kvp => kvp.Key == "Thread" && (int)kvp.Value! == threadId);
         items.Should().Contain(kvp => kvp.Key == "LogSource" && (string)kvp.Value! == logSource);
 
@@ -89,7 +89,7 @@ public class AkkaLogStateSpecs
             activityContext,
             semanticProperties,
             "akka://test/user/actor",
-            DateTime.UtcNow,
+            DateTimeOffset.UtcNow,
             1,
             "Source",
             "Template",
@@ -165,7 +165,7 @@ public class AkkaLogStateSpecs
             default,
             semanticProperties,
             "path",
-            DateTime.UtcNow,
+            DateTimeOffset.UtcNow,
             1,
             "source",
             "Hello {Name}!",
@@ -184,7 +184,7 @@ public class AkkaLogStateSpecs
             default,
             semanticProperties,
             "path",
-            DateTime.UtcNow,
+            DateTimeOffset.UtcNow,
             1,
             "source",
             "template",
@@ -210,7 +210,7 @@ public class AkkaLogStateSpecs
             activityContext,
             new Dictionary<string, object>(),
             "path",
-            DateTime.UtcNow,
+            DateTimeOffset.UtcNow,
             1,
             "source",
             "template",
@@ -240,7 +240,7 @@ public class AkkaLogStateSpecs
             default,
             emptyProperties,
             "akka://test/user/actor",
-            DateTime.UtcNow,
+            DateTimeOffset.UtcNow,
             99,
             "TestSource",
             "template",

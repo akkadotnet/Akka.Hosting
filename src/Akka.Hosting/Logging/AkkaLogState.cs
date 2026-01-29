@@ -47,7 +47,7 @@ namespace Akka.Hosting.Logging
         private readonly ActivityContext _activityContext;
         private readonly IReadOnlyDictionary<string, object>? _semanticProperties;
         private readonly string _actorPath;
-        private readonly DateTime _timestamp;
+        private readonly DateTimeOffset _timestamp;
         private readonly int _threadId;
         private readonly string _logSource;
         private readonly string _template;
@@ -69,7 +69,7 @@ namespace Akka.Hosting.Logging
             ActivityContext activityContext,
             IReadOnlyDictionary<string, object> semanticProperties,
             string actorPath,
-            DateTime timestamp,
+            DateTimeOffset timestamp,
             int threadId,
             string logSource,
             string template,
