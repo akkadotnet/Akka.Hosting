@@ -26,6 +26,7 @@ See the ["Introduction to Akka.Hosting - HOCON-less, "Pit of Success" Akka.NET R
     * [Microsoft.Extensions.Logging.ILoggerFactory Logging Support](#microsoftextensionsloggingiloggerfactory-logging-support)
     * [Serilog Support](#serilog-support)
     * [Microsoft.Extensions.Logging Log Event Filtering](#microsoftextensionslogging-log-event-filtering)
+- [OpenTelemetry Trace Correlation](#opentelemetry-trace-correlation)
 - [Microsoft.Extensions.Diagnostics.HealthChecks Integration](#healthchecks)
     * [Dependency Injected Health Checks](#healthcheck-di)
     * [Built-in HealthChecks](#healthcheck-builtin)
@@ -626,6 +627,46 @@ To set up the `Microsoft.Extensions.Logging` log filtering, you will need to edi
   }
 }
 ```
+
+[Back to top](#akkahosting)
+
+<a id="opentelemetry-trace-correlation"></a>
+# OpenTelemetry Trace Correlation
+
+Akka.NET processes log events asynchronously, which means `Activity.Current` does not flow across actor mailbox boundaries. To preserve trace correlation, Akka.Hosting captures the `ActivityContext` at log creation time and includes it in the log state. The `AkkaTraceContextProcessor` then applies that context to OpenTelemetry `LogRecord`s so exporters can correlate logs with traces.
+
+Minimal setup:
+
+```csharp
+using Akka.Hosting;
+using Akka.Hosting.Logging;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(ResourceBuilder.CreateDefault()
+        .AddService("my-service"));
+
+    // Register before exporters
+    options.AddAkkaTraceCorrelation();
+
+    // Add OTLP exporter if you have not configured it elsewhere.
+    // Your mileage may vary; use the OpenTelemetry configuration that fits your app.
+    options.AddOtlpExporter();
+});
+
+builder.Services.AddAkka("MySystem", configBuilder =>
+{
+    configBuilder.ConfigureLoggers(setup =>
+    {
+        setup.ClearLoggers();
+        setup.AddLoggerFactory();
+    });
+});
+```
+
+See the demo in `src/Examples/Akka.Hosting.OpenTelemetry.AppHost` and `src/Examples/Akka.Hosting.OpenTelemetry.Demo` for a working Aspire setup.
 
 [Back to top](#akkahosting)
 

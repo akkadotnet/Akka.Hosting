@@ -61,7 +61,7 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
         entry.State.Should().ContainKey("{OriginalFormat}");
         
         entry.State["ActorPath"].Should().BeOfType<string>();
-        entry.State["Timestamp"].Should().BeOfType<DateTime>();
+        entry.State["Timestamp"].Should().BeOfType<DateTimeOffset>();
         entry.State["Thread"].Should().BeOfType<int>();
         entry.State["LogSource"].Should().BeOfType<string>();
         entry.State["{OriginalFormat}"].Should().BeOfType<string>();
@@ -277,7 +277,7 @@ public class BugReproTestSink : ILogger
 
     public bool IsEnabled(LogLevel logLevel) => true;
 
-    public IDisposable BeginScope<TState>(TState state) => EmptyDisposable.Instance;
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull => EmptyDisposable.Instance;
 }
 
 public class BugReproLogEntry

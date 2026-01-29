@@ -64,46 +64,61 @@ namespace Akka.Hosting.Logging
         {
             var logLevel = GetLogLevel(log.LogLevel());
 
-            // Create state dictionary with structured properties from the log message
-            var state = new Dictionary<string, object>();
+            // Capture ActivityContext (Akka.NET 1.5.59+) for trace correlation
+            var activityContext = log.ActivityContext ?? default;
 
             // Use semantic logging to extract structured properties
             if (log.TryGetProperties(out var properties) && properties is not null)
             {
-                // Add structured properties from the message template
-                foreach (var prop in properties)
+                var formattedMessage = SafeFormat(log);
+
+                // Include trace context and structured properties in AkkaLogState
+                var state = new AkkaLogState(
+                    activityContext,
+                    properties,
+                    path.ToString(),
+                    log.Timestamp,
+                    log.Thread.ManagedThreadId,
+                    log.LogSource,
+                    log.GetTemplate(),
+                    formattedMessage);
+
+                _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
+                    (s, ex) => formattedMessage);
+            }
+            else
+            {
+                var formattedMessage = SafeFormat(log);
+
+                if (log.ActivityContext.HasValue)
                 {
-                    state[prop.Key] = prop.Value;
+                    // Preserve trace context even for non-structured logs
+                    var state = new AkkaLogState(activityContext, formattedMessage);
+                    _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
+                        (s, ex) => formattedMessage);
+                }
+                else
+                {
+                    // Fallback for non-structured messages without trace context
+                    _akkaLogger.Log<LogEvent>(logLevel, new EventId(), log, log.Cause,
+                        (@event, exception) => formattedMessage);
                 }
             }
-            
-            // Add Akka metadata properties
-            state["ActorPath"] = path.ToString();
-            state["Timestamp"] = log.Timestamp;
-            state["Thread"] = log.Thread.ManagedThreadId;
-            state["LogSource"] = log.LogSource;
+        }
 
-            // Add {OriginalFormat} key per MEL convention for structured logging
-            // This allows MEL sinks to recognize and preserve the message template
-            state["{OriginalFormat}"] = log.GetTemplate();
-
-            // Log with structured state
-            // Use LogMessage.ToString() which applies the correct formatter (SemanticLogMessageFormatter)
-            // instead of string.Format() which only works with positional {0} placeholders
-            _akkaLogger.Log(logLevel, new EventId(), state, log.Cause, (s, ex) =>
+        private static string SafeFormat(LogEvent log)
+        {
+            try
             {
-                try
-                {
-                    return log.ToString();
-                }
-                catch
-                {
-                    if(log.Message is LogMessage msg)
-                        return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Template: [{msg.Format}], args: [{string.Join(",", msg.Unformatted())}]";
-                    
-                    return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Message: [{log.Message}]";
-                }
-            });
+                return log.ToString();
+            }
+            catch
+            {
+                if (log.Message is LogMessage msg)
+                    return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Template: [{msg.Format}], args: [{string.Join(",", msg.Unformatted())}]";
+
+                return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Message: [{log.Message}]";
+            }
         }
 
         private static LogLevel GetLogLevel(Event.LogLevel level)

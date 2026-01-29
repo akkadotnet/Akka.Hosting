@@ -68,7 +68,7 @@ namespace Akka.Hosting.TestKit.Internals
             };
         }
 
-        public IDisposable BeginScope<TState>(TState state) 
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
             return NullScope.Instance;
         }

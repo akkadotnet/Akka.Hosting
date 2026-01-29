@@ -44,6 +44,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Remote.Hosting.Tests",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.OpenTelemetry.Demo", "src\Examples\Akka.Hosting.OpenTelemetry.Demo\Akka.Hosting.OpenTelemetry.Demo.csproj", "{6BCB9636-DAD2-4364-8A83-3D2888FE5AB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.OpenTelemetry.AppHost", "src\Examples\Akka.Hosting.OpenTelemetry.AppHost\Akka.Hosting.OpenTelemetry.AppHost.csproj", "{CC22F505-B648-420E-BC8A-0FCE46082986}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -110,6 +114,14 @@ Global
 		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BCB9636-DAD2-4364-8A83-3D2888FE5AB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BCB9636-DAD2-4364-8A83-3D2888FE5AB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BCB9636-DAD2-4364-8A83-3D2888FE5AB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BCB9636-DAD2-4364-8A83-3D2888FE5AB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC22F505-B648-420E-BC8A-0FCE46082986}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC22F505-B648-420E-BC8A-0FCE46082986}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC22F505-B648-420E-BC8A-0FCE46082986}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC22F505-B648-420E-BC8A-0FCE46082986}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +130,8 @@ Global
 		{5F6A7BE8-6906-46CE-BA1C-72EA11EFA33B} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{4F79325B-9EE7-4501-800F-7A1F8DFBCC80} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 		{298D7727-FDC6-49B2-9030-CC7F0E09B0B8} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
+		{6BCB9636-DAD2-4364-8A83-3D2888FE5AB2} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
+		{CC22F505-B648-420E-BC8A-0FCE46082986} = {EFA970FF-6BCC-4C38-84D8-324D40F2BF03}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
