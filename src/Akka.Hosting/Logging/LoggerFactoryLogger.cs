@@ -65,7 +65,7 @@ namespace Akka.Hosting.Logging
             var logLevel = GetLogLevel(log.LogLevel());
 
             // Capture ActivityContext (Akka.NET 1.5.59+) for trace correlation
-            var activityContext = log.ActivityContext;
+            var activityContext = log.ActivityContext ?? default;
 
             // Use semantic logging to extract structured properties
             if (log.TryGetProperties(out var properties) && properties is not null)
@@ -90,7 +90,7 @@ namespace Akka.Hosting.Logging
             {
                 var formattedMessage = SafeFormat(log);
 
-                if (activityContext.TraceId != default)
+                if (log.ActivityContext.HasValue)
                 {
                     // Preserve trace context even for non-structured logs
                     var state = new AkkaLogState(activityContext, formattedMessage);
