@@ -35,8 +35,8 @@
     <CoverletVersion>6.0.3</CoverletVersion>
     <XunitRunneVisualstudio>3.1.5</XunitRunneVisualstudio>
     <AkkaVersion>1.5.59</AkkaVersion>
-    <MicrosoftExtensionsVersion>[6.0.0,)</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>[6.0.10,)</SystemTextJsonVersion>
+    <MicrosoftExtensionsVersion>[8.0.0,)</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>[8.0.5,)</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
