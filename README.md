@@ -651,6 +651,8 @@ builder.Logging.AddOpenTelemetry(options =>
     // Register before exporters
     options.AddAkkaTraceCorrelation();
 
+    // Add OTLP exporter if you have not configured it elsewhere.
+    // Your mileage may vary; use the OpenTelemetry configuration that fits your app.
     options.AddOtlpExporter();
 });
 
