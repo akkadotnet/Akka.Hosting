@@ -277,7 +277,7 @@ public class BugReproTestSink : ILogger
 
     public bool IsEnabled(LogLevel logLevel) => true;
 
-    public IDisposable BeginScope<TState>(TState state) => EmptyDisposable.Instance;
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull => EmptyDisposable.Instance;
 }
 
 public class BugReproLogEntry
