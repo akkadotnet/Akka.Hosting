@@ -15,7 +15,7 @@ using OpenTelemetry.Resources;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Add Aspire service defaults (includes Seq integration via OTLP)
+// Add Aspire service defaults (service discovery + tracing)
 builder.AddServiceDefaults();
 
 // Configure OpenTelemetry logging with Akka trace correlation
@@ -31,6 +31,15 @@ builder.Logging.AddOpenTelemetry(options =>
     // Include formatted message for easier debugging
     options.IncludeFormattedMessage = true;
     options.IncludeScopes = true;
+
+    var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+    if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+    {
+        options.AddOtlpExporter(exporterOptions =>
+        {
+            exporterOptions.Endpoint = new Uri(otlpEndpoint);
+        });
+    }
 });
 
 // Configure Akka.NET with LoggerFactoryLogger

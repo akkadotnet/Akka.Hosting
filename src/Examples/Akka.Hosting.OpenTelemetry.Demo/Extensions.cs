@@ -4,7 +4,6 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Trace;
 
 namespace Akka.Hosting.OpenTelemetry.Demo;
@@ -28,20 +27,6 @@ public static class Extensions
             {
                 tracing.AddSource("Akka.Hosting.OpenTelemetry.Demo");
             });
-
-        // Add OTLP exporters if configured
-        var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
-        if (!string.IsNullOrWhiteSpace(otlpEndpoint))
-        {
-            builder.Services.AddOpenTelemetry()
-                .WithTracing(tracing =>
-                {
-                    tracing.AddOtlpExporter(options =>
-                    {
-                        options.Endpoint = new Uri(otlpEndpoint);
-                    });
-                });
-        }
 
         // Add health checks
         builder.Services.AddHealthChecks();

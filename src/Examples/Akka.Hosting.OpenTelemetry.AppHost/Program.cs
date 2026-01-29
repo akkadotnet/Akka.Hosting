@@ -6,12 +6,7 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Add Seq for log collection and visualization
-var seq = builder.AddSeq("seq")
-    .WithDataVolume();
-
-// Add the Akka.NET demo service with Seq reference for OTLP export
-builder.AddProject<Projects.Akka_Hosting_OpenTelemetry_Demo>("demo")
-    .WithReference(seq);
+// Add the Akka.NET demo service
+builder.AddProject<Projects.Akka_Hosting_OpenTelemetry_Demo>("demo");
 
 builder.Build().Run();

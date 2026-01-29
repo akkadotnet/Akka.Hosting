@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Seq" Version="8.2.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="8.2.2" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
