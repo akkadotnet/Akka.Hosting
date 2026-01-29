@@ -33,7 +33,7 @@ public class DeadLetterOptions
     /// Number of dead letter messages to be logged. Only effective if <see cref="ShouldLog"/> is set to
     /// <see cref="TriStateValue.Some"/>
     /// </summary>
-    public int LogCount { get; set; } = 10;
+    public int? LogCount { get; set; }
     
     /// <summary>
     /// Flag to indicate that log letters should not be logged while the <see cref="ActorSystem"/> is shutting down.
@@ -49,17 +49,32 @@ public class DeadLetterOptions
     public override string ToString()
     {
         var sb = new StringBuilder();
-        sb.AppendLine("akka {");
-        sb.AppendLine($@"log-dead-letters = {ShouldLog switch
+
+        if (ShouldLog is not TriStateValue.Some)
         {
-            TriStateValue.All => "on",
-            TriStateValue.None => "off",
-            _ => LogCount
-        }}");
-        if (LogDuringShutdown is { })
+            switch (ShouldLog)
+            {
+                case TriStateValue.All:
+                    sb.AppendLine("log-dead-letters = on");
+                    break;
+                case TriStateValue.None:
+                    sb.AppendLine("log-dead-letters = off");
+                    break;
+                default:
+                    throw new IndexOutOfRangeException($"Unknown TriStateValue: {ShouldLog}");
+            }
+        } else if(LogCount is not null)
+            sb.AppendLine($"log-dead-letters = {LogCount.Value}");
+        
+        if (LogDuringShutdown is not null)
             sb.AppendLine($"log-dead-letters-during-shutdown = {LogDuringShutdown.ToHocon()}");
-        if (LogSuspendDuration is { })
+        if (LogSuspendDuration is not null)
             sb.AppendLine($"log-dead-letters-suspend-duration = {LogSuspendDuration.ToHocon(allowInfinite: true, zeroIsInfinite: true)}");
+        
+        if(sb.Length == 0)
+            return string.Empty;
+
+        sb.Insert(0, "akka {");
         sb.AppendLine("}");
         return sb.ToString();
     }

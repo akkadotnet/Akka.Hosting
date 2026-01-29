@@ -4,9 +4,14 @@
     <Authors>Akka.NET Team</Authors>
     <VersionPrefix>1.5.59</VersionPrefix>
     <PackageReleaseNotes>**New Features**
-* [Add OpenTelemetry trace correlation support for LoggerFactoryLogger](https://github.com/akkadotnet/Akka.Hosting/issues/700) - enables proper trace correlation for logs emitted from actor code. Solves the problem that Activity.Current doesn't flow across actor mailbox boundaries. When using Akka.NET 1.5.59+, LogEvent.ActivityContext captures trace context at log creation time and flows it through to OpenTelemetry LogRecords via the new AkkaTraceContextProcessor.
+* [Add OpenTelemetry trace correlation support for LoggerFactoryLogger](https://github.com/akkadotnet/Akka.Hosting/issues/700) - enables proper trace correlation for logs emitted from actor code. When using Akka.NET 1.5.59+, `LogEvent.ActivityContext` captures trace context at log creation time and flows it through to OpenTelemetry `LogRecord`s via the new `AkkaTraceContextProcessor`.
+
+**Bug Fixes**
+* [Fix semantic logging not capturing named placeholders as structured properties](https://github.com/akkadotnet/Akka.Hosting/pull/702) - resolved [issue #701](https://github.com/akkadotnet/Akka.Hosting/issues/701) where named placeholders like `{Event}` in log messages were not captured as searchable structured properties. Made all `LoggerConfigBuilder` properties optional and refactored message formatting code.
+* [Fix TestKit startup timeout race condition](https://github.com/akkadotnet/Akka.Hosting/pull/705) - resolved race condition in `TestKit.InitializeAsync()` where `CancellationTokenSource.Register()` threw exceptions on the timer thread, causing unhandled exceptions that crashed the test host process. Also increased default startup timeout from 10s to 30s for CI environments.
+
 **Updates**
-* [Bump Akka version from 1.5.57 to 1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)
+* [Bump Akka version from 1.5.58 to 1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)
 * Added OpenTelemetry dependency (1.9.0+) for trace correlation support</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>

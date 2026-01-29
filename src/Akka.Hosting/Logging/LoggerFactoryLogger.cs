@@ -6,7 +6,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
@@ -65,17 +64,15 @@ namespace Akka.Hosting.Logging
         {
             var logLevel = GetLogLevel(log.LogLevel());
 
-            // Try to get ActivityContext for OpenTelemetry trace correlation
-            // This captures trace context that was active when the log was created,
-            // solving the problem that Activity.Current doesn't flow across mailbox boundaries
-            var activityContext = TryGetActivityContext(log);
+            // Capture ActivityContext (Akka.NET 1.5.59+) for trace correlation
+            var activityContext = log.ActivityContext;
 
             // Use semantic logging to extract structured properties
             if (log.TryGetProperties(out var properties) && properties is not null)
             {
-                var formattedMessage = FormatMessage(log.GetTemplate(), log.GetParameters().ToArray());
+                var formattedMessage = SafeFormat(log);
 
-                // Use AkkaLogState to include trace context with structured properties
+                // Include trace context and structured properties in AkkaLogState
                 var state = new AkkaLogState(
                     activityContext,
                     properties,
@@ -86,70 +83,44 @@ namespace Akka.Hosting.Logging
                     log.GetTemplate(),
                     formattedMessage);
 
-                // Log with structured state including trace context
                 _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                    (s, ex) => s.ToString());
+                    (s, ex) => formattedMessage);
             }
             else
             {
-                // Fallback for non-structured messages (plain strings)
-                // Still include trace context if available
+                var formattedMessage = SafeFormat(log);
+
                 if (activityContext.TraceId != default)
                 {
-                    var state = new AkkaLogState(activityContext, log.ToString());
+                    // Preserve trace context even for non-structured logs
+                    var state = new AkkaLogState(activityContext, formattedMessage);
                     _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                        (s, ex) => s.ToString());
+                        (s, ex) => formattedMessage);
                 }
                 else
                 {
+                    // Fallback for non-structured messages without trace context
                     _akkaLogger.Log<LogEvent>(logLevel, new EventId(), log, log.Cause,
-                        (@event, exception) => @event.ToString());
+                        (@event, exception) => formattedMessage);
                 }
             }
         }
 
-        /// <summary>
-        /// Attempts to extract the ActivityContext from a LogEvent.
-        /// Uses reflection to maintain compatibility with older Akka.NET versions
-        /// that don't have the ActivityContext property.
-        /// </summary>
-        private static ActivityContext TryGetActivityContext(LogEvent log)
-        {
-            // Try to get ActivityContext via the property added in Akka.NET 1.5.59
-            // Use reflection for backwards compatibility with older versions
-            try
-            {
-                var activityContextProperty = log.GetType().GetProperty("ActivityContext");
-                if (activityContextProperty != null)
-                {
-                    var value = activityContextProperty.GetValue(log);
-                    if (value is ActivityContext context)
-                    {
-                        return context;
-                    }
-                }
-            }
-            catch
-            {
-                // Ignore reflection errors - just return default
-            }
-
-            return default;
-        }
-
-        private static string FormatMessage(string template, object[] args)
+        private static string SafeFormat(LogEvent log)
         {
             try
             {
-                return args.Length == 0 ? template : string.Format(template, args);
+                return log.ToString();
             }
             catch
             {
-                // If formatting fails, return the template as-is
-                return template;
+                if (log.Message is LogMessage msg)
+                    return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Template: [{msg.Format}], args: [{string.Join(",", msg.Unformatted())}]";
+
+                return $"Received a malformed formatted message. Log level: [{log.LogLevel()}], Message: [{log.Message}]";
             }
         }
-        
+
         private static LogLevel GetLogLevel(Event.LogLevel level)
         {
             return level switch

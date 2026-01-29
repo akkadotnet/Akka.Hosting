@@ -3,9 +3,18 @@
 **New Features**
 * [Add OpenTelemetry trace correlation support for LoggerFactoryLogger](https://github.com/akkadotnet/Akka.Hosting/issues/700) - enables proper trace correlation for logs emitted from actor code. Solves the problem that `Activity.Current` doesn't flow across actor mailbox boundaries because it uses `AsyncLocal<T>`. When using Akka.NET 1.5.59+, `LogEvent.ActivityContext` captures trace context at log creation time and flows it through to OpenTelemetry `LogRecord`s via the new `AkkaTraceContextProcessor`. Register with `options.AddAkkaTraceCorrelation()` in your OpenTelemetry logging configuration.
 
+**Bug Fixes**
+* [Fix semantic logging not capturing named placeholders as structured properties](https://github.com/akkadotnet/Akka.Hosting/pull/702) - resolved [issue #701](https://github.com/akkadotnet/Akka.Hosting/issues/701) where named placeholders like `{Event}` in log messages were not captured as searchable structured properties. Made all `LoggerConfigBuilder` properties optional and refactored message formatting code.
+* [Fix TestKit startup timeout race condition](https://github.com/akkadotnet/Akka.Hosting/pull/705) - resolved race condition in `TestKit.InitializeAsync()` where `CancellationTokenSource.Register()` threw exceptions on the timer thread, causing unhandled exceptions that crashed the test host process. Also increased default startup timeout from 10s to 30s for CI environments.
+
 **Updates**
-* [Bump Akka version from 1.5.57 to 1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)
+* [Bump Akka version from 1.5.58 to 1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)
 * Added `OpenTelemetry` package dependency (1.9.0+) for trace correlation support
+
+#### 1.5.58 January 9th 2026 ####
+
+**Updates**
+* [Bump Akka version from 1.5.57 to 1.5.58](https://github.com/akkadotnet/akka.net/releases/tag/1.5.58)
 
 #### 1.5.57 December 16th 2025 ####
 
