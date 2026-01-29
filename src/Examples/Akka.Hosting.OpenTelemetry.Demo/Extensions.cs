@@ -26,6 +26,7 @@ public static class Extensions
             .WithTracing(tracing =>
             {
                 tracing.AddSource("Akka.Hosting.OpenTelemetry.Demo");
+                tracing.AddOtlpExporter();
             });
 
         // Add health checks

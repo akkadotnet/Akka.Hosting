@@ -32,14 +32,7 @@ builder.Logging.AddOpenTelemetry(options =>
     options.IncludeFormattedMessage = true;
     options.IncludeScopes = true;
 
-    var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
-    if (!string.IsNullOrWhiteSpace(otlpEndpoint))
-    {
-        options.AddOtlpExporter(exporterOptions =>
-        {
-            exporterOptions.Endpoint = new Uri(otlpEndpoint);
-        });
-    }
+    options.AddOtlpExporter();
 });
 
 // Configure Akka.NET with LoggerFactoryLogger
