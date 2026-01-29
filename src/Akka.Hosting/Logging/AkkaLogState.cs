@@ -27,7 +27,7 @@ namespace Akka.Hosting.Logging
     /// it uses <see cref="AsyncLocal{T}"/>.
     /// </para>
     /// </remarks>
-    public readonly struct AkkaLogState : IEnumerable<KeyValuePair<string, object?>>
+    internal readonly struct AkkaLogState : IEnumerable<KeyValuePair<string, object?>>
     {
         /// <summary>
         /// Key for the trace ID in the log state dictionary.

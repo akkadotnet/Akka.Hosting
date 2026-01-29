@@ -255,16 +255,6 @@ namespace Akka.Hosting.HealthChecks
 }
 namespace Akka.Hosting.Logging
 {
-    public readonly struct AkkaLogState : System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object?>>, System.Collections.IEnumerable
-    {
-        public const string SpanIdKey = "Akka.SpanId";
-        public const string TraceFlagsKey = "Akka.TraceFlags";
-        public const string TraceIdKey = "Akka.TraceId";
-        public AkkaLogState(System.Diagnostics.ActivityContext activityContext, string formattedMessage) { }
-        public AkkaLogState(System.Diagnostics.ActivityContext activityContext, System.Collections.Generic.IReadOnlyDictionary<string, object> semanticProperties, string actorPath, System.DateTimeOffset timestamp, int threadId, string logSource, string template, string formattedMessage) { }
-        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object?>> GetEnumerator() { }
-        public override string ToString() { }
-    }
     public sealed class AkkaTraceContextProcessor : OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord>
     {
         public AkkaTraceContextProcessor() { }
