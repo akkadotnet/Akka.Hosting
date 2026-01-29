@@ -6,6 +6,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
@@ -111,18 +112,11 @@ namespace Akka.Hosting.Logging
 
         private static void SetTraceContext(LogRecord record, ActivityTraceId traceId, ActivitySpanId spanId, ActivityTraceFlags traceFlags)
         {
-            // LogRecord has internal setters, so we need to use reflection
             try
             {
-                var recordType = typeof(LogRecord);
-
-                var traceIdProp = recordType.GetProperty("TraceId");
-                var spanIdProp = recordType.GetProperty("SpanId");
-                var traceFlagsProp = recordType.GetProperty("TraceFlags");
-
-                traceIdProp?.SetValue(record, traceId);
-                spanIdProp?.SetValue(record, spanId);
-                traceFlagsProp?.SetValue(record, traceFlags);
+                SetTraceId(record, traceId);
+                SetSpanId(record, spanId);
+                SetTraceFlags(record, traceFlags);
             }
             catch
             {
@@ -130,6 +124,15 @@ namespace Akka.Hosting.Logging
                 // The trace context attributes are still present in the log state
             }
         }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "set_TraceId")]
+        private static extern void SetTraceId(LogRecord record, ActivityTraceId value);
+
+        [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "set_SpanId")]
+        private static extern void SetSpanId(LogRecord record, ActivitySpanId value);
+
+        [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "set_TraceFlags")]
+        private static extern void SetTraceFlags(LogRecord record, ActivityTraceFlags value);
 
         private static ActivityTraceId? TryParseTraceId(string traceIdStr)
         {
