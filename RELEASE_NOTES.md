@@ -4,6 +4,12 @@
 * [Add OpenTelemetry trace correlation support for LoggerFactoryLogger](https://github.com/akkadotnet/Akka.Hosting/pull/706) - enables proper trace correlation for logs emitted from actor code. Solves the problem that `Activity.Current` doesn't flow across actor mailbox boundaries because it uses `AsyncLocal<T>`. When using Akka.NET 1.5.59+, `LogEvent.ActivityContext` captures trace context at log creation time and flows it through to OpenTelemetry `LogRecord`s via the new `AkkaTraceContextProcessor`. Register with `options.AddAkkaTraceCorrelation()` in your OpenTelemetry logging configuration.
 * [Add WithContext() integration tests for MEL logger](https://github.com/akkadotnet/Akka.Hosting/pull/709) - confirmed that Akka.NET 1.5.60's `WithContext()` logging context enrichment works automatically with `LoggerFactoryLogger`. Context properties set via the core `WithContext()` API flow through to Microsoft.Extensions.Logging state dictionaries via `TryGetProperties()` without any code changes needed.
 
+**Bug Fixes**
+* [Fix `WithDefaultLogMessageFormatter<T>()` rejecting built-in formatters](https://github.com/akkadotnet/Akka.Hosting/pull/711) - `SemanticLogMessageFormatter` and `DefaultLogMessageFormatter` have private constructors (they use singleton `Instance` properties), but the validation only accepted public parameterless constructors. These built-in types are now correctly accepted.
+
+**Deprecations**
+* `WithDefaultLogMessageFormatter<T>()` is now marked `[Obsolete]` — `SemanticLogMessageFormatter` is the default as of Akka.NET 1.5.58 and no longer needs to be set explicitly. The method still works for custom `ILogMessageFormatter` implementations.
+
 **Updates**
 * [Bump Akka version from 1.5.59 to 1.5.60](https://github.com/akkadotnet/akka.net/releases/tag/1.5.60)
 
