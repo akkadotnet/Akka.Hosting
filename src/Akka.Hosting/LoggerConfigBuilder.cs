@@ -57,10 +57,15 @@ namespace Akka.Hosting
                 if (!typeof(ILogMessageFormatter).IsAssignableFrom(value))
                     throw new ConfigurationException($"{nameof(LogMessageFormatter)} must implement {nameof(ILogMessageFormatter)}");
 
-                var ctor = value.GetConstructor([]);
-                if (ctor is null)
-                    throw new ConfigurationException($"{nameof(LogMessageFormatter)} Type must have an empty constructor");
-                        
+                // Built-in formatters use private constructors with singleton Instance properties;
+                // Akka.NET's Settings.cs handles these as special cases at runtime.
+                if (value != typeof(SemanticLogMessageFormatter) && value != typeof(DefaultLogMessageFormatter))
+                {
+                    var ctor = value.GetConstructor([]);
+                    if (ctor is null)
+                        throw new ConfigurationException($"{nameof(LogMessageFormatter)} Type must have an empty constructor");
+                }
+
                 _logMessageFormatter = value;
             }
         }
@@ -87,8 +92,14 @@ namespace Akka.Hosting
         }
         
         /// <summary>
-        /// Sets the formatter used by the logger
+        /// Sets the formatter used by the logger.
         /// </summary>
+        /// <remarks>
+        /// As of Akka.NET 1.5.58, <see cref="SemanticLogMessageFormatter"/> is the default formatter
+        /// and is configured automatically. This method is only needed if you have a custom
+        /// <see cref="ILogMessageFormatter"/> implementation.
+        /// </remarks>
+        [Obsolete("SemanticLogMessageFormatter is now the default. Only use this method if you have a custom ILogMessageFormatter implementation.")]
         public LoggerConfigBuilder WithDefaultLogMessageFormatter<T>() where T: ILogMessageFormatter
         {
 #pragma warning disable CS0618 // Type or member is obsolete

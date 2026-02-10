@@ -63,6 +63,44 @@ public class LogMessageFormatterSpec
             .Should().ThrowAsync<ConfigurationException>().WithMessage("*must have an empty constructor*");
     }
 
+    [Fact(DisplayName = "SemanticLogMessageFormatter should be accepted (GitHub issue #703)")]
+    public async Task SemanticLogMessageFormatterShouldBeAcceptedTest()
+    {
+        // SemanticLogMessageFormatter has a private constructor - verify it doesn't throw
+#pragma warning disable CS0618
+        using var host = await SetupHost<SemanticLogMessageFormatter>();
+#pragma warning restore CS0618
+
+        try
+        {
+            var sys = host.Services.GetRequiredService<ActorSystem>();
+            sys.Settings.LogFormatter.Should().BeOfType<SemanticLogMessageFormatter>();
+        }
+        finally
+        {
+            await host.StopAsync();
+        }
+    }
+
+    [Fact(DisplayName = "DefaultLogMessageFormatter should be accepted")]
+    public async Task DefaultLogMessageFormatterShouldBeAcceptedTest()
+    {
+        // DefaultLogMessageFormatter has a private constructor - verify it doesn't throw
+#pragma warning disable CS0618
+        using var host = await SetupHost<DefaultLogMessageFormatter>();
+#pragma warning restore CS0618
+
+        try
+        {
+            var sys = host.Services.GetRequiredService<ActorSystem>();
+            sys.Settings.LogFormatter.Should().BeOfType<DefaultLogMessageFormatter>();
+        }
+        finally
+        {
+            await host.StopAsync();
+        }
+    }
+
     private async Task<IHost> SetupHost<TFormatter>() where TFormatter : ILogMessageFormatter
     {
         var host = new HostBuilder()
@@ -79,7 +117,9 @@ public class LogMessageFormatterSpec
                         {
                             setup.LogLevel = Event.LogLevel.DebugLevel;
                             setup.AddLoggerFactory();
+#pragma warning disable CS0618
                             setup.WithDefaultLogMessageFormatter<TFormatter>();
+#pragma warning restore CS0618
                         });
                 });
             }).Build();
