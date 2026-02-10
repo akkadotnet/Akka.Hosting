@@ -194,6 +194,8 @@ namespace Akka.Hosting
         public Akka.Hosting.LoggerConfigBuilder AddLogger<T>()
             where T : Akka.Dispatch.IRequiresMessageQueue<Akka.Event.ILoggerMessageQueueSemantics> { }
         public Akka.Hosting.LoggerConfigBuilder ClearLoggers() { }
+        [System.Obsolete("SemanticLogMessageFormatter is now the default. Only use this method if you have " +
+            "a custom ILogMessageFormatter implementation.")]
         public Akka.Hosting.LoggerConfigBuilder WithDefaultLogMessageFormatter<T>()
             where T : Akka.Event.ILogMessageFormatter { }
         public Akka.Hosting.LoggerConfigBuilder WithLogFilter(System.Action<Akka.Event.LogFilterBuilder> filterBuilder) { }

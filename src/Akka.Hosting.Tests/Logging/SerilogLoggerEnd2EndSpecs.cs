@@ -69,7 +69,9 @@ public class SerilogLoggerEnd2EndSpecs : TestKit.TestKit
             setup.ClearLoggers();
             setup.AddLogger<SerilogLogger>();
             setup.LogLevel = Event.LogLevel.DebugLevel;
+#pragma warning disable CS0618
             setup.WithDefaultLogMessageFormatter<SerilogLogMessageFormatter>();
+#pragma warning restore CS0618
         });
     }
 
