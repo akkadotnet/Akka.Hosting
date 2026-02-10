@@ -1,3 +1,12 @@
+#### 1.5.60 February 10th 2026 ####
+
+**New Features**
+* [Add OpenTelemetry trace correlation support for LoggerFactoryLogger](https://github.com/akkadotnet/Akka.Hosting/pull/706) - enables proper trace correlation for logs emitted from actor code. Solves the problem that `Activity.Current` doesn't flow across actor mailbox boundaries because it uses `AsyncLocal<T>`. When using Akka.NET 1.5.59+, `LogEvent.ActivityContext` captures trace context at log creation time and flows it through to OpenTelemetry `LogRecord`s via the new `AkkaTraceContextProcessor`. Register with `options.AddAkkaTraceCorrelation()` in your OpenTelemetry logging configuration.
+* [Add WithContext() integration tests for MEL logger](https://github.com/akkadotnet/Akka.Hosting/pull/709) - confirmed that Akka.NET 1.5.60's `WithContext()` logging context enrichment works automatically with `LoggerFactoryLogger`. Context properties set via the core `WithContext()` API flow through to Microsoft.Extensions.Logging state dictionaries via `TryGetProperties()` without any code changes needed.
+
+**Updates**
+* [Bump Akka version from 1.5.59 to 1.5.60](https://github.com/akkadotnet/akka.net/releases/tag/1.5.60)
+
 #### 1.5.60-beta1 January 29th 2026 ####
 
 **Beta Release**
