@@ -1,3 +1,8 @@
+#### 1.5.61 February 26th 2026 ####
+
+**Updates**
+* [Bump Akka version from 1.5.60 to 1.5.61](https://github.com/akkadotnet/akka.net/releases/tag/1.5.61)
+
 #### 1.5.60 February 10th 2026 ####
 
 **New Features**
