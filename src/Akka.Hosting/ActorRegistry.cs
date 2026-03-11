@@ -62,9 +62,9 @@ namespace Akka.Hosting
                     return _internalRef;
 
                 // attempt 2 - synchronously check the registry (fast path)
-                if (_registry.TryGet<TActor>(out _internalRef))
+                if (_registry.TryGet<TActor>(out var internalRef))
                 {
-                    return _internalRef;
+                    return _internalRef = internalRef;
                 }
 
 

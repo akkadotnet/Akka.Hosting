@@ -138,4 +138,37 @@ public class RequiredActorSpecs
         // assert
         cachedActorRef.Should().NotBeOfType<Nobody>();
     }
+    
+    [Fact]
+    public async Task ShouldNotCacheNobodyBeforeRegistrationWithSyncActorRef()
+    {
+        // arrange
+        using var host = new HostBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddAkka("MySys", (builder, _) =>
+                {
+                    builder.WithActors((system, registry) =>
+                    {
+                        var actor = system.ActorOf(Props.Create(() => new MyActorType()), "myactor");
+                        registry.Register<MyActorType>(actor);
+                    });
+                });
+            })
+            .Build();
+
+        var myRequiredActor = host.Services.GetRequiredService<IRequiredActor<MyActorType>>();
+
+        Action shouldThrow = () => _ = myRequiredActor.ActorRef;
+
+        shouldThrow.Should().Throw<MissingActorRegistryEntryException>();
+
+        await host.StartAsync();
+
+        // act
+        var cachedActorRef = await myRequiredActor.GetAsync();
+
+        // assert
+        cachedActorRef.Should().NotBeOfType<Nobody>();
+    }
 }
