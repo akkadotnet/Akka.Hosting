@@ -32,6 +32,17 @@ jobs:
     - name: Push Packages
       run: dotnet nuget push "output/*.nupkg" -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json
 
+    - name: "Extract latest release notes"
+      shell: pwsh
+      run: |
+        $content = Get-Content RELEASE_NOTES.md -Raw
+        # Match from the first #### heading to just before the second one
+        if ($content -match '(?s)(####.+?)(?=\n####|\z)') {
+          $Matches[1].Trim() | Set-Content RELEASE_NOTES_LATEST.md
+        } else {
+          $content | Set-Content RELEASE_NOTES_LATEST.md
+        }
+
     - name: release
       uses: actions/create-release@v1
       id: create_release
@@ -40,7 +51,7 @@ jobs:
         prerelease: false
         release_name: 'Akka.Hosting ${{ github.ref_name }}'
         tag_name: ${{ github.ref }}
-        body_path: RELEASE_NOTES.md
+        body_path: RELEASE_NOTES_LATEST.md
       env:
         GITHUB_TOKEN: ${{ github.token }}
 
