@@ -1,3 +1,11 @@
+#### 1.5.63 March 24th 2026 ####
+
+**Bug Fixes**
+* [Fix `ActorRegistry.TryGet` caching stale `IActorRef` values](https://github.com/akkadotnet/Akka.Hosting/pull/718) - `ActorRegistry.TryGet` was caching the internal `IActorRef` on first call.
+
+**Updates**
+* [Bump Akka version from 1.5.62 to 1.5.63](https://github.com/akkadotnet/akka.net/releases/tag/1.5.63)
+
 #### 1.5.62 March 4th 2026 ####
 
 **Updates**
