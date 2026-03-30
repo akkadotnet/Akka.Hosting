@@ -7,6 +7,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Hosting;
@@ -21,9 +23,9 @@ namespace Akka.Hosting.Tests.Logging;
 /// <summary>
 /// Verify snapshot tests for LoggerFactoryLogger structured state output.
 ///
-/// These tests capture the structure of the log state dictionary that
-/// LoggerFactoryLogger passes to ILogger.Log(). Any change to the metadata
-/// presence will cause a snapshot mismatch.
+/// Captures both the formatted message and the structured state dictionary
+/// from ILogger.Log(), sanitizes volatile values (timestamps, thread IDs,
+/// actor paths), and snapshots the result as plain text.
 /// </summary>
 [UsesVerify]
 public class LogStateSnapshotSpecs : TestKit.TestKit
@@ -45,96 +47,76 @@ public class LogStateSnapshotSpecs : TestKit.TestKit
         });
     }
 
-    /// <summary>
-    /// Snapshot the state dictionary for a structured log with named placeholders.
-    /// Expected: semantic properties (UserId, Action) + Akka metadata (ActorPath, Timestamp, Thread, LogSource) + {OriginalFormat}
-    /// </summary>
     [Fact]
-    public System.Threading.Tasks.Task StructuredLog_StateKeys()
+    public System.Threading.Tasks.Task StructuredLog_StateSnapshot()
     {
         _sink.Clear();
-
         Sys.Log.Info("User {UserId} performed {Action}", 12345, "Login");
-
         AwaitCondition(() => _sink.Entries.Any(e => e.Message.Contains("12345")));
-
         var entry = _sink.Entries.First(e => e.Message.Contains("12345"));
-
-        var snapshot = new
-        {
-            entry.LogLevel,
-            HasActorPath = entry.State.ContainsKey("ActorPath"),
-            HasTimestamp = entry.State.ContainsKey("Timestamp"),
-            HasThread = entry.State.ContainsKey("Thread"),
-            HasLogSource = entry.State.ContainsKey("LogSource"),
-            HasOriginalFormat = entry.State.ContainsKey("{OriginalFormat}"),
-            OriginalFormat = entry.State.GetValueOrDefault("{OriginalFormat}")?.ToString(),
-            HasSemanticProperty_UserId = entry.State.ContainsKey("UserId"),
-            HasSemanticProperty_Action = entry.State.ContainsKey("Action"),
-            UserId = entry.State.GetValueOrDefault("UserId"),
-            Action = entry.State.GetValueOrDefault("Action"),
-        };
-
-        return Verifier.Verify(snapshot);
+        return Verifier.Verify(FormatEntry(entry));
     }
 
-    /// <summary>
-    /// Snapshot the state dictionary for a plain string log (no template placeholders).
-    /// Expected: Akka metadata (ActorPath, Timestamp, Thread, LogSource) + {OriginalFormat}
-    /// This is the scenario that regressed — plain string logs must still carry metadata.
-    /// </summary>
     [Fact]
-    public System.Threading.Tasks.Task PlainStringLog_StateKeys()
+    public System.Threading.Tasks.Task PlainStringLog_StateSnapshot()
     {
         _sink.Clear();
-
         Sys.Log.Info("Server started successfully");
-
         AwaitCondition(() => _sink.Entries.Any(e => e.Message.Contains("Server started successfully")));
-
         var entry = _sink.Entries.First(e => e.Message.Contains("Server started successfully"));
-
-        var snapshot = new
-        {
-            entry.LogLevel,
-            HasActorPath = entry.State.ContainsKey("ActorPath"),
-            HasTimestamp = entry.State.ContainsKey("Timestamp"),
-            HasThread = entry.State.ContainsKey("Thread"),
-            HasLogSource = entry.State.ContainsKey("LogSource"),
-            HasOriginalFormat = entry.State.ContainsKey("{OriginalFormat}"),
-        };
-
-        return Verifier.Verify(snapshot);
+        return Verifier.Verify(FormatEntry(entry));
     }
 
-    /// <summary>
-    /// Snapshot the state dictionary for a log with positional placeholders.
-    /// Expected: semantic properties (0) + Akka metadata + {OriginalFormat}
-    /// </summary>
     [Fact]
-    public System.Threading.Tasks.Task PositionalPlaceholderLog_StateKeys()
+    public System.Threading.Tasks.Task PositionalPlaceholderLog_StateSnapshot()
     {
         _sink.Clear();
-
         Sys.Log.Info("User {0} logged in", 99);
-
         AwaitCondition(() => _sink.Entries.Any(e => e.Message.Contains("99")));
-
         var entry = _sink.Entries.First(e => e.Message.Contains("99"));
+        return Verifier.Verify(FormatEntry(entry));
+    }
 
-        var snapshot = new
+    private static string FormatEntry(BugReproLogEntry entry)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"LogLevel: {entry.LogLevel}");
+        sb.AppendLine($"Message: {SanitizeMessage(entry.Message)}");
+        sb.AppendLine("State:");
+        foreach (var kvp in entry.State.OrderBy(k => k.Key))
         {
-            entry.LogLevel,
-            HasActorPath = entry.State.ContainsKey("ActorPath"),
-            HasTimestamp = entry.State.ContainsKey("Timestamp"),
-            HasThread = entry.State.ContainsKey("Thread"),
-            HasLogSource = entry.State.ContainsKey("LogSource"),
-            HasOriginalFormat = entry.State.ContainsKey("{OriginalFormat}"),
-            OriginalFormat = entry.State.GetValueOrDefault("{OriginalFormat}")?.ToString(),
-            HasSemanticProperty_0 = entry.State.ContainsKey("0"),
-            Value_0 = entry.State.GetValueOrDefault("0"),
-        };
+            sb.AppendLine($"  [{kvp.Key}] = {SanitizeValue(kvp.Key, kvp.Value)}");
+        }
+        return sb.ToString();
+    }
 
-        return Verifier.Verify(snapshot);
+    private static string SanitizeMessage(string message)
+    {
+        // Replace [LEVEL][datetime][Thread NNNN][logSource] prefix with sanitized constants
+        message = Regex.Replace(message,
+            @"\[(DEBUG|INFO|WARNING|ERROR)\]",
+            "[LEVEL]");
+        message = Regex.Replace(message,
+            @"\[\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}\.\d{3}Z?\]",
+            "[DateTime]");
+        message = Regex.Replace(message,
+            @"\[Thread \d+\]",
+            "[Thread 0001]");
+        message = Regex.Replace(message,
+            @"\[akka://[^\]]+\]",
+            "[ActorPath]");
+        return message;
+    }
+
+    private static string SanitizeValue(string key, object? value)
+    {
+        return key switch
+        {
+            "ActorPath" => "akka://test/...",
+            "Timestamp" => "DateTime",
+            "Thread" => "1",
+            "LogSource" => "LogSource",
+            _ => value?.ToString() ?? "null"
+        };
     }
 }
