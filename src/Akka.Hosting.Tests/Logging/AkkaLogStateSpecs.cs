@@ -121,7 +121,7 @@ public class AkkaLogStateSpecs
         var logSource = "MyActor";
 
         // Act
-        var state = new AkkaLogState(activityContext, actorPath, timestamp, threadId, logSource, message);
+        var state = new AkkaLogState(activityContext, actorPath, timestamp, threadId, logSource, message, message);
         var items = state.ToList();
 
         // Assert
@@ -155,7 +155,7 @@ public class AkkaLogStateSpecs
         var logSource = "MyActor";
 
         // Act
-        var state = new AkkaLogState(activityContext, actorPath, timestamp, threadId, logSource, message);
+        var state = new AkkaLogState(activityContext, actorPath, timestamp, threadId, logSource, message, message);
         var items = state.ToList();
 
         // Assert

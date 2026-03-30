@@ -95,6 +95,7 @@ namespace Akka.Hosting.Logging
                     log.Timestamp,
                     log.Thread.ManagedThreadId,
                     log.LogSource,
+                    log.GetTemplate(),
                     formattedMessage);
                 _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
                     (s, ex) => formattedMessage);
