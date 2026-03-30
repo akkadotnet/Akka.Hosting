@@ -92,15 +92,13 @@ namespace Akka.Hosting.Logging
         /// <param name="timestamp">The timestamp when the log was created.</param>
         /// <param name="threadId">The managed thread ID of the originating thread.</param>
         /// <param name="logSource">The source of the log event.</param>
-        /// <param name="template">The message template string (for {OriginalFormat}).</param>
-        /// <param name="formattedMessage">The pre-formatted message for display.</param>
+        /// <param name="formattedMessage">The formatted log message.</param>
         public AkkaLogState(
             ActivityContext activityContext,
             string actorPath,
             DateTimeOffset timestamp,
             int threadId,
             string logSource,
-            string template,
             string formattedMessage)
         {
             _activityContext = activityContext;
@@ -109,7 +107,7 @@ namespace Akka.Hosting.Logging
             _timestamp = timestamp;
             _threadId = threadId;
             _logSource = logSource;
-            _template = template;
+            _template = formattedMessage;
             _formattedMessage = formattedMessage;
         }
 

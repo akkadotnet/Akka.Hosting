@@ -12,8 +12,6 @@
     <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
     <PackageReference Include="FluentAssertions" Version="6.12.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-    <PackageReference Include="Verify.DiffPlex" Version="2.3.0" />
-    <PackageReference Include="Verify.Xunit" Version="22.11.1" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitRunneVisualstudio)">
       <PrivateAssets>all</PrivateAssets>
