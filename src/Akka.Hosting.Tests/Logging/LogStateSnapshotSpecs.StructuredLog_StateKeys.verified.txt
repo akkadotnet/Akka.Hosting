@@ -1,0 +1,32 @@
+﻿{
+  LogLevel: Information,
+  MessageContainsValue: true,
+  StateKeys: [
+    {OriginalFormat},
+    Action,
+    ActorPath,
+    LogSource,
+    Thread,
+    Timestamp,
+    UserId
+  ],
+  StateValueTypes: {
+    {OriginalFormat}: String,
+    Action: String,
+    ActorPath: String,
+    LogSource: String,
+    Thread: Int32,
+    Timestamp: DateTime,
+    UserId: Int32
+  },
+  HasActorPath: true,
+  HasTimestamp: true,
+  HasThread: true,
+  HasLogSource: true,
+  HasOriginalFormat: true,
+  OriginalFormat: User {UserId} performed {Action},
+  HasSemanticProperty_UserId: true,
+  HasSemanticProperty_Action: true,
+  UserId: 12345,
+  Action: Login
+}

@@ -1,0 +1,28 @@
+﻿{
+  LogLevel: Information,
+  MessageContainsValue: true,
+  StateKeys: [
+    {OriginalFormat},
+    0,
+    ActorPath,
+    LogSource,
+    Thread,
+    Timestamp
+  ],
+  StateValueTypes: {
+    {OriginalFormat}: String,
+    0: Int32,
+    ActorPath: String,
+    LogSource: String,
+    Thread: Int32,
+    Timestamp: DateTime
+  },
+  HasActorPath: true,
+  HasTimestamp: true,
+  HasThread: true,
+  HasLogSource: true,
+  HasOriginalFormat: true,
+  OriginalFormat: User {0} logged in,
+  HasSemanticProperty_0: true,
+  Value_0: 99
+}
