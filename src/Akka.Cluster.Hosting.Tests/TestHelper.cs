@@ -30,6 +30,8 @@ public static class TestHelper
                 var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(output)));
                 logger.Tell(new InitializeLogger(system.EventStream));
             })
+            // Use WithActors (not AddStartup) so cluster join runs as an _actorStarter
+            // before any cluster-dependent starters like WithShardRegion registered by specBuilder.
             .WithActors(async (system, registry) =>
             {
                 var cluster = Cluster.Get(system);
@@ -37,7 +39,7 @@ public static class TestHelper
                 if (options.SeedNodes == null || options.SeedNodes.Length == 0)
                 {
                     var myAddress = cluster.SelfAddress;
-                    await cluster.JoinAsync(myAddress); // force system to wait until we're up
+                    await cluster.JoinAsync(myAddress);
                 }
             });
         specBuilder(builder);
@@ -56,13 +58,14 @@ public static class TestHelper
                 });
             }).Build();
 
-        // Start host without a cancellation token to avoid the .NET Generic Host
-        // triggering StopAsync (and CoordinatedShutdown) while startup is still in progress.
-        await host.StartAsync();
+        // Use a generous startup timeout — must not be so tight that it triggers
+        // host.StopAsync (and CoordinatedShutdown) while startup is still in progress.
+        using var startupCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        await host.StartAsync(startupCts.Token);
 
-        // Use a separate timeout for waiting on cluster formation.
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        await tcs.Task.WaitAsync(cts.Token);
+        // Separate timeout for cluster formation (happens after host startup completes).
+        using var clusterCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await tcs.Task.WaitAsync(clusterCts.Token);
 
         return host;
     }

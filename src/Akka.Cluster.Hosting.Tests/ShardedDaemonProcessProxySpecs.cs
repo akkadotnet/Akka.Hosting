@@ -40,6 +40,8 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
             {
                 Roles = [Role]
             })
+            // Join cluster via WithActors (not AddStartup) so it runs before
+            // WithShardedDaemonProcess, which needs a formed cluster.
             .WithActors((system, _) =>
             {
                 var cluster = Cluster.Get(system);
@@ -135,6 +137,8 @@ public class ProxySystem: Akka.Hosting.TestKit.TestKit
             {
                 Roles = new[]{ "proxy" }
             })
+            // Join cluster via WithActors (not AddStartup) so it runs before
+            // WithShardedDaemonProcessProxy, which needs a formed cluster.
             .WithActors((system, _) =>
             {
                 var cluster = Cluster.Get(system);
