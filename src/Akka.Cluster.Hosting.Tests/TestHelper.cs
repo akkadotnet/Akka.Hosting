@@ -32,15 +32,14 @@ public static class TestHelper
             })
             // Use WithActors (not AddStartup) so cluster join runs as an _actorStarter
             // before any cluster-dependent starters like WithShardRegion registered by specBuilder.
-            // JoinAsync only initiates the join — actual cluster formation (MemberUp) completes
-            // asynchronously and is awaited via tcs in CreateHost.
             .WithActors(async (system, registry) =>
             {
                 var cluster = Cluster.Get(system);
                 cluster.RegisterOnMemberUp(tcs.SetResult);
                 if (options.SeedNodes == null || options.SeedNodes.Length == 0)
                 {
-                    await cluster.JoinAsync(cluster.SelfAddress);
+                    var myAddress = cluster.SelfAddress;
+                    await cluster.JoinAsync(myAddress);
                 }
             });
         specBuilder(builder);
