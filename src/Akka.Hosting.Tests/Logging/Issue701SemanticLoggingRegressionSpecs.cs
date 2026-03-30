@@ -228,6 +228,28 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
         
         AssertMetadata(entry, "User {UserId} action {0}");
     }
+
+    /// <summary>
+    /// Regression test: Plain string logs (no template placeholders) should still include
+    /// Akka metadata (ActorPath, LogSource, Timestamp, Thread) as structured state properties.
+    /// Before fix, non-semantic logs lost all metadata due to AkkaLogState lightweight constructor
+    /// setting _hasSemanticProperties = false.
+    /// </summary>
+    [Fact(DisplayName = "Plain string logs should include Akka metadata")]
+    public void PlainStringLogsShouldIncludeMetadata()
+    {
+        _sink.Clear();
+
+        Sys.Log.Info("Server started successfully");
+
+        AwaitCondition(() => _sink.Entries.Any(e => e.Message.Contains("Server started successfully")));
+
+        var entry = _sink.Entries.First(e => e.Message.Contains("Server started successfully"));
+
+        // Metadata should be present even for plain string logs
+        AssertMetadata(entry);
+    }
+
 }
 
 /// <summary>
