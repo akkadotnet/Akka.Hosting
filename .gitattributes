@@ -28,4 +28,8 @@
 # Needed for API Approvals
 *.txt text eol=crlf
 
+# Verify snapshot files — must use LF to match Verify's output on all platforms
+*.verified.txt text eol=lf
+*.received.txt text eol=lf
+
 build.sh eol=lf
