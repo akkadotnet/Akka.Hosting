@@ -108,50 +108,64 @@ public class AkkaLogStateSpecs
     }
 
     [Fact]
-    public void AkkaLogState_NonStructuredMessage_ShouldYieldMinimalProperties()
+    public void AkkaLogState_NonStructuredMessage_ShouldYieldMetadataProperties()
     {
         // Arrange
         var traceId = ActivityTraceId.CreateRandom();
         var spanId = ActivitySpanId.CreateRandom();
         var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.None);
         var message = "Plain text message";
+        var actorPath = "akka://test/user/myactor";
+        var timestamp = DateTimeOffset.UtcNow;
+        var threadId = 42;
+        var logSource = "MyActor";
 
         // Act
-        var state = new AkkaLogState(activityContext, message);
+        var state = new AkkaLogState(activityContext, actorPath, timestamp, threadId, logSource, message);
         var items = state.ToList();
 
         // Assert
-        // Should have: 3 trace context + 1 OriginalFormat = 4
-        items.Should().HaveCount(4);
+        // Should have: 3 trace context + 4 Akka metadata + 1 OriginalFormat = 8
+        items.Should().HaveCount(8);
 
         // Verify trace context is present
         items.Should().Contain(kvp => kvp.Key == AkkaLogState.TraceIdKey);
         items.Should().Contain(kvp => kvp.Key == AkkaLogState.SpanIdKey);
         items.Should().Contain(kvp => kvp.Key == AkkaLogState.TraceFlagsKey);
 
+        // Verify Akka metadata
+        items.Should().Contain(kvp => kvp.Key == "ActorPath" && (string)kvp.Value! == actorPath);
+        items.Should().Contain(kvp => kvp.Key == "Timestamp" && (DateTimeOffset)kvp.Value! == timestamp);
+        items.Should().Contain(kvp => kvp.Key == "Thread" && (int)kvp.Value! == threadId);
+        items.Should().Contain(kvp => kvp.Key == "LogSource" && (string)kvp.Value! == logSource);
+
         // Verify OriginalFormat
         items.Should().Contain(kvp => kvp.Key == "{OriginalFormat}" && (string)kvp.Value! == message);
-
-        // Should NOT contain Akka metadata (ActorPath, etc.)
-        items.Should().NotContain(kvp => kvp.Key == "ActorPath");
     }
 
     [Fact]
-    public void AkkaLogState_NonStructuredMessage_WithoutTraceContext_ShouldYieldOnlyOriginalFormat()
+    public void AkkaLogState_NonStructuredMessage_WithoutTraceContext_ShouldYieldMetadataAndOriginalFormat()
     {
         // Arrange
         var activityContext = default(ActivityContext);
         var message = "Plain text message";
+        var actorPath = "akka://test/user/myactor";
+        var timestamp = DateTimeOffset.UtcNow;
+        var threadId = 7;
+        var logSource = "MyActor";
 
         // Act
-        var state = new AkkaLogState(activityContext, message);
+        var state = new AkkaLogState(activityContext, actorPath, timestamp, threadId, logSource, message);
         var items = state.ToList();
 
         // Assert
-        // Should have: 0 trace context + 1 OriginalFormat = 1
-        items.Should().HaveCount(1);
-        items.Single().Key.Should().Be("{OriginalFormat}");
-        items.Single().Value.Should().Be(message);
+        // Should have: 0 trace context + 4 Akka metadata + 1 OriginalFormat = 5
+        items.Should().HaveCount(5);
+        items.Should().Contain(kvp => kvp.Key == "ActorPath" && (string)kvp.Value! == actorPath);
+        items.Should().Contain(kvp => kvp.Key == "Timestamp" && (DateTimeOffset)kvp.Value! == timestamp);
+        items.Should().Contain(kvp => kvp.Key == "Thread" && (int)kvp.Value! == threadId);
+        items.Should().Contain(kvp => kvp.Key == "LogSource" && (string)kvp.Value! == logSource);
+        items.Should().Contain(kvp => kvp.Key == "{OriginalFormat}" && (string)kvp.Value! == message);
     }
 
     [Fact]

@@ -89,20 +89,15 @@ namespace Akka.Hosting.Logging
             else
             {
                 var formattedMessage = SafeFormat(log);
-
-                if (log.ActivityContext.HasValue)
-                {
-                    // Preserve trace context even for non-structured logs
-                    var state = new AkkaLogState(activityContext, formattedMessage);
-                    _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
-                        (s, ex) => formattedMessage);
-                }
-                else
-                {
-                    // Fallback for non-structured messages without trace context
-                    _akkaLogger.Log<LogEvent>(logLevel, new EventId(), log, log.Cause,
-                        (@event, exception) => formattedMessage);
-                }
+                var state = new AkkaLogState(
+                    activityContext,
+                    path.ToString(),
+                    log.Timestamp,
+                    log.Thread.ManagedThreadId,
+                    log.LogSource,
+                    formattedMessage);
+                _akkaLogger.Log(logLevel, new EventId(), state, log.Cause,
+                    (s, ex) => formattedMessage);
             }
         }
 
@@ -110,7 +105,9 @@ namespace Akka.Hosting.Logging
         {
             try
             {
-                return log.ToString();
+                if (log.Message is LogMessage msg)
+                    return msg.ToString() ?? string.Empty;
+                return log.Message?.ToString() ?? string.Empty;
             }
             catch
             {
