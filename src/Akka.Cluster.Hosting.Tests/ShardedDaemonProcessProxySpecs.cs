@@ -40,21 +40,23 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
             {
                 Roles = [Role]
             })
+            // Join cluster via WithActors (not AddStartup) so it runs before
+            // WithShardedDaemonProcess, which needs a formed cluster.
+            .WithActors((system, _) =>
+            {
+                var cluster = Cluster.Get(system);
+                cluster.Join(cluster.SelfAddress);
+            })
             .WithShardedDaemonProcess<ShardedDaemonRouter>(
-                name: Name, 
-                numberOfInstances: NumWorkers, 
+                name: Name,
+                numberOfInstances: NumWorkers,
                 entityPropsFactory: (_, _, _) => EchoActor.EchoProps,
                 options: new ClusterDaemonOptions
                 {
                     KeepAliveInterval = 500.Milliseconds(),
-                    Role = Role, 
+                    Role = Role,
                     HandoffStopMessage = PoisonPill.Instance
-                })
-            .AddStartup((system, _) =>
-            {
-                var cluster = Cluster.Get(system);
-                cluster.Join(cluster.SelfAddress);
-            });
+                });
     }
 
     public ShardedDaemonProcessProxySpecs(ITestOutputHelper output) : base(nameof(ShardedDaemonProcessProxySpecs), output)
@@ -135,14 +137,16 @@ public class ProxySystem: Akka.Hosting.TestKit.TestKit
             {
                 Roles = new[]{ "proxy" }
             })
-            .WithShardedDaemonProcessProxy<ShardedDaemonProcessProxySpecs.ShardedDaemonRouter>(
-                name: ShardedDaemonProcessProxySpecs.Name, 
-                numberOfInstances: ShardedDaemonProcessProxySpecs.NumWorkers, 
-                role: ShardedDaemonProcessProxySpecs.Role)
-            .AddStartup((system, _) =>
+            // Join cluster via WithActors (not AddStartup) so it runs before
+            // WithShardedDaemonProcessProxy, which needs a formed cluster.
+            .WithActors((system, _) =>
             {
                 var cluster = Cluster.Get(system);
                 cluster.Join(_remoteCluster.SelfAddress);
-            });
+            })
+            .WithShardedDaemonProcessProxy<ShardedDaemonProcessProxySpecs.ShardedDaemonRouter>(
+                name: ShardedDaemonProcessProxySpecs.Name,
+                numberOfInstances: ShardedDaemonProcessProxySpecs.NumWorkers,
+                role: ShardedDaemonProcessProxySpecs.Role);
     }
 }

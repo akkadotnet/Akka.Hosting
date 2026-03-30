@@ -30,14 +30,16 @@ public static class TestHelper
                 var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(output)));
                 logger.Tell(new InitializeLogger(system.EventStream));
             })
-            .AddStartup(async (system, registry) =>
+            // Use WithActors (not AddStartup) so cluster join runs as an _actorStarter
+            // before any cluster-dependent starters like WithShardRegion registered by specBuilder.
+            .WithActors(async (system, registry) =>
             {
                 var cluster = Cluster.Get(system);
                 cluster.RegisterOnMemberUp(tcs.SetResult);
                 if (options.SeedNodes == null || options.SeedNodes.Length == 0)
                 {
                     var myAddress = cluster.SelfAddress;
-                    await cluster.JoinAsync(myAddress); // force system to wait until we're up
+                    await cluster.JoinAsync(myAddress);
                 }
             });
         specBuilder(builder);
@@ -46,7 +48,6 @@ public static class TestHelper
     public static async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, ClusterOptions options, ITestOutputHelper output)
     {
         var tcs = new TaskCompletionSource();
-        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         var host = new HostBuilder()
             .ConfigureServices(collection =>
@@ -57,8 +58,14 @@ public static class TestHelper
                 });
             }).Build();
 
-        await host.StartAsync(cancellationTokenSource.Token);
-        await (tcs.Task.WaitAsync(cancellationTokenSource.Token));
+        // Use a generous startup timeout — must not be so tight that it triggers
+        // host.StopAsync (and CoordinatedShutdown) while startup is still in progress.
+        using var startupCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        await host.StartAsync(startupCts.Token);
+
+        // Separate timeout for cluster formation (happens after host startup completes).
+        using var clusterCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await tcs.Task.WaitAsync(clusterCts.Token);
 
         return host;
     }
