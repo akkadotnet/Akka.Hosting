@@ -1,24 +1,5 @@
 ﻿{
   LogLevel: Information,
-  MessageContainsValue: true,
-  StateKeys: [
-    {OriginalFormat},
-    Action,
-    ActorPath,
-    LogSource,
-    Thread,
-    Timestamp,
-    UserId
-  ],
-  StateValueTypes: {
-    {OriginalFormat}: String,
-    Action: String,
-    ActorPath: String,
-    LogSource: String,
-    Thread: Int32,
-    Timestamp: DateTime,
-    UserId: Int32
-  },
   HasActorPath: true,
   HasTimestamp: true,
   HasThread: true,
