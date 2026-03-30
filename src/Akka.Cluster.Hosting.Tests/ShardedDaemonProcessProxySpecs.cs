@@ -40,21 +40,21 @@ public class ShardedDaemonProcessProxySpecs: Akka.Hosting.TestKit.TestKit
             {
                 Roles = [Role]
             })
+            .WithActors((system, _) =>
+            {
+                var cluster = Cluster.Get(system);
+                cluster.Join(cluster.SelfAddress);
+            })
             .WithShardedDaemonProcess<ShardedDaemonRouter>(
-                name: Name, 
-                numberOfInstances: NumWorkers, 
+                name: Name,
+                numberOfInstances: NumWorkers,
                 entityPropsFactory: (_, _, _) => EchoActor.EchoProps,
                 options: new ClusterDaemonOptions
                 {
                     KeepAliveInterval = 500.Milliseconds(),
-                    Role = Role, 
+                    Role = Role,
                     HandoffStopMessage = PoisonPill.Instance
-                })
-            .AddStartup((system, _) =>
-            {
-                var cluster = Cluster.Get(system);
-                cluster.Join(cluster.SelfAddress);
-            });
+                });
     }
 
     public ShardedDaemonProcessProxySpecs(ITestOutputHelper output) : base(nameof(ShardedDaemonProcessProxySpecs), output)
@@ -135,14 +135,14 @@ public class ProxySystem: Akka.Hosting.TestKit.TestKit
             {
                 Roles = new[]{ "proxy" }
             })
-            .WithShardedDaemonProcessProxy<ShardedDaemonProcessProxySpecs.ShardedDaemonRouter>(
-                name: ShardedDaemonProcessProxySpecs.Name, 
-                numberOfInstances: ShardedDaemonProcessProxySpecs.NumWorkers, 
-                role: ShardedDaemonProcessProxySpecs.Role)
-            .AddStartup((system, _) =>
+            .WithActors((system, _) =>
             {
                 var cluster = Cluster.Get(system);
                 cluster.Join(_remoteCluster.SelfAddress);
-            });
+            })
+            .WithShardedDaemonProcessProxy<ShardedDaemonProcessProxySpecs.ShardedDaemonRouter>(
+                name: ShardedDaemonProcessProxySpecs.Name,
+                numberOfInstances: ShardedDaemonProcessProxySpecs.NumWorkers,
+                role: ShardedDaemonProcessProxySpecs.Role);
     }
 }

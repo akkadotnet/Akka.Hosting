@@ -30,7 +30,7 @@ public static class TestHelper
                 var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(output)));
                 logger.Tell(new InitializeLogger(system.EventStream));
             })
-            .AddStartup(async (system, registry) =>
+            .WithActors(async (system, registry) =>
             {
                 var cluster = Cluster.Get(system);
                 cluster.RegisterOnMemberUp(tcs.SetResult);
@@ -46,7 +46,6 @@ public static class TestHelper
     public static async Task<IHost> CreateHost(Action<AkkaConfigurationBuilder> specBuilder, ClusterOptions options, ITestOutputHelper output)
     {
         var tcs = new TaskCompletionSource();
-        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         var host = new HostBuilder()
             .ConfigureServices(collection =>
@@ -57,8 +56,13 @@ public static class TestHelper
                 });
             }).Build();
 
-        await host.StartAsync(cancellationTokenSource.Token);
-        await (tcs.Task.WaitAsync(cancellationTokenSource.Token));
+        // Start host without a cancellation token to avoid the .NET Generic Host
+        // triggering StopAsync (and CoordinatedShutdown) while startup is still in progress.
+        await host.StartAsync();
+
+        // Use a separate timeout for waiting on cluster formation.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await tcs.Task.WaitAsync(cts.Token);
 
         return host;
     }
