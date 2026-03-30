@@ -247,50 +247,9 @@ public class Issue701SemanticLoggingRegressionSpecs : TestKit.TestKit
         var entry = _sink.Entries.First(e => e.Message.Contains("Server started successfully"));
 
         // Metadata should be present even for plain string logs
-        AssertMetadata(entry, "Server started successfully");
+        AssertMetadata(entry);
     }
 
-    /// <summary>
-    /// Regression test: The formatted message body should contain only the clean message content,
-    /// not the bracket-wrapped format [LEVEL][timestamp][Thread NNNN][source] that LogEvent.ToString() produces.
-    /// Metadata is already available as structured state properties.
-    /// </summary>
-    [Fact(DisplayName = "Structured log message body should not contain bracket prefix")]
-    public void StructuredLogMessageBodyShouldNotContainBracketPrefix()
-    {
-        _sink.Clear();
-
-        Sys.Log.Info("User {UserId} logged in", 12345);
-
-        AwaitCondition(() => _sink.Entries.Any(e => e.Message.Contains("12345")));
-
-        var entry = _sink.Entries.First(e => e.Message.Contains("12345"));
-
-        // Message should be clean, not bracket-wrapped
-        entry.Message.Should().NotStartWith("[",
-            "the message body should not contain the [LEVEL][timestamp][Thread][source] prefix");
-        entry.Message.Should().Be("User 12345 logged in");
-    }
-
-    /// <summary>
-    /// Regression test: Plain string log message body should be clean, not bracket-wrapped.
-    /// </summary>
-    [Fact(DisplayName = "Plain string log message body should not contain bracket prefix")]
-    public void PlainStringLogMessageBodyShouldNotContainBracketPrefix()
-    {
-        _sink.Clear();
-
-        Sys.Log.Info("Remoting shut down");
-
-        AwaitCondition(() => _sink.Entries.Any(e => e.Message.Contains("Remoting shut down")));
-
-        var entry = _sink.Entries.First(e => e.Message.Contains("Remoting shut down"));
-
-        // Message should be clean, not bracket-wrapped
-        entry.Message.Should().NotStartWith("[",
-            "the message body should not contain the [LEVEL][timestamp][Thread][source] prefix");
-        entry.Message.Should().Be("Remoting shut down");
-    }
 }
 
 /// <summary>

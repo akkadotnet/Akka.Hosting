@@ -105,9 +105,7 @@ namespace Akka.Hosting.Logging
         {
             try
             {
-                if (log.Message is LogMessage msg)
-                    return msg.ToString() ?? string.Empty;
-                return log.Message?.ToString() ?? string.Empty;
+                return log.ToString();
             }
             catch
             {
