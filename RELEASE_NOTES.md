@@ -1,3 +1,14 @@
+#### 1.5.64 March 31st 2026 ####
+
+**Bug Fixes**
+* [Fix `LoggerFactoryLogger` metadata regression for non-semantic logs](https://github.com/akkadotnet/Akka.Hosting/pull/724) - PR #706 (trace correlation) accidentally gated `ActorPath`, `LogSource`, `Timestamp`, and `Thread` emission on `_hasSemanticProperties`, which was `false` for plain-string logs. Non-semantic logs lost all structured metadata, breaking downstream consumers such as Datadog pipelines and custom `ConsoleFormatter`s. All log paths now emit the full set of Akka metadata as structured attributes regardless of whether the message uses named placeholders.
+
+**Breaking Changes**
+* [Convert `Akka.Hosting.TestKit` to xUnit 3](https://github.com/akkadotnet/Akka.Hosting/commit/7e55516) - `Akka.Hosting.TestKit` now targets xUnit v3. Users who need to remain on xUnit v2 can switch to the new `Akka.Hosting.TestKit.Xunit2` package, which preserves the previous xUnit v2-based TestKit API.
+
+**Updates**
+* [Bump Akka version from 1.5.63 to 1.5.64](https://github.com/akkadotnet/akka.net/releases/tag/1.5.64)
+
 #### 1.5.63 March 24th 2026 ####
 
 **Bug Fixes**
