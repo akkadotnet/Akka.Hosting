@@ -2,6 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>$(TestsNetCoreFramework)</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,9 +13,9 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-        <PackageReference Include="xunit" Version="$(XunitVersion)" />
+        <PackageReference Include="xunit.v3" Version="$(Xunit3Version)" />
         <PackageReference Include="FluentAssertions" Version="6.12.2" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitRunneVisualstudio)">
+        <PackageReference Include="xunit.runner.visualstudio" Version="$(Xunit3RunneVisualstudio)">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

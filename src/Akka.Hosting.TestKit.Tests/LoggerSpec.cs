@@ -11,14 +11,13 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.Hosting.TestKit.Internals;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.TestKit.Tests;
 
 public class LoggerSpec: TestKit
 {
-    public LoggerSpec(ITestOutputHelper output): base(output: output, logLevel: LogLevel.Debug)
+    public LoggerSpec(XunitTestOutputHelper output): base(output: output, logLevel: LogLevel.Debug)
     {
     }
 

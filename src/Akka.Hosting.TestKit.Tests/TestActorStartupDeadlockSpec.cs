@@ -1,6 +1,5 @@
 ﻿using Akka.TestKit;
 using Microsoft.Extensions.Logging;
-using Xunit.Abstractions;
 
 namespace Akka.Hosting.TestKit.Tests;
 
@@ -16,15 +15,15 @@ file sealed class StartupPinger(IRequiredActor<TestProbe> testActorReq) : Receiv
 {
     protected override void PreStart()
     {
-        // This should work now that TestProbe is registered in the first startup hook
-        var testActor = testActorReq.GetAsync().GetAwaiter().GetResult();
-        testActor.Tell("startup-ping");
+        // TestProbe is registered before user WithActors callbacks execute, so we can
+        // use the synchronous ActorRef here and avoid blocking actor startup.
+        testActorReq.ActorRef.Tell("startup-ping");
     }
 }
 
 file sealed class HostedTestKitRunner : TestKit, IAsyncLifetime  // TestKit already implements IAsyncLifetime, but we expose it here for clarity
 {
-    public HostedTestKitRunner(ITestOutputHelper output) 
+    public HostedTestKitRunner(XunitTestOutputHelper output) 
         : base($"{Guid.NewGuid():N}", startupTimeout: TimeSpan.FromSeconds(20), output: output, logLevel: LogLevel.Error)
     {
     }
@@ -40,8 +39,8 @@ file sealed class HostedTestKitRunner : TestKit, IAsyncLifetime  // TestKit alre
     }
 
     // Optional convenience wrappers so the test code reads cleanly
-    public Task StartAsync() => InitializeAsync();
-    public Task StopAsync()  => DisposeAsync();
+    public Task StartAsync() => InitializeAsync().ToTask();
+    public Task StopAsync()  => DisposeAsync().ToTask();
 
     public Task ExpectStartupAsync(TimeSpan? timeout = null)
         => ExpectMsgAsync("startup-ping", timeout ?? TimeSpan.FromSeconds(5)).AsTask();
@@ -49,9 +48,9 @@ file sealed class HostedTestKitRunner : TestKit, IAsyncLifetime  // TestKit alre
 
 public class TestActorStartupDeadlockSpec
 {
-    private readonly ITestOutputHelper _output;
+    private readonly XunitTestOutputHelper _output;
 
-    public TestActorStartupDeadlockSpec(ITestOutputHelper output)
+    public TestActorStartupDeadlockSpec(XunitTestOutputHelper output)
     {
         _output = output;
     }
@@ -68,7 +67,7 @@ public class TestActorStartupDeadlockSpec
 
         // Spin up N independent hosts concurrently inside the same theory
         var runners = Enumerable.Range(0, concurrentHosts)
-                                .Select(_ => Task.Run(RunOneAsync))
+                                .Select(_ => RunOneAsync())
                                 .ToArray();
 
         await Task.WhenAll(runners);

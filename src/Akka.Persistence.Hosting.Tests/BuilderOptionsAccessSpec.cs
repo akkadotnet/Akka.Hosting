@@ -5,7 +5,6 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
-using Xunit.Abstractions;
 using static Akka.Persistence.Hosting.Tests.UnifiedApiTestResources;
 
 namespace Akka.Persistence.Hosting.Tests;

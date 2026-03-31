@@ -8,7 +8,7 @@
 using System;
 using System.Threading.Tasks;
 using Akka.Event;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Akka.Hosting.TestKit.Tests.TestEventListenerTests
 {

@@ -2,10 +2,10 @@
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
-using Akka.TestKit.Xunit2.Internals;
+using Akka.TestKit.Xunit.Internals;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Akka.Hosting.Tests;
 

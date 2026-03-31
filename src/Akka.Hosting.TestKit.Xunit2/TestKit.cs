@@ -4,18 +4,17 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using System;
 using System.Threading.Tasks;
 using Akka.Annotations;
 using Xunit;
 
 namespace Akka.Hosting.TestKit
 {
-    public abstract partial class TestKit : IAsyncLifetime, IAsyncDisposable
+    public abstract partial class TestKit : IAsyncLifetime
     {
         [InternalApi]
-        public ValueTask InitializeAsync() => new(InitializeAsyncCore());
+        public Task InitializeAsync() => InitializeAsyncCore();
 
-        public ValueTask DisposeAsync() => new(DisposeAsyncCore());
+        public Task DisposeAsync() => DisposeAsyncCore();
     }
 }

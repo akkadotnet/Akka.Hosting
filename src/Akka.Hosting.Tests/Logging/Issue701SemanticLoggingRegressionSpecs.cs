@@ -13,7 +13,6 @@ using Akka.Event;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.Tests.Logging;

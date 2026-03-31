@@ -8,12 +8,11 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using static Akka.Hosting.Tests.TestHelpers;
 
 namespace Akka.Hosting.Tests.Logging;
 
-public class LoggerConfigEnd2EndSpecs : Akka.TestKit.Xunit2.TestKit
+public class LoggerConfigEnd2EndSpecs : Akka.TestKit.Xunit.TestKit
 {
     private class CustomLoggingProvider : ILoggerProvider
     {

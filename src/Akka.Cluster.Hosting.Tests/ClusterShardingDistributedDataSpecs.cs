@@ -6,7 +6,6 @@ using Akka.DistributedData;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Cluster.Hosting.Tests;
 

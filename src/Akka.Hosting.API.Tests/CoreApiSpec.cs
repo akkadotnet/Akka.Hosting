@@ -10,7 +10,6 @@ using static VerifyXunit.Verifier;
 
 namespace Akka.Hosting.API.Tests;
 
-[UsesVerify]
 public class CoreApiSpec
 {
     static CoreApiSpec()

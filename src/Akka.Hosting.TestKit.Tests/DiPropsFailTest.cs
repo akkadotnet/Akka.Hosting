@@ -11,14 +11,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Hosting.TestKit.Tests;
 
 // Regression test for https://github.com/akkadotnet/Akka.Hosting/issues/343
 public class DiPropsFailTest: TestKit
 {
-    public DiPropsFailTest(ITestOutputHelper output) : base(nameof(DiPropsFailTest), output)
+    public DiPropsFailTest(XunitTestOutputHelper output) : base(nameof(DiPropsFailTest), output)
     {}
     
     protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)

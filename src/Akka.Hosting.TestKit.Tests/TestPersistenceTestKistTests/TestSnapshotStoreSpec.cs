@@ -5,7 +5,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Akka.Hosting.TestKit.Tests.TestPersistenceTestKistTests;
 

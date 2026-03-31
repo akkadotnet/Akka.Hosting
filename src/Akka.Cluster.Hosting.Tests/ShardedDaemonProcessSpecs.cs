@@ -9,7 +9,7 @@ using Akka.Remote.Hosting;
 using Akka.TestKit;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using Xunit.Abstractions;
+
 
 namespace Akka.Cluster.Hosting.Tests;
 
@@ -89,6 +89,13 @@ public class ShardedDaemonProcessSpecs: Akka.Hosting.TestKit.TestKit
                 Port = 0
             })
             .WithClustering()
+            // Join cluster via WithActors (not AddStartup) so it runs before
+            // WithShardedDaemonProcess, which depends on cluster formation.
+            .WithActors(async (system, _) =>
+            {
+                var cluster = Cluster.Get(system);
+                await cluster.JoinAsync(cluster.SelfAddress);
+            })
             .WithShardedDaemonProcess<ShardedDaemonRouter>(
                 name: "test", 
                 numberOfInstances: 5, 
@@ -96,12 +103,7 @@ public class ShardedDaemonProcessSpecs: Akka.Hosting.TestKit.TestKit
                 options: new ClusterDaemonOptions
                 {
                     KeepAliveInterval = 500.Milliseconds()
-                })
-            .AddStartup((system, _) =>
-            {
-                var cluster = Cluster.Get(system);
-                cluster.Join(cluster.SelfAddress);
-            });
+                });
     }
 
     protected override async Task BeforeTestStart()
@@ -162,6 +164,13 @@ public class ShardedDaemonProcessFailureSpecs : Akka.Hosting.TestKit.TestKit
         builder
             .WithRemoting()
             .WithClustering()
+            // Join cluster via WithActors (not AddStartup) so it runs before
+            // WithShardedDaemonProcess, which depends on cluster formation.
+            .WithActors(async (system, _) =>
+            {
+                var cluster = Cluster.Get(system);
+                await cluster.JoinAsync(cluster.SelfAddress);
+            })
             .WithShardedDaemonProcess<ShardedDaemonProcessSpecs.ShardedDaemonRouter>(
                 name: "test", 
                 numberOfInstances: 5, 
@@ -170,12 +179,7 @@ public class ShardedDaemonProcessFailureSpecs : Akka.Hosting.TestKit.TestKit
                 {
                     KeepAliveInterval = 500.Milliseconds(),
                     Role = "DoNotExist"
-                })
-            .AddStartup((system, _) =>
-            {
-                var cluster = Cluster.Get(system);
-                cluster.Join(cluster.SelfAddress);
-            });
+                });
     }
     
     [Fact]

@@ -17,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.Tests.Logging;
@@ -38,17 +37,17 @@ public class SemanticLoggingSpecs : IAsyncLifetime
         _logger = new SemanticTestLogger(helper);
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _host = await SetupHost(_logger);
         var registry = _host.Services.GetRequiredService<ActorRegistry>();
         _testActor = registry.Get<TestActor>();
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         _host?.Dispose();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     [Fact(DisplayName = "Should extract named template properties and add to MEL state dictionary")]

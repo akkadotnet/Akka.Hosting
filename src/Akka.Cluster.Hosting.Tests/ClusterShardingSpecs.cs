@@ -8,7 +8,6 @@ using Akka.Configuration;
 using Akka.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Cluster.Hosting.Tests;
 

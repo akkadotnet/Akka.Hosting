@@ -12,7 +12,6 @@ using FluentAssertions;
 using Serilog;
 using Serilog.Core;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Hosting.Tests.Logging;
 
