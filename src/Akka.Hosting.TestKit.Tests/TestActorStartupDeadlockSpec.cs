@@ -15,9 +15,9 @@ file sealed class StartupPinger(IRequiredActor<TestProbe> testActorReq) : Receiv
 {
     protected override void PreStart()
     {
-        // This should work now that TestProbe is registered in the first startup hook
-        var testActor = testActorReq.GetAsync().GetAwaiter().GetResult();
-        testActor.Tell("startup-ping");
+        // TestProbe is registered before user WithActors callbacks execute, so we can
+        // use the synchronous ActorRef here and avoid blocking actor startup.
+        testActorReq.ActorRef.Tell("startup-ping");
     }
 }
 
@@ -67,7 +67,7 @@ public class TestActorStartupDeadlockSpec
 
         // Spin up N independent hosts concurrently inside the same theory
         var runners = Enumerable.Range(0, concurrentHosts)
-                                .Select(_ => Task.Run(RunOneAsync))
+                                .Select(_ => RunOneAsync())
                                 .ToArray();
 
         await Task.WhenAll(runners);
