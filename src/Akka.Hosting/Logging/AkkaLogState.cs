@@ -52,7 +52,6 @@ namespace Akka.Hosting.Logging
         private readonly string _logSource;
         private readonly string _template;
         private readonly string _formattedMessage;
-        private readonly bool _hasSemanticProperties;
 
         /// <summary>
         /// Creates an <see cref="AkkaLogState"/> with trace context, semantic properties, and Akka metadata.
@@ -83,25 +82,35 @@ namespace Akka.Hosting.Logging
             _logSource = logSource;
             _template = template;
             _formattedMessage = formattedMessage;
-            _hasSemanticProperties = true;
         }
 
         /// <summary>
-        /// Creates an <see cref="AkkaLogState"/> with trace context for non-structured messages.
+        /// Creates an <see cref="AkkaLogState"/> with trace context and Akka metadata for non-structured messages.
         /// </summary>
         /// <param name="activityContext">The activity context containing trace correlation IDs.</param>
-        /// <param name="formattedMessage">The formatted log message.</param>
-        public AkkaLogState(ActivityContext activityContext, string formattedMessage)
+        /// <param name="actorPath">The path of the actor that generated the log.</param>
+        /// <param name="timestamp">The timestamp when the log was created.</param>
+        /// <param name="threadId">The managed thread ID of the originating thread.</param>
+        /// <param name="logSource">The source of the log event.</param>
+        /// <param name="template">The message template string (for {OriginalFormat}).</param>
+        /// <param name="formattedMessage">The pre-formatted message for display.</param>
+        public AkkaLogState(
+            ActivityContext activityContext,
+            string actorPath,
+            DateTimeOffset timestamp,
+            int threadId,
+            string logSource,
+            string template,
+            string formattedMessage)
         {
             _activityContext = activityContext;
-            _formattedMessage = formattedMessage;
             _semanticProperties = null;
-            _actorPath = string.Empty;
-            _timestamp = default;
-            _threadId = 0;
-            _logSource = string.Empty;
-            _template = formattedMessage;
-            _hasSemanticProperties = false;
+            _actorPath = actorPath;
+            _timestamp = timestamp;
+            _threadId = threadId;
+            _logSource = logSource;
+            _template = template;
+            _formattedMessage = formattedMessage;
         }
 
         /// <inheritdoc />
@@ -115,31 +124,23 @@ namespace Akka.Hosting.Logging
                 yield return new KeyValuePair<string, object?>(TraceFlagsKey, (int)_activityContext.TraceFlags);
             }
 
-            if (_hasSemanticProperties)
+            // Yield semantic properties if present (referenced, not copied)
+            if (_semanticProperties != null)
             {
-                // Yield semantic properties (referenced, not copied)
-                if (_semanticProperties != null)
+                foreach (var prop in _semanticProperties)
                 {
-                    foreach (var prop in _semanticProperties)
-                    {
-                        yield return new KeyValuePair<string, object?>(prop.Key, prop.Value);
-                    }
+                    yield return new KeyValuePair<string, object?>(prop.Key, prop.Value);
                 }
-
-                // Yield Akka metadata
-                yield return new KeyValuePair<string, object?>("ActorPath", _actorPath);
-                yield return new KeyValuePair<string, object?>("Timestamp", _timestamp);
-                yield return new KeyValuePair<string, object?>("Thread", _threadId);
-                yield return new KeyValuePair<string, object?>("LogSource", _logSource);
-
-                // Yield OriginalFormat for MEL convention
-                yield return new KeyValuePair<string, object?>("{OriginalFormat}", _template);
             }
-            else
-            {
-                // For non-structured messages, just yield OriginalFormat
-                yield return new KeyValuePair<string, object?>("{OriginalFormat}", _template);
-            }
+
+            // Yield Akka metadata
+            yield return new KeyValuePair<string, object?>("ActorPath", _actorPath);
+            yield return new KeyValuePair<string, object?>("Timestamp", _timestamp);
+            yield return new KeyValuePair<string, object?>("Thread", _threadId);
+            yield return new KeyValuePair<string, object?>("LogSource", _logSource);
+
+            // Yield OriginalFormat for MEL convention
+            yield return new KeyValuePair<string, object?>("{OriginalFormat}", _template);
         }
 
         /// <inheritdoc />
