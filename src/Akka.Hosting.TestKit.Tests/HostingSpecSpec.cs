@@ -20,7 +20,7 @@ namespace Akka.Hosting.TestKit.Tests
         private enum Echo
         { }
 
-        public HostingSpecSpec(ITestOutputHelper output)
+        public HostingSpecSpec(XunitTestOutputHelper output)
             : base(nameof(HostingSpecSpec), output, logLevel: LogLevel.Debug)
         {
         }

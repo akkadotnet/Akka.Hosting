@@ -23,7 +23,7 @@ file sealed class StartupPinger(IRequiredActor<TestProbe> testActorReq) : Receiv
 
 file sealed class HostedTestKitRunner : TestKit, IAsyncLifetime  // TestKit already implements IAsyncLifetime, but we expose it here for clarity
 {
-    public HostedTestKitRunner(ITestOutputHelper output) 
+    public HostedTestKitRunner(XunitTestOutputHelper output) 
         : base($"{Guid.NewGuid():N}", startupTimeout: TimeSpan.FromSeconds(20), output: output, logLevel: LogLevel.Error)
     {
     }
@@ -39,8 +39,8 @@ file sealed class HostedTestKitRunner : TestKit, IAsyncLifetime  // TestKit alre
     }
 
     // Optional convenience wrappers so the test code reads cleanly
-    public ValueTask StartAsync() => InitializeAsync();
-    public ValueTask StopAsync()  => DisposeAsync();
+    public Task StartAsync() => InitializeAsync().ToTask();
+    public Task StopAsync()  => DisposeAsync().ToTask();
 
     public Task ExpectStartupAsync(TimeSpan? timeout = null)
         => ExpectMsgAsync("startup-ping", timeout ?? TimeSpan.FromSeconds(5)).AsTask();
@@ -48,9 +48,9 @@ file sealed class HostedTestKitRunner : TestKit, IAsyncLifetime  // TestKit alre
 
 public class TestActorStartupDeadlockSpec
 {
-    private readonly ITestOutputHelper _output;
+    private readonly XunitTestOutputHelper _output;
 
-    public TestActorStartupDeadlockSpec(ITestOutputHelper output)
+    public TestActorStartupDeadlockSpec(XunitTestOutputHelper output)
     {
         _output = output;
     }
@@ -81,7 +81,7 @@ public class TestActorStartupDeadlockSpec
 
             // --- START (bounded) ---
             _output.WriteLine($"[{id}] Calling StartAsync");
-            var startTask = kit.StartAsync().AsTask();
+            var startTask = kit.StartAsync();
             var startDone = await Task.WhenAny(startTask, Task.Delay(startTimeout));
             if (startDone != startTask)
             {
@@ -122,7 +122,7 @@ public class TestActorStartupDeadlockSpec
             finally
             {
                 // --- STOP (bounded) ---
-                var stopTask = kit.StopAsync().AsTask();
+                var stopTask = kit.StopAsync();
                 var stopDone = await Task.WhenAny(stopTask, Task.Delay(stopTimeout));
                 if (stopDone == stopTask)
                     await stopTask;
