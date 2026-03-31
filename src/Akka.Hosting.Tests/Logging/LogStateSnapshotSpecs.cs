@@ -16,7 +16,6 @@ using Akka.Hosting;
 using Microsoft.Extensions.Logging;
 using VerifyXunit;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.Tests.Logging;
@@ -25,7 +24,6 @@ namespace Akka.Hosting.Tests.Logging;
 /// Verify snapshot tests for LoggerFactoryLogger structured state output.
 /// Follows the same sanitization pattern as DefaultLogFormatSpec in Akka.NET.
 /// </summary>
-[UsesVerify]
 public class LogStateSnapshotSpecs : TestKit.TestKit
 {
     private readonly SnapshotTestSink _sink;

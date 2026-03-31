@@ -16,14 +16,12 @@ using Akka.Event;
 using Akka.Hosting.Logging;
 using Akka.Hosting.TestKit.Internals;
 using Akka.TestKit;
-using Akka.TestKit.Xunit2;
-using Akka.TestKit.Xunit2.Internals;
+using Akka.TestKit.Xunit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
@@ -162,7 +160,7 @@ namespace Akka.Hosting.TestKit
         protected abstract void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider);
         
         [InternalApi]
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             var hostBuilder = new HostBuilder();
             if (Output != null)
@@ -255,7 +253,7 @@ namespace Akka.Hosting.TestKit
             return Task.CompletedTask;
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             Exception? exception = null;
             try

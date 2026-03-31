@@ -48,6 +48,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.OpenTelemetry.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.OpenTelemetry.AppHost", "src\Examples\Akka.Hosting.OpenTelemetry.AppHost\Akka.Hosting.OpenTelemetry.AppHost.csproj", "{CC22F505-B648-420E-BC8A-0FCE46082986}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit.Xunit2", "src\Akka.Hosting.TestKit.Xunit2\Akka.Hosting.TestKit.Xunit2.csproj", "{AA79C523-DA30-4B92-9AD5-235AFFAF9C28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.TestKit.Xunit2.Tests", "src\Akka.Hosting.TestKit.Xunit2.Tests\Akka.Hosting.TestKit.Xunit2.Tests.csproj", "{403A293F-C78C-418A-A80C-980C97048D87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -122,6 +126,14 @@ Global
 		{CC22F505-B648-420E-BC8A-0FCE46082986}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC22F505-B648-420E-BC8A-0FCE46082986}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC22F505-B648-420E-BC8A-0FCE46082986}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA79C523-DA30-4B92-9AD5-235AFFAF9C28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA79C523-DA30-4B92-9AD5-235AFFAF9C28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA79C523-DA30-4B92-9AD5-235AFFAF9C28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA79C523-DA30-4B92-9AD5-235AFFAF9C28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{403A293F-C78C-418A-A80C-980C97048D87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{403A293F-C78C-418A-A80C-980C97048D87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{403A293F-C78C-418A-A80C-980C97048D87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{403A293F-C78C-418A-A80C-980C97048D87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

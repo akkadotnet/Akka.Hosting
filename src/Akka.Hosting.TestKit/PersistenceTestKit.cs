@@ -10,7 +10,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Persistence.TestKit;
 using Microsoft.Extensions.Logging;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Akka.Hosting.TestKit;
 

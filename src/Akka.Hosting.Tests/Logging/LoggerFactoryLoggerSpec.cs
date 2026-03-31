@@ -18,7 +18,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.Tests.Logging;
@@ -34,17 +33,17 @@ public class LoggerFactoryLoggerSpec: IAsyncLifetime
         _logger = new TestLogger(helper);
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _host = await SetupHost(_logger);
         var registry = _host.Services.GetRequiredService<ActorRegistry>();
         _echo = registry.Get<EchoActor>();
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         _host?.Dispose();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     [Fact(DisplayName = "LoggerFactoryLogger should log events")]

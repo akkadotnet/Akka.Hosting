@@ -14,7 +14,7 @@
       https://github.com/akkadotnet/Akka.Hosting
     </PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;xUnit1051</NoWarn>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <PropertyGroup>
@@ -27,9 +27,11 @@
     <NetLibraryFramework>net6.0</NetLibraryFramework>
     <TestsNetCoreFramework>net8.0</TestsNetCoreFramework>
     <XunitVersion>2.8.1</XunitVersion>
+    <Xunit3Version>3.2.2</Xunit3Version>
     <TestSdkVersion>17.11.1</TestSdkVersion>
     <CoverletVersion>6.0.3</CoverletVersion>
     <XunitRunneVisualstudio>3.1.5</XunitRunneVisualstudio>
+    <Xunit3RunneVisualstudio>3.1.5</Xunit3RunneVisualstudio>
     <AkkaVersion>1.5.64</AkkaVersion>
     <MicrosoftExtensionsVersion>[8.0.0,)</MicrosoftExtensionsVersion>
     <SystemTextJsonVersion>[8.0.5,)</SystemTextJsonVersion>

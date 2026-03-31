@@ -17,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using static FluentAssertions.FluentActions;
 
@@ -40,7 +39,7 @@ public class LogMessageFormatterSpec
         try
         {
             var sys = host.Services.GetRequiredService<ActorSystem>();
-            var testKit = new Akka.TestKit.Xunit2.TestKit(sys);
+            var testKit = new Akka.TestKit.Xunit.TestKit(sys);
 
             var probe = testKit.CreateTestProbe();
             sys.EventStream.Subscribe(probe, typeof(Error));

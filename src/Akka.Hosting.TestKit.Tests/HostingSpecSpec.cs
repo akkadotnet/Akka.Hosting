@@ -11,7 +11,6 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.TestKit.TestActors;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Hosting.TestKit.Tests

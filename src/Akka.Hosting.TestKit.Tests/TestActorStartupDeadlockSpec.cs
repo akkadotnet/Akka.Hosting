@@ -1,6 +1,5 @@
 ﻿using Akka.TestKit;
 using Microsoft.Extensions.Logging;
-using Xunit.Abstractions;
 
 namespace Akka.Hosting.TestKit.Tests;
 
@@ -40,8 +39,8 @@ file sealed class HostedTestKitRunner : TestKit, IAsyncLifetime  // TestKit alre
     }
 
     // Optional convenience wrappers so the test code reads cleanly
-    public Task StartAsync() => InitializeAsync();
-    public Task StopAsync()  => DisposeAsync();
+    public ValueTask StartAsync() => InitializeAsync();
+    public ValueTask StopAsync()  => DisposeAsync();
 
     public Task ExpectStartupAsync(TimeSpan? timeout = null)
         => ExpectMsgAsync("startup-ping", timeout ?? TimeSpan.FromSeconds(5)).AsTask();
@@ -82,7 +81,7 @@ public class TestActorStartupDeadlockSpec
 
             // --- START (bounded) ---
             _output.WriteLine($"[{id}] Calling StartAsync");
-            var startTask = kit.StartAsync();
+            var startTask = kit.StartAsync().AsTask();
             var startDone = await Task.WhenAny(startTask, Task.Delay(startTimeout));
             if (startDone != startTask)
             {
@@ -123,7 +122,7 @@ public class TestActorStartupDeadlockSpec
             finally
             {
                 // --- STOP (bounded) ---
-                var stopTask = kit.StopAsync();
+                var stopTask = kit.StopAsync().AsTask();
                 var stopDone = await Task.WhenAny(stopTask, Task.Delay(stopTimeout));
                 if (stopDone == stopTask)
                     await stopTask;

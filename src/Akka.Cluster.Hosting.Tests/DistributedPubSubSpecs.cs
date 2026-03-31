@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Cluster.Hosting.Tests;
@@ -24,7 +23,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
     private ActorSystem? _system;
     private ILoggingAdapter? _log;
     private Cluster? _cluster;
-    private TestKit.Xunit2.TestKit? _testKit;
+    private TestKit.Xunit.TestKit? _testKit;
 
     private IActorRef? _mediator;
 
@@ -68,7 +67,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
@@ -83,12 +82,12 @@ public class DistributedPubSubSpecs : IAsyncLifetime
                     .AddAkka("TestSys", (configurationBuilder, _) =>
                     {
                         configurationBuilder
-                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig, HoconAddMode.Append)
+                            .AddHocon(TestKit.Xunit.TestKit.DefaultConfig, HoconAddMode.Append)
                             .WithRemoting("localhost", 0)
                             .WithClustering(_clusterOptions)
                             .WithActors((system, _) =>
                             {
-                                _testKit = new TestKit.Xunit2.TestKit(system, _helper);
+                                _testKit = new TestKit.Xunit.TestKit(system, _helper);
                                 _system = system;
                                 _log = Logging.GetLogger(system, this);
                                 _cluster = Cluster.Get(system);
@@ -116,7 +115,7 @@ public class DistributedPubSubSpecs : IAsyncLifetime
         _mediator = registry.Get<DistributedPubSub>();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_host != null) 
             await _host.StopAsync();

@@ -8,7 +8,6 @@ using FluentAssertions;
 using System;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Hosting.TestKit.Tests.TestPersistenceTestKistTests;
 

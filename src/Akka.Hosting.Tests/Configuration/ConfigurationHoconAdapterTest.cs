@@ -81,12 +81,12 @@ public class ConfigurationHoconAdapterTest: IAsyncLifetime
             .Build();
     }
 
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__A", null);
         Environment.SetEnvironmentVariable("akka__TEST_VALUE_1__B", null);
@@ -107,7 +107,7 @@ public class ConfigurationHoconAdapterTest: IAsyncLifetime
         Environment.SetEnvironmentVariable("MISE____SESSION", null);
         Environment.SetEnvironmentVariable("____MISE_SESSION", null);
         
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
     
     #region Adapter unit tests
