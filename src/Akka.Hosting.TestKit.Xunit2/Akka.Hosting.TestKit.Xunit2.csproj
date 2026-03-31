@@ -22,4 +22,22 @@
       <ProjectReference Include="..\Akka.Persistence.Hosting\Akka.Persistence.Hosting.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Include="..\Akka.Hosting.TestKit\Internals\TestKitLoggerFactoryLogger.cs">
+        <Link>Internals\TestKitLoggerFactoryLogger.cs</Link>
+      </Compile>
+      <Compile Include="..\Akka.Hosting.TestKit\Internals\XUnitLogger.cs">
+        <Link>Internals\XUnitLogger.cs</Link>
+      </Compile>
+      <Compile Include="..\Akka.Hosting.TestKit\Internals\XUnitLoggerProvider.cs">
+        <Link>Internals\XUnitLoggerProvider.cs</Link>
+      </Compile>
+      <Compile Include="..\Akka.Hosting.TestKit\PersistenceTestKit.cs">
+        <Link>PersistenceTestKit.cs</Link>
+      </Compile>
+      <Compile Include="..\Akka.Hosting.TestKit\TestKit.Shared.cs">
+        <Link>TestKit.Shared.cs</Link>
+      </Compile>
+    </ItemGroup>
+
 </Project>

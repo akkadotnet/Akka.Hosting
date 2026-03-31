@@ -22,7 +22,7 @@ public abstract class PersistenceTestKit : TestKit
     /// Create a new instance of the <see cref="PersistenceTestKit"/> class.
     /// A new system with the specified configuration will be created.
     /// </summary>
-    public PersistenceTestKit(string? actorSystemName = null, ITestOutputHelper? output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
+    public PersistenceTestKit(string? actorSystemName = null, XunitTestOutputHelper? output = null, TimeSpan? startupTimeout = null, LogLevel logLevel = LogLevel.Information)
         : base(actorSystemName, output, startupTimeout, logLevel)
     {
     }

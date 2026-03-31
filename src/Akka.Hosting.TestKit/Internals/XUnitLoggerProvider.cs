@@ -1,14 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace Akka.Hosting.TestKit.Internals
 {
     public class XUnitLoggerProvider : ILoggerProvider
     {
-        private readonly ITestOutputHelper _helper;
+        private readonly XunitTestOutputHelper _helper;
         private readonly LogLevel _logLevel;
 
-        public XUnitLoggerProvider(ITestOutputHelper helper, LogLevel logLevel)
+        public XUnitLoggerProvider(XunitTestOutputHelper helper, LogLevel logLevel)
         {
             _helper = helper;
             _logLevel = logLevel;
@@ -25,4 +24,3 @@ namespace Akka.Hosting.TestKit.Internals
         }
     }    
 }
-

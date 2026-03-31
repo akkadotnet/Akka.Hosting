@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace Akka.Hosting.TestKit.Internals
 {
@@ -9,10 +8,10 @@ namespace Akka.Hosting.TestKit.Internals
         private const string NullFormatted = "[null]";
 
         private readonly string _category;
-        private readonly ITestOutputHelper _helper;
+        private readonly XunitTestOutputHelper _helper;
         private readonly LogLevel _logLevel;
 
-        public XUnitLogger(string category, ITestOutputHelper helper, LogLevel logLevel)
+        public XUnitLogger(string category, XunitTestOutputHelper helper, LogLevel logLevel)
         {
             _category = category;
             _helper = helper;
@@ -100,4 +99,3 @@ namespace Akka.Hosting.TestKit.Internals
         }
     }    
 }
-
