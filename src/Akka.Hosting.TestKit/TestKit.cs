@@ -7,10 +7,12 @@
 using System;
 using System.Threading.Tasks;
 using Akka.Annotations;
+using Akka.Hosting.TestKit.Internals;
 using Xunit;
 
 namespace Akka.Hosting.TestKit
 {
+    [HostingCleanAmbientContext]
     public abstract partial class TestKit : IAsyncLifetime, IAsyncDisposable
     {
         [InternalApi]
