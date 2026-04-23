@@ -21,12 +21,19 @@ namespace Akka.Hosting.TestKit.Internals
         [ThreadStatic]
         private static SynchronizationContext? _previousContext;
 
+        [ThreadStatic]
+        private static bool _applied;
+
         public override void Before(MethodInfo methodUnderTest, IXunitTest test)
         {
             var instance = TestContext.Current.TestClassInstance;
             if (instance is not TestKitBase testKit)
+            {
+                _applied = false;
                 return;
+            }
 
+            _applied = true;
             var cell = testKit is INoImplicitSender ? null : TryGetCell(testKit);
 
             InternalCurrentActorCellKeeper.Current = cell;
@@ -37,6 +44,10 @@ namespace Akka.Hosting.TestKit.Internals
 
         public override void After(MethodInfo methodUnderTest, IXunitTest test)
         {
+            if (!_applied)
+                return;
+
+            _applied = false;
             InternalCurrentActorCellKeeper.Current = null;
             SynchronizationContext.SetSynchronizationContext(_previousContext);
             _previousContext = null;
