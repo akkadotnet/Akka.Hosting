@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -193,6 +193,27 @@ namespace Akka.Hosting
         public static AkkaConfigurationBuilder WithActorAskTimeout(this AkkaConfigurationBuilder builder, TimeSpan timeout)
         {
             return AddHocon(builder, $"akka.actor.ask-timeout = {timeout.ToHocon(true, true)}", HoconAddMode.Prepend);
+        }
+
+        /// <summary>
+        /// Enables strict serialization mode, which disables the <c>System.Object</c> serialization fallback.
+        /// When strict serialization is enabled, Akka.NET will throw a <c>SerializationException</c> if
+        /// no explicit serializer binding exists for a type, instead of silently falling back to the
+        /// default JSON serializer.
+        /// <para>
+        /// This is useful for security (preventing arbitrary type deserialization) and for catching
+        /// missing serializer registrations during development.
+        /// </para>
+        /// <para>
+        /// Requires Akka.NET 1.5.66+.
+        /// </para>
+        /// </summary>
+        /// <param name="builder">The builder instance being configured.</param>
+        /// <param name="enabled">Whether to enable strict serialization. Defaults to <c>true</c>.</param>
+        /// <returns>The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.</returns>
+        public static AkkaConfigurationBuilder WithStrictSerialization(this AkkaConfigurationBuilder builder, bool enabled = true)
+        {
+            return AddHocon(builder, $"akka.actor.serialization-settings.allow-unregistered-types = {(enabled ? "off" : "on")}", HoconAddMode.Prepend);
         }
         
         /// <summary>
