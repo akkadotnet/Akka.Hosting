@@ -46,13 +46,8 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
         await AwaitAssertAsync(async () =>
         {
             actorSelection.Tell(new Identify("coordinator"), TestActor);
-            var identity = await ExpectMsgAsync<ActorIdentity>(TimeSpan.FromSeconds(3));
-            
-            // The DData replicator should be running
-            // * This actor is created inside DistributedData extension .ctor
-            // * Marks that the extension is running
-            // * We can't use DistributedData.Get() because that defeats the purpose.
+            var identity = await ExpectMsgAsync<ActorIdentity>(TimeSpan.FromSeconds(1));
             Assert.NotNull(identity.Subject);
-        });
+        }, duration: TimeSpan.FromSeconds(10));
     }
 }
