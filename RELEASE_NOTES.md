@@ -1,3 +1,8 @@
+#### 1.5.67 April 26th 2026 ####
+
+**Updates**
+* [Bump Akka version from 1.5.66 to 1.5.67](https://github.com/akkadotnet/akka.net/releases/tag/1.5.67) - Hotfix release reverting the Task.Yield() optimization in AsyncWriteJournal/SnapshotStore that broke the persistence plugin threading contract.
+
 #### 1.5.65 April 10th 2026 ####
 
 **Updates**
