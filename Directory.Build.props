@@ -31,7 +31,7 @@
     <CoverletVersion>6.0.3</CoverletVersion>
     <XunitRunneVisualstudio>3.1.5</XunitRunneVisualstudio>
     <Xunit3RunneVisualstudio>3.1.5</Xunit3RunneVisualstudio>
-    <AkkaVersion>1.5.67</AkkaVersion>
+    <AkkaVersion>1.5.68</AkkaVersion>
     <MicrosoftExtensionsVersion>[9.0.0,)</MicrosoftExtensionsVersion>
     <SystemTextJsonVersion>[9.0.0,)</SystemTextJsonVersion>
   </PropertyGroup>

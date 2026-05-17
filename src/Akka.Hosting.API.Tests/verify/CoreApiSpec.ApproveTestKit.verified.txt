@@ -43,6 +43,7 @@ namespace Akka.Hosting.TestKit
         public System.Threading.Tasks.Task WithSnapshotSave(System.Func<Akka.Persistence.TestKit.SnapshotStoreSaveBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Action execution) { }
         public System.Threading.Tasks.Task WithSnapshotSave(System.Func<Akka.Persistence.TestKit.SnapshotStoreSaveBehavior, System.Threading.Tasks.Task> behaviorSelector, System.Func<System.Threading.Tasks.Task> execution) { }
     }
+    [Akka.TestKit.Xunit.Attributes.AkkaCleanAmbientContext]
     public abstract class TestKit : Akka.TestKit.TestKitBase, System.IAsyncDisposable, Xunit.IAsyncLifetime
     {
         protected TestKit(string? actorSystemName = null, Xunit.ITestOutputHelper? output = null, System.TimeSpan? startupTimeout = default, Microsoft.Extensions.Logging.LogLevel logLevel = 2) { }

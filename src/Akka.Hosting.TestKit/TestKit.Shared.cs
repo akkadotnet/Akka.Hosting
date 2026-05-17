@@ -54,7 +54,7 @@ namespace Akka.Hosting.TestKit
         /// </summary>
         private void EnsureImplicitSender()
         {
-            if (this is not INoImplicitSender && TestActor != null)
+            if (this is not INoImplicitSender && InternalCurrentActorCellKeeper.Current == null && TestActor != null)
                 InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
         }
 
@@ -192,12 +192,6 @@ namespace Akka.Hosting.TestKit
             // TestActor initialization and registration now happens in AddStartup
             // before user actors are created, preventing race conditions
 
-            // ALWAYS set the implicit sender context on the current thread after initialization
-            // This ensures it's available on the thread where tests will run
-            // This is critical for tests using DI-created actors
-            if (this is not INoImplicitSender && TestActor != null)
-                InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
-
             await BeforeTestStart();
         }
 
@@ -221,11 +215,6 @@ namespace Akka.Hosting.TestKit
 
         protected virtual Task BeforeTestStart()
         {
-            // Ensure the implicit sender is set on the current thread before each test
-            // This is critical because tests may run on different threads than initialization
-            if (this is not INoImplicitSender)
-                InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
-
             return Task.CompletedTask;
         }
 
