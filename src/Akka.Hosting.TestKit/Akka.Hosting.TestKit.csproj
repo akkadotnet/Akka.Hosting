@@ -11,7 +11,7 @@
     <ItemGroup>
         <PackageReference Include="Akka.TestKit.Xunit" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.Persistence.TestKit" Version="$(AkkaVersion)" />
-        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MicrosoftExtensionsVersion)" />
         <PackageReference Include="xunit.v3.extensibility.core" Version="$(Xunit3Version)" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
         <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
