@@ -97,11 +97,13 @@ namespace Akka.Hosting.TestKit
                 if (Config is { })
                     builder.AddHocon(Config, HoconAddMode.Prepend);
 
+                // Don't re-register TestEventListener here — DefaultConfig (prepended above) already
+                // configures it with a short type name. AddLogger<T> produces a fully-qualified name,
+                // which makes InjectTopLevelFallback think the config changed and triggers a full
+                // serialization rebuild. Under CI load that rebuild can race with scheduler disposal.
                 builder.ConfigureLoggers(logger =>
                 {
                     logger.LogLevel = ToAkkaLogLevel(LogLevel);
-                    logger.ClearLoggers();
-                    logger.AddLogger<TestEventListener>();
                 });
 
                 if (Output is { })
