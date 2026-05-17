@@ -33,7 +33,7 @@
     <Xunit3RunneVisualstudio>3.1.5</Xunit3RunneVisualstudio>
     <AkkaVersion>1.5.67</AkkaVersion>
     <MicrosoftExtensionsVersion>[9.0.0,)</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>[8.0.5,)</SystemTextJsonVersion>
+    <SystemTextJsonVersion>[9.0.0,)</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
