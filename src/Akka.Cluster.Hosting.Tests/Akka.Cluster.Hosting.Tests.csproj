@@ -9,7 +9,7 @@
         <PackageReference Include="Akka.TestKit.Xunit" Version="$(AkkaVersion)" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
         <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="$(MicrosoftExtensionsVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
         <PackageReference Include="xunit.v3" Version="$(Xunit3Version)" />
         <PackageReference Include="xunit.runner.visualstudio" Version="$(Xunit3RunneVisualstudio)">

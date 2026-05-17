@@ -1,3 +1,11 @@
+#### 1.5.67 April 26th 2026 ####
+
+**New Features**
+* [Add `WithStrictSerialization` helper](https://github.com/akkadotnet/Akka.Hosting/pull/737) — resolves [issue #734](https://github.com/akkadotnet/Akka.Hosting/issues/734). Adds `WithStrictSerialization(bool enabled = true)` extension on `AkkaConfigurationBuilder` that sets `akka.actor.serialization-settings.allow-unregistered-types = off`, disabling the Newtonsoft.Json fallback and throwing `SerializationException` for unregistered types.
+
+**Updates**
+* [Bump Akka version from 1.5.66 to 1.5.67](https://github.com/akkadotnet/akka.net/releases/tag/1.5.67) - Hotfix release reverting the Task.Yield() optimization in AsyncWriteJournal/SnapshotStore that broke the persistence plugin threading contract.
+
 #### 1.5.65 April 10th 2026 ####
 
 **Updates**
