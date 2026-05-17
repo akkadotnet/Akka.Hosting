@@ -12,6 +12,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
-    <PackageReference Include="OpenTelemetry" Version="[1.9.0,)" />
+    <PackageReference Include="OpenTelemetry" Version="[1.10.0,)" />
   </ItemGroup>
 </Project>
