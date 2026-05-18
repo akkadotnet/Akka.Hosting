@@ -214,14 +214,79 @@ namespace Akka.Hosting.TestKit
                 if (await Task.WhenAny(initializedTask, timeoutTask) == timeoutTask)
                     throw new TimeoutException($"Akka.NET failed to initialize within {StartupTimeout.TotalSeconds} seconds");
 
-                // TestActor initialization and registration now happens in AddStartup
-                // before user actors are created, preventing race conditions
+                // The TestActor is created (via base.InitializeTest) inside a StartActors callback while
+                // remoting/clustering/etc. are concurrently spinning up their own /system actors. That
+                // concurrent startup intermittently terminates the freshly-created TestActor. Host startup
+                // is now complete, so the system is quiet — verify the TestActor survived and re-create it
+                // here (race-free) if it did not. See EnsureTestActorAliveAsync.
+                await EnsureTestActorAliveAsync();
 
                 await BeforeTestStart();
             }
             finally
             {
                 SynchronizationContext.SetSynchronizationContext(entryContext);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that the <see cref="TestKitBase.TestActor"/> survived host startup, and re-creates it
+        /// if it did not.
+        /// <para>
+        /// The TestActor is an <c>InternalTestActor</c> created under <c>/system</c> on the
+        /// <c>CallingThreadDispatcher</c> via <see cref="TestKitBase.InitializeTest(ActorSystem, ActorSystemSetup, string, string)"/>,
+        /// which runs inside a <see cref="AkkaConfigurationBuilder.StartActors(Akka.Hosting.ActorStarter)"/> callback while
+        /// remoting, clustering and other extensions are concurrently creating their own <c>/system</c> actors.
+        /// That concurrent startup intermittently terminates the freshly-created TestActor, after which every
+        /// message sent to it dead-letters and <c>ExpectMsg</c> calls time out.
+        /// </para>
+        /// <para>
+        /// By the time this runs host startup has completed and the system is quiet, so re-creating the
+        /// TestActor here is race-free and deterministic.
+        /// </para>
+        /// </summary>
+        private async Task EnsureTestActorAliveAsync()
+        {
+            const int maxAttempts = 3;
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                if (await IsTestActorAliveAsync())
+                    return;
+
+                Sys.Log.Warning(
+                    "TestActor [{0}] did not survive host startup; re-creating it (attempt {1}/{2}).",
+                    TestActor.Path, attempt + 1, maxAttempts);
+
+                // base.InitializeTest installs an ActorCellKeepingSynchronizationContext on the current
+                // thread; bracket it the same way the original call site does so it cannot leak.
+                var savedContext = SynchronizationContext.Current;
+                try
+                {
+                    base.InitializeTest(Sys, (ActorSystemSetup)null!, null, null);
+                }
+                finally
+                {
+                    SynchronizationContext.SetSynchronizationContext(savedContext);
+                }
+
+                ActorRegistry.Register<TestProbe>(TestActor, overwrite: true);
+            }
+
+            if (!await IsTestActorAliveAsync())
+                throw new InvalidOperationException(
+                    $"TestActor could not be kept alive across host startup after {maxAttempts} attempts.");
+        }
+
+        private async Task<bool> IsTestActorAliveAsync()
+        {
+            try
+            {
+                await Sys.ActorSelection(TestActor.Path).ResolveOne(TimeSpan.FromSeconds(1));
+                return true;
+            }
+            catch (ActorNotFoundException)
+            {
+                return false;
             }
         }
 

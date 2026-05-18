@@ -22,6 +22,13 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
         builder
             .WithRemoting()
             .WithClustering()
+            // Join the cluster during host startup (matching the other cluster specs) rather than in
+            // the test body, so cluster formation completes before the test body runs.
+            .WithActors(async (system, _) =>
+            {
+                var cluster = Cluster.Get(system);
+                await cluster.JoinAsync(cluster.SelfAddress);
+            })
             .WithDistributedData(opt =>
             {
                 opt.Name = ReplicatorName;
@@ -32,8 +39,7 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
     public async Task WithDistributedDataStartsAutomaticallyTest()
     {
         var cluster = Cluster.Get(Sys);
-        await cluster.JoinAsync(cluster.SelfAddress);
-        await AwaitAssertAsync(() => 
+        await AwaitAssertAsync(() =>
                 Assert.Equal(1, cluster.State.Members.Count(m => m.Status == MemberStatus.Up)),
             interval: TimeSpan.FromMilliseconds(200),
             duration: TimeSpan.FromSeconds(10));
