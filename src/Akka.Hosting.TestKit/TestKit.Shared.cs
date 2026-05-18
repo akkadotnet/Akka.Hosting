@@ -33,6 +33,8 @@ namespace Akka.Hosting.TestKit
         protected static XunitAssertions Assertions { get; } = new XunitAssertions();
 
         private IHost? _host;
+        private IActorRef? _registeredTestProbe;
+
         public IHost Host
         {
             get
@@ -129,7 +131,7 @@ namespace Akka.Hosting.TestKit
                     {
                         // Initialize TestActor here to ensure it's available before user actors start
                         base.InitializeTest(actorSystem, (ActorSystemSetup)null!, null, null);
-                        actorRegistry.Register<TestProbe>(TestActor);
+                        actorRegistry.Register<TestProbe>(GetOrCreateRegisteredTestProbe(actorSystem));
 
                         // Set implicit sender on initialization thread
                         if (this is not INoImplicitSender)
@@ -269,7 +271,8 @@ namespace Akka.Hosting.TestKit
                     SynchronizationContext.SetSynchronizationContext(savedContext);
                 }
 
-                ActorRegistry.Register<TestProbe>(TestActor, overwrite: true);
+                await RetargetRegisteredTestProbeAsync(Sys);
+                ActorRegistry.Register<TestProbe>(GetOrCreateRegisteredTestProbe(Sys), overwrite: true);
             }
 
             if (!await IsTestActorAliveAsync())
@@ -287,6 +290,72 @@ namespace Akka.Hosting.TestKit
             catch (ActorNotFoundException)
             {
                 return false;
+            }
+        }
+
+        private IActorRef GetOrCreateRegisteredTestProbe(ActorSystem system)
+        {
+            if (_registeredTestProbe == null)
+            {
+                _registeredTestProbe = system.ActorOf(
+                    Props.Create(() => new StableTestProbeRef(TestActor)),
+                    $"testProbe-registry-{Guid.NewGuid():N}");
+            }
+
+            return _registeredTestProbe;
+        }
+
+        internal async Task ForceReinitializeTestActorAsync()
+        {
+            var savedContext = SynchronizationContext.Current;
+            try
+            {
+                base.InitializeTest(Sys, (ActorSystemSetup)null!, null, null);
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(savedContext);
+            }
+
+            await RetargetRegisteredTestProbeAsync(Sys);
+            ActorRegistry.Register<TestProbe>(GetOrCreateRegisteredTestProbe(Sys), overwrite: true);
+        }
+
+        private async Task RetargetRegisteredTestProbeAsync(ActorSystem system)
+        {
+            if (_registeredTestProbe == null)
+            {
+                _ = GetOrCreateRegisteredTestProbe(system);
+                return;
+            }
+
+            _ = await _registeredTestProbe.Ask<Done>(new StableTestProbeRef.UpdateTarget(TestActor), TimeSpan.FromSeconds(3));
+        }
+
+        private sealed class StableTestProbeRef : ReceiveActor
+        {
+            public sealed class UpdateTarget
+            {
+                public UpdateTarget(IActorRef target)
+                {
+                    Target = target;
+                }
+
+                public IActorRef Target { get; }
+            }
+
+            private IActorRef _target;
+
+            public StableTestProbeRef(IActorRef initialTarget)
+            {
+                _target = initialTarget;
+
+                Receive<UpdateTarget>(update =>
+                {
+                    _target = update.Target;
+                    Sender.Tell(Done.Instance);
+                });
+                ReceiveAny(message => _target.Forward(message));
             }
         }
 
