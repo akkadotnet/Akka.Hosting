@@ -115,13 +115,30 @@ namespace Akka.Hosting.TestKit
                 // This ensures TestProbe is available for any actors that depend on IRequiredActor<TestProbe>
                 builder.StartActors((actorSystem, actorRegistry) =>
                 {
-                    // Initialize TestActor here to ensure it's available before user actors start
-                    base.InitializeTest(actorSystem, (ActorSystemSetup)null!, null, null);
-                    actorRegistry.Register<TestProbe>(TestActor);
+                    // base.InitializeTest -> Akka.TestKit.TestKitBase.InitializeTest unconditionally calls
+                    // SynchronizationContext.SetSynchronizationContext(new ActorCellKeepingSynchronizationContext(...)).
+                    // This delegate runs on a host-startup thread inside _host.StartAsync(); SetSynchronizationContext
+                    // is per-thread and is NOT unwound by await, and nothing here scrubs it. Left unbracketed, that
+                    // SynchronizationContext leaks onto pool threads, escapes InitializeAsyncCore, and is captured by
+                    // xUnit v3's CreateTestClassInstance -> [AkkaCleanAmbientContext].Before, which then pins the
+                    // next sequentially-run test's continuations onto this (disposed) test's ActorCell.
+                    // This delegate is synchronous, so same-thread save/restore fully contains the mutation. The
+                    // correct per-test SynchronizationContext is installed later by [AkkaCleanAmbientContext].Before.
+                    var savedContext = SynchronizationContext.Current;
+                    try
+                    {
+                        // Initialize TestActor here to ensure it's available before user actors start
+                        base.InitializeTest(actorSystem, (ActorSystemSetup)null!, null, null);
+                        actorRegistry.Register<TestProbe>(TestActor);
 
-                    // Set implicit sender on initialization thread
-                    if (this is not INoImplicitSender)
-                        InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
+                        // Set implicit sender on initialization thread
+                        if (this is not INoImplicitSender)
+                            InternalCurrentActorCellKeeper.Current = (ActorCell)((ActorRefWithCell)TestActor).Underlying;
+                    }
+                    finally
+                    {
+                        SynchronizationContext.SetSynchronizationContext(savedContext);
+                    }
                 });
 
                 // User configuration comes AFTER TestProbe registration
@@ -153,46 +170,59 @@ namespace Akka.Hosting.TestKit
         [InternalApi]
         private async Task InitializeAsyncCore()
         {
-            var hostBuilder = new HostBuilder();
-            if (Output != null)
-            {
-                hostBuilder.ConfigureLogging(logger =>
-                {
-                    logger.ClearProviders();
-                    logger.AddProvider(new XUnitLoggerProvider(Output, LogLevel));
-                    logger.AddFilter("Akka.*", LogLevel);
-                    ConfigureLogging(logger);
-                });
-            }
-
-            hostBuilder
-                .ConfigureHostConfiguration(ConfigureHostConfiguration)
-                .ConfigureAppConfiguration(ConfigureAppConfiguration);
-            ConfigureHostBuilder(hostBuilder);
-            hostBuilder.ConfigureServices(InternalConfigureServices);
-
-            _host = hostBuilder.Build();
-
-            using var cts = new CancellationTokenSource(StartupTimeout);
+            // Defense-in-depth for the SynchronizationContext leak contained at the base.InitializeTest
+            // call site above: SetSynchronizationContext is per-thread and not unwound by await, so this
+            // continuation can return to xUnit's CreateTestClassInstance on a thread carrying a stale SC.
+            // Restoring the entry SC on exit guarantees [AkkaCleanAmbientContext].Before captures a clean
+            // PreviousContext regardless of what the host-startup pipeline installs.
+            var entryContext = SynchronizationContext.Current;
             try
             {
-                await _host.StartAsync(cts.Token);
+                var hostBuilder = new HostBuilder();
+                if (Output != null)
+                {
+                    hostBuilder.ConfigureLogging(logger =>
+                    {
+                        logger.ClearProviders();
+                        logger.AddProvider(new XUnitLoggerProvider(Output, LogLevel));
+                        logger.AddFilter("Akka.*", LogLevel);
+                        ConfigureLogging(logger);
+                    });
+                }
+
+                hostBuilder
+                    .ConfigureHostConfiguration(ConfigureHostConfiguration)
+                    .ConfigureAppConfiguration(ConfigureAppConfiguration);
+                ConfigureHostBuilder(hostBuilder);
+                hostBuilder.ConfigureServices(InternalConfigureServices);
+
+                _host = hostBuilder.Build();
+
+                using var cts = new CancellationTokenSource(StartupTimeout);
+                try
+                {
+                    await _host.StartAsync(cts.Token);
+                }
+                catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                {
+                    throw new TimeoutException($"Host failed to start within {StartupTimeout.TotalSeconds} seconds");
+                }
+
+                // Wait for Akka initialization with timeout
+                var initializedTask = _initialized.Task;
+                var timeoutTask = Task.Delay(StartupTimeout, CancellationToken.None);
+                if (await Task.WhenAny(initializedTask, timeoutTask) == timeoutTask)
+                    throw new TimeoutException($"Akka.NET failed to initialize within {StartupTimeout.TotalSeconds} seconds");
+
+                // TestActor initialization and registration now happens in AddStartup
+                // before user actors are created, preventing race conditions
+
+                await BeforeTestStart();
             }
-            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+            finally
             {
-                throw new TimeoutException($"Host failed to start within {StartupTimeout.TotalSeconds} seconds");
+                SynchronizationContext.SetSynchronizationContext(entryContext);
             }
-
-            // Wait for Akka initialization with timeout
-            var initializedTask = _initialized.Task;
-            var timeoutTask = Task.Delay(StartupTimeout, CancellationToken.None);
-            if (await Task.WhenAny(initializedTask, timeoutTask) == timeoutTask)
-                throw new TimeoutException($"Akka.NET failed to initialize within {StartupTimeout.TotalSeconds} seconds");
-
-            // TestActor initialization and registration now happens in AddStartup
-            // before user actors are created, preventing race conditions
-
-            await BeforeTestStart();
         }
 
         protected sealed override void InitializeTest(ActorSystem system, ActorSystemSetup config, string actorSystemName,
