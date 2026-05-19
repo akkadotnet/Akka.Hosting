@@ -48,11 +48,14 @@ public class ClusterShardingDistributedDataSpecs: Akka.Hosting.TestKit.TestKit
         var coordinatorName = settings.RestartReplicatorOnFailure ? $"{ReplicatorName}Supervisor" : ReplicatorName;
         
         var actorSelection = Sys.ActorSelection(new RootActorPath(cluster.SelfAddress) / "user" / coordinatorName);
-        
+
+        // Use a fresh TestProbe rather than TestActor: on Windows, TestActor can be a stale dead
+        // reference due to the startup race window between EnsureTestActorAliveAsync and the test body.
+        var probe = CreateTestProbe();
         await AwaitAssertAsync(async () =>
         {
-            actorSelection.Tell(new Identify("coordinator"), TestActor);
-            var identity = await ExpectMsgAsync<ActorIdentity>(TimeSpan.FromSeconds(1));
+            actorSelection.Tell(new Identify("coordinator"), probe.Ref);
+            var identity = await probe.ExpectMsgAsync<ActorIdentity>(TimeSpan.FromSeconds(1));
             Assert.NotNull(identity.Subject);
         }, duration: TimeSpan.FromSeconds(10));
     }
