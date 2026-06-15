@@ -56,7 +56,7 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
 
     - name: Upload Release Asset
-      uses: AButler/upload-release-assets@v4.0
+      uses: AButler/upload-release-assets@34491005a5d7ec239a784e460807ce844fde7962
       with:
           repo-token: ${{ github.token }}
           release-tag: ${{ github.ref_name }}
