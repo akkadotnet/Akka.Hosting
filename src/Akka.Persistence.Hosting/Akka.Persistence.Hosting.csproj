@@ -11,6 +11,7 @@
 
     <ItemGroup>
         <PackageReference Include="Akka.Persistence" Version="$(AkkaVersion)" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" />
     </ItemGroup>
 
 </Project>
