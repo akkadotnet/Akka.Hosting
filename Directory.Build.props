@@ -3,13 +3,8 @@
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
     <VersionPrefix>1.5.69</VersionPrefix>
-    <PackageReleaseNotes>**Security Fixes**
-* [Resolve GHSA-g94r-2vxg-569j by bumping OpenTelemetry minimum to 1.10.0](https://github.com/akkadotnet/Akka.Hosting/pull/743) - `OpenTelemetry.Api` 1.9.0 has a known moderate severity vulnerability. The minimum `OpenTelemetry` version floor has been raised from `1.9.0` to `1.10.0`, and the Microsoft.Extensions.Logging floor has been raised to `9.0.0`. Downstream consumers that previously resolved to the vulnerable `OpenTelemetry.Api` 1.9.0 will now pull the safe 1.10.0 release.
-
-**Bug Fixes**
-* [Fix implicit-sender leak under xUnit v3 parallel execution in `Akka.Hosting.TestKit`](https://github.com/akkadotnet/Akka.Hosting/pull/735) - Under xUnit v3's default parallel-class scheduling, `await` continuations could resume on ThreadPool threads where a sibling test had pinned its actor cell, causing `Tell()` to use the wrong implicit sender and replies to land in the wrong `TestActor`'s mailbox. A new wrapping `SynchronizationContext` preserves xUnit's scheduler while pinning the ambient actor cell across `await` continuations.
-* [Fix `SynchronizationContext` leak and `TestActor` startup race in `Akka.Hosting.TestKit`](https://github.com/akkadotnet/Akka.Hosting/pull/744) - Two compounding sources of flakiness in sequential xUnit v3 suites: (1) the `ActorCellKeepingSynchronizationContext` installed during host startup leaked out of the initialization callback and was inherited by subsequent tests, pinning continuations onto disposed `ActorCell`s; (2) the `TestActor` created during host startup was intermittently terminated by a race with other `/system` actors starting concurrently. Fixed by bracketing the context installation with a save/restore and adding post-startup `TestActor` liveness verification with automatic re-creation.
-* [Fix cached `TestProbe` refs becoming stale after `TestActor` recovery in `Akka.Hosting.TestKit`](https://github.com/akkadotnet/Akka.Hosting/pull/745) - Actors created during `WithActors` could cache `IRequiredActor&lt;TestProbe&gt;.ActorRef` before recovery ran. Re-registering a new raw `TestActor` in `ActorRegistry` did not update those cached refs. `TestProbe` is now registered via a stable forwarding actor whose target is swapped atomically after recovery, ensuring all cached references remain valid.</PackageReleaseNotes>
+    <PackageReleaseNotes>**Updates**
+* [Bump Akka.NET version from 1.5.68 to 1.5.69](https://github.com/akkadotnet/akka.net/releases/tag/1.5.69)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
