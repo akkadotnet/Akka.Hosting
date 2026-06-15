@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.5.68</VersionPrefix>
+    <VersionPrefix>1.5.69</VersionPrefix>
     <PackageReleaseNotes>**Security Fixes**
 * [Resolve GHSA-g94r-2vxg-569j by bumping OpenTelemetry minimum to 1.10.0](https://github.com/akkadotnet/Akka.Hosting/pull/743) - `OpenTelemetry.Api` 1.9.0 has a known moderate severity vulnerability. The minimum `OpenTelemetry` version floor has been raised from `1.9.0` to `1.10.0`, and the Microsoft.Extensions.Logging floor has been raised to `9.0.0`. Downstream consumers that previously resolved to the vulnerable `OpenTelemetry.Api` 1.9.0 will now pull the safe 1.10.0 release.
 
@@ -33,7 +33,7 @@
     <CoverletVersion>6.0.3</CoverletVersion>
     <XunitRunneVisualstudio>3.1.5</XunitRunneVisualstudio>
     <Xunit3RunneVisualstudio>3.1.5</Xunit3RunneVisualstudio>
-    <AkkaVersion>1.5.68</AkkaVersion>
+    <AkkaVersion>1.5.69</AkkaVersion>
     <MicrosoftExtensionsVersion>[9.0.0,)</MicrosoftExtensionsVersion>
     <SystemTextJsonVersion>[9.0.0,)</SystemTextJsonVersion>
   </PropertyGroup>
