@@ -1,3 +1,9 @@
+#### 1.5.70 July 2nd 2026 ####
+
+**Updates**
+* [Bump Akka.NET version from 1.5.69 to 1.5.70](https://github.com/akkadotnet/akka.net/releases/tag/1.5.70)
+
+
 #### 1.5.69 June 15th 2026 ####
 
 **Updates**
