@@ -2,9 +2,9 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.5.69</VersionPrefix>
+    <VersionPrefix>1.5.70</VersionPrefix>
     <PackageReleaseNotes>**Updates**
-* [Bump Akka.NET version from 1.5.68 to 1.5.69](https://github.com/akkadotnet/akka.net/releases/tag/1.5.69)</PackageReleaseNotes>
+* [Bump Akka.NET version from 1.5.69 to 1.5.70](https://github.com/akkadotnet/akka.net/releases/tag/1.5.70)</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>
       https://github.com/akkadotnet/Akka.Hosting
@@ -28,7 +28,7 @@
     <CoverletVersion>6.0.3</CoverletVersion>
     <XunitRunneVisualstudio>3.1.5</XunitRunneVisualstudio>
     <Xunit3RunneVisualstudio>3.1.5</Xunit3RunneVisualstudio>
-    <AkkaVersion>1.5.69</AkkaVersion>
+    <AkkaVersion>1.5.70</AkkaVersion>
     <MicrosoftExtensionsVersion>[9.0.0,)</MicrosoftExtensionsVersion>
     <SystemTextJsonVersion>[9.0.0,)</SystemTextJsonVersion>
   </PropertyGroup>
