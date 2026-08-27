@@ -27,9 +27,9 @@ namespace Akka.Hosting.TestKit.Internals
     /// seeded cell never survives onto a pooled thread reused by unrelated work.
     /// <para/>
     /// xUnit2 port of the v3 <c>AkkaCleanAmbientContextAttribute</c> (PR #735). The v3 variant
-    /// is an attribute because xUnit v3's <c>BeforeAfterTestAttribute</c> exposes the test
-    /// instance (<c>TestContext.Current.TestClassInstance</c>). xUnit2's
-    /// <see cref="Xunit.Sdk.BeforeAfterTestAttribute"/> does not, so this helper is driven from
+    /// is an attribute because xUnit v3 exposes the test instance via
+    /// <c>TestContext.Current.TestClassInstance</c>. xUnit2's
+    /// BeforeAfterTestAttribute does not, so this helper is driven from
     /// the test kit's own <c>IAsyncLifetime</c> hooks (<c>InitializeAsync</c>/<c>DisposeAsync</c>),
     /// which run on the body thread and have direct access to the instance.
     /// </summary>
