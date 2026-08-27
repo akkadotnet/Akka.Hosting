@@ -377,24 +377,6 @@ namespace Akka.Hosting.TestKit
             }
         }
 
-        protected virtual Task BeforeTestStart()
-        {
-            return Task.CompletedTask;
-        }
-
-        /// <summary>
-        /// This method is called when a test ends.
-        ///
-        /// <remarks>
-        /// If you override this, then make sure you either call base.AfterAllAsync()
-        /// to shut down the system. Otherwise a memory leak will occur.
-        /// </remarks>
-        /// </summary>
-        protected virtual Task AfterAllAsync()
-        {
-            return Task.CompletedTask;
-        }
-
         private async Task DisposeAsyncCore()
         {
             Exception? exception = null;
