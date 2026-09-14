@@ -23,6 +23,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Include="..\Akka.Hosting.TestKit\Internals\ActorCellKeepingSynchronizationContext.cs">
+        <Link>Internals\ActorCellKeepingSynchronizationContext.cs</Link>
+      </Compile>
+      <Compile Include="..\Akka.Hosting.TestKit\Internals\CleanAmbientContext.cs">
+        <Link>Internals\CleanAmbientContext.cs</Link>
+      </Compile>
       <Compile Include="..\Akka.Hosting.TestKit\Internals\TestKitLoggerFactoryLogger.cs">
         <Link>Internals\TestKitLoggerFactoryLogger.cs</Link>
       </Compile>
